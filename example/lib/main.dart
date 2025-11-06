@@ -221,7 +221,7 @@ class HomePage extends StatelessWidget {
                 },
               ),
               CupertinoListTile(
-                title: Text('App Bar'),
+                title: Text('Glass container'),
                 leading: CNIcon(
                   symbol: CNSymbol('rectangle.topthird.inset', color: accentColor),
                 ),
