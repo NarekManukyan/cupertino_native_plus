@@ -277,11 +277,62 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
         
         // Handle imageAsset (highest priority)
         if i < self.imageAssetPaths.count, !self.imageAssetPaths[i].isEmpty {
-          image = SVGImageLoader.shared.loadSVG(from: self.imageAssetPaths[i], size: CGSize(width: 18, height: 18))
-        } else if i < self.imageAssetData.count, let data = self.imageAssetData[i], 
-                  i < self.imageAssetFormats.count, !self.imageAssetFormats[i].isEmpty {
-          let format = self.imageAssetFormats[i]
-          image = Self.createImageFromData(data, format: format, scale: self.iconScale)
+          let assetPath = self.imageAssetPaths[i]
+          let format = i < self.imageAssetFormats.count ? self.imageAssetFormats[i] : nil
+          let iconColorARGB: Int? = {
+            if i < self.itemColors.count, let colorNum = self.itemColors[i] as? NSNumber, !(self.itemColors[i] is NSNull) {
+              return colorNum.intValue
+            }
+            return nil
+          }()
+          let iconSize: CGFloat? = {
+            if i < self.itemSizes.count, let sizeNum = self.itemSizes[i] as? NSNumber {
+              return CGFloat(truncating: sizeNum)
+            }
+            return 18.0
+          }()
+          
+          // Use utility function to load and optionally tint image
+          if let argb = iconColorARGB, #available(iOS 13.0, *) {
+            image = ImageUtils.loadAndTintImage(
+              from: assetPath,
+              iconSize: iconSize,
+              iconColor: argb,
+              providedFormat: format,
+              scale: self.iconScale
+            )
+          } else {
+            let size = CGSize(width: iconSize ?? 18, height: iconSize ?? 18)
+            image = ImageUtils.loadFlutterAsset(assetPath, size: size, format: format, scale: self.iconScale)
+          }
+        } else if i < self.imageAssetData.count, let data = self.imageAssetData[i] {
+          let format = i < self.imageAssetFormats.count ? self.imageAssetFormats[i] : nil
+          let iconColorARGB: Int? = {
+            if i < self.itemColors.count, let colorNum = self.itemColors[i] as? NSNumber, !(self.itemColors[i] is NSNull) {
+              return colorNum.intValue
+            }
+            return nil
+          }()
+          let iconSize: CGFloat? = {
+            if i < self.itemSizes.count, let sizeNum = self.itemSizes[i] as? NSNumber {
+              return CGFloat(truncating: sizeNum)
+            }
+            return 18.0
+          }()
+          
+          // Use utility function to create and optionally tint image
+          if let argb = iconColorARGB, #available(iOS 13.0, *) {
+            image = ImageUtils.createAndTintImage(
+              from: data,
+              iconSize: iconSize,
+              iconColor: argb,
+              providedFormat: format,
+              scale: self.iconScale
+            )
+          } else {
+            let size: CGSize? = iconSize != nil ? CGSize(width: iconSize!, height: iconSize!) : nil
+            image = ImageUtils.createImageFromData(data, format: format, size: size, scale: self.iconScale)
+          }
         }
         
         // Handle custom icon bytes (medium priority)
@@ -419,12 +470,9 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
     return nil
   }
 
+  // Use shared utility functions
   private static func colorFromARGB(_ argb: Int) -> UIColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return UIColor(red: r, green: g, blue: b, alpha: a)
+    return ImageUtils.colorFromARGB(argb)
   }
 
   @available(iOS 13.0, *)
@@ -433,9 +481,37 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
     
     // Handle imageAsset (highest priority)
     if let path = btnAssetPath, !path.isEmpty {
-      return SVGImageLoader.shared.loadSVG(from: path, size: CGSize(width: btnIconSize ?? 20, height: btnIconSize ?? 20))
-    } else if let data = btnImageData, let format = btnImageFormat {
-      return Self.createImageFromData(data, format: format, scale: iconScale)
+      let iconColorARGB = btnIconColor != nil ? ImageUtils.colorToARGB(btnIconColor!) : nil
+      let size = CGSize(width: btnIconSize ?? 20, height: btnIconSize ?? 20)
+      
+      // Use utility function to load and optionally tint image
+      if let argb = iconColorARGB, #available(iOS 13.0, *) {
+        return ImageUtils.loadAndTintImage(
+          from: path,
+          iconSize: btnIconSize,
+          iconColor: argb,
+          providedFormat: btnImageFormat,
+          scale: iconScale
+        )
+      } else {
+        return ImageUtils.loadFlutterAsset(path, size: size, format: btnImageFormat, scale: iconScale)
+      }
+    } else if let data = btnImageData {
+      let iconColorARGB = btnIconColor != nil ? ImageUtils.colorToARGB(btnIconColor!) : nil
+      
+      // Use utility function to create and optionally tint image
+      if let argb = iconColorARGB, #available(iOS 13.0, *) {
+        return ImageUtils.createAndTintImage(
+          from: data,
+          iconSize: btnIconSize,
+          iconColor: argb,
+          providedFormat: btnImageFormat,
+          scale: iconScale
+        )
+      } else {
+        let size: CGSize? = btnIconSize != nil ? CGSize(width: btnIconSize!, height: btnIconSize!) : nil
+        return ImageUtils.createImageFromData(data, format: btnImageFormat, size: size, scale: iconScale)
+      }
     }
     
     // Handle custom icon bytes (medium priority)
@@ -565,27 +641,10 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   private static func loadFlutterAsset(_ assetPath: String) -> UIImage? {
-    let flutterKey = FlutterDartProject.lookupKey(forAsset: assetPath)
-    guard let path = Bundle.main.path(forResource: flutterKey, ofType: nil) else {
-      return nil
-    }
-    return UIImage(contentsOfFile: path)
+    return ImageUtils.loadFlutterAsset(assetPath)
   }
 
   private static func createImageFromData(_ data: Data, format: String?, scale: CGFloat) -> UIImage? {
-    guard let format = format?.lowercased() else {
-      // Try to detect format from data or default to PNG
-      return UIImage(data: data, scale: scale)
-    }
-    
-    switch format {
-    case "png", "jpg", "jpeg":
-      return UIImage(data: data, scale: scale)
-    case "svg":
-      return SVGImageLoader.shared.loadSVG(from: data)
-    default:
-      // Try as generic image data
-      return UIImage(data: data, scale: scale)
-    }
+    return ImageUtils.createImageFromData(data, format: format, scale: scale)
   }
 }

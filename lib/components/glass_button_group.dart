@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import '../utils/version_detector.dart';
 import '../utils/icon_renderer.dart';
+import '../utils/theme_helper.dart';
 import '../channel/params.dart';
 import 'button.dart';
 
@@ -77,6 +78,7 @@ class CNGlassButtonGroup extends StatelessWidget {
           'axis': axis == Axis.horizontal ? 'horizontal' : 'vertical',
           'spacing': spacing,
           'spacingForGlass': spacingForGlass,
+          'isDark': ThemeHelper.isDark(context),
         };
 
         final platformView = defaultTargetPlatform == TargetPlatform.iOS
@@ -165,7 +167,7 @@ class CNGlassButtonGroup extends StatelessWidget {
       // Create a new button with shrinkWrap enabled for proper layout in group
       if (button.isIcon) {
         return CNButton.icon(
-          icon: button.icon!,
+          icon: button.icon,
           customIcon: button.customIcon,
           imageAsset: button.imageAsset,
           onPressed: button.onPressed,
@@ -234,9 +236,12 @@ class CNGlassButtonGroup extends StatelessWidget {
     BuildContext context,
   ) async {
     // Capture context-dependent values before async operations
-    final iconColorArgb = button.icon?.color != null
-        ? resolveColorToArgb(button.icon!.color, context)
-        : null;
+    // Priority: imageAsset.color > icon.color (for customIcon, icon.color is used)
+    final iconColorArgb = button.imageAsset?.color != null
+        ? resolveColorToArgb(button.imageAsset!.color, context)
+        : (button.icon?.color != null
+            ? resolveColorToArgb(button.icon!.color, context)
+            : null);
     final tintArgb =
         button.tint != null ? resolveColorToArgb(button.tint, context) : null;
     
@@ -254,19 +259,31 @@ class CNGlassButtonGroup extends StatelessWidget {
     // Convert image asset to bytes if provided
     Uint8List? imageBytes;
     String? imageFormat;
+    String? resolvedAssetPath;
     if (button.imageAsset != null) {
+      // Resolve asset path based on device pixel ratio
+      resolvedAssetPath = await resolveAssetPathForPixelRatio(button.imageAsset!.assetPath);
       imageBytes = button.imageAsset!.imageData;
-      imageFormat = button.imageAsset!.imageFormat;
+      // Auto-detect format if not provided (use resolved path)
+      imageFormat = button.imageAsset!.imageFormat ?? 
+          detectImageFormat(resolvedAssetPath, button.imageAsset!.imageData);
     }
+    
+    // Determine icon size - priority: imageAsset > icon > default
+    final iconSize = button.imageAsset?.size ?? button.icon?.size ?? 20.0;
     
     return {
       if (button.label != null) 'label': button.label,
       if (button.icon != null) 'iconName': button.icon!.name,
       if (button.icon != null) 'iconSize': button.icon!.size,
+      // Use iconSize from imageAsset if available, otherwise from icon
+      if (button.imageAsset != null) 'iconSize': iconSize,
       if (iconColorArgb != null) 'iconColor': iconColorArgb,
       if (iconBytes != null) 'iconBytes': iconBytes,
       if (imageBytes != null) 'imageBytes': imageBytes,
       if (imageFormat != null) 'imageFormat': imageFormat,
+      if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
+        'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
       'enabled': button.enabled,
       if (tintArgb != null) 'tint': tintArgb,
       'minHeight': button.config.minHeight ?? 44.0,

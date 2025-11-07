@@ -96,9 +96,47 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     
     // Handle imageAsset (highest priority)
     if let path = assetPath, !path.isEmpty {
-      finalImage = SVGImageLoader.shared.loadSVG(from: path, size: CGSize(width: iconSize ?? 20, height: iconSize ?? 20))
-    } else if let data = imageData, let format = imageFormat {
-      finalImage = Self.createImageFromData(data, format: format, scale: iconScale)
+      let detectedFormat = ImageUtils.detectImageFormat(assetPath: path, providedFormat: imageFormat)
+      let iconColorARGB: Int? = iconColor != nil ? ImageUtils.colorToARGB(iconColor!) : nil
+      
+      // Use utility function to load and optionally tint image
+      if let argb = iconColorARGB, #available(iOS 13.0, *) {
+        finalImage = ImageUtils.loadAndTintImage(
+          from: path,
+          iconSize: iconSize,
+          iconColor: argb,
+          providedFormat: imageFormat,
+          scale: iconScale
+        )
+      } else {
+        let size: CGSize? = iconSize != nil ? CGSize(width: iconSize!, height: iconSize!) : nil
+        finalImage = ImageUtils.loadFlutterAsset(path, size: size, format: detectedFormat, scale: iconScale)
+      }
+      
+      // If no color but size is specified, scale the image
+      if finalImage != nil, iconColor == nil, let iconSize = iconSize {
+        let targetSize = CGSize(width: iconSize, height: iconSize)
+        if finalImage!.size != targetSize {
+          finalImage = ImageUtils.scaleImage(finalImage!, to: targetSize, scale: iconScale)
+        }
+      }
+    } else if let data = imageData {
+      let format = imageFormat
+      let iconColorARGB: Int? = iconColor != nil ? ImageUtils.colorToARGB(iconColor!) : nil
+      
+      // Use utility function to create and optionally tint image
+      if let argb = iconColorARGB, #available(iOS 13.0, *) {
+        finalImage = ImageUtils.createAndTintImage(
+          from: data,
+          iconSize: iconSize,
+          iconColor: argb,
+          providedFormat: format,
+          scale: iconScale
+        )
+      } else {
+        let size: CGSize? = iconSize != nil ? CGSize(width: iconSize!, height: iconSize!) : nil
+        finalImage = ImageUtils.createImageFromData(data, format: format, size: size, scale: iconScale)
+      }
     }
     
     // Handle custom icon bytes (medium priority)
@@ -293,15 +331,47 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       case "setButtonIcon":
         if let args = call.arguments as? [String: Any] {
           var image: UIImage? = nil
+          let size = CGSize(width: args["buttonIconSize"] as? CGFloat ?? 20, height: args["buttonIconSize"] as? CGFloat ?? 20)
           
           // Priority: imageAsset > customIconBytes > SF Symbol
           // Handle imageAsset properties first
           if let assetPath = args["buttonAssetPath"] as? String, !assetPath.isEmpty {
-            let size = CGSize(width: args["buttonIconSize"] as? CGFloat ?? 20, height: args["buttonIconSize"] as? CGFloat ?? 20)
-            image = SVGImageLoader.shared.loadSVG(from: assetPath, size: size)
+            let format = args["buttonImageFormat"] as? String
+            let iconColorARGB = (args["buttonIconColor"] as? NSNumber)?.intValue
+            
+            // Use utility function to load and optionally tint image
+            if let argb = iconColorARGB, #available(iOS 13.0, *) {
+              image = ImageUtils.loadAndTintImage(
+                from: assetPath,
+                iconSize: size.width,
+                iconColor: argb,
+                providedFormat: format,
+                scale: UIScreen.main.scale
+              )
+            } else {
+              image = ImageUtils.loadFlutterAsset(assetPath, size: size, format: format, scale: UIScreen.main.scale)
+            }
+            
+            // If no color but size is specified, scale the image
+            if image != nil, iconColorARGB == nil, image!.size != size {
+              image = ImageUtils.scaleImage(image!, to: size, scale: UIScreen.main.scale)
+            }
           } else if let imageData = args["buttonImageData"] as? FlutterStandardTypedData {
             let format = args["buttonImageFormat"] as? String
-            image = Self.createImageFromData(imageData.data, format: format, scale: UIScreen.main.scale)
+            let iconColorARGB = (args["buttonIconColor"] as? NSNumber)?.intValue
+            
+            // Use utility function to create and optionally tint image
+            if let argb = iconColorARGB, #available(iOS 13.0, *) {
+              image = ImageUtils.createAndTintImage(
+                from: imageData.data,
+                iconSize: size.width,
+                iconColor: argb,
+                providedFormat: format,
+                scale: UIScreen.main.scale
+              )
+            } else {
+              image = ImageUtils.createImageFromData(imageData.data, format: format, size: size, scale: UIScreen.main.scale)
+            }
           } else if let customIconBytes = args["buttonCustomIconBytes"] as? FlutterStandardTypedData {
             image = UIImage(data: customIconBytes.data, scale: UIScreen.main.scale)?.withRenderingMode(.alwaysTemplate)
           } else if let name = args["buttonIconName"] as? String {
@@ -555,20 +625,9 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     channel.invokeMethod("pressed", arguments: nil)
   }
 
+  // Use shared utility functions
   private static func colorFromARGB(_ argb: Int) -> UIColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return UIColor(red: r, green: g, blue: b, alpha: a)
-  }
-
-  private static func loadFlutterAsset(_ assetPath: String) -> UIImage? {
-    let flutterKey = FlutterDartProject.lookupKey(forAsset: assetPath)
-    guard let path = Bundle.main.path(forResource: flutterKey, ofType: nil) else {
-      return nil
-    }
-    return UIImage(contentsOfFile: path)
+    return ImageUtils.colorFromARGB(argb)
   }
 
   private func applyButtonStyle(buttonStyle: String, round: Bool) {
@@ -691,19 +750,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   private static func createImageFromData(_ data: Data, format: String?, scale: CGFloat) -> UIImage? {
-    guard let format = format?.lowercased() else {
-      // Try to detect format from data or default to PNG
-      return UIImage(data: data, scale: scale)
-    }
-    
-    switch format {
-    case "png", "jpg", "jpeg":
-      return UIImage(data: data, scale: scale)
-    case "svg":
-      return SVGImageLoader.shared.loadSVG(from: data)
-    default:
-      // Try as generic image data
-      return UIImage(data: data, scale: scale)
-    }
+    return ImageUtils.createImageFromData(data, format: format, scale: scale)
   }
 }

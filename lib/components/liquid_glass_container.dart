@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import '../style/glass_effect.dart';
 import '../utils/version_detector.dart';
+import '../utils/theme_helper.dart';
 import '../channel/params.dart';
 
 /// A container that applies Liquid Glass effects to its child widget.
@@ -68,6 +69,7 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer> {
       if (widget.config.tint != null)
         'tint': resolveColorToArgb(widget.config.tint!, context),
       'interactive': widget.config.interactive,
+      'isDark': ThemeHelper.isDark(context),
     };
 
     final platformView = defaultTargetPlatform == TargetPlatform.iOS

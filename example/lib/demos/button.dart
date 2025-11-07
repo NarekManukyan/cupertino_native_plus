@@ -320,6 +320,398 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 48),
+            const Text('Icon buttons (PNG Assets)'),
+            const SizedBox(height: 12),
+            const Text(
+              'PNG icons with automatic format detection - no need to specify imageFormat!',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 18,
+                  ),
+                  onPressed: () => _set('PNG Plain'),
+                  config: const CNButtonConfig(style: CNButtonStyle.plain),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
+                  onPressed: () => _set('PNG Gray'),
+                  config: const CNButtonConfig(style: CNButtonStyle.gray),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/clock_filled.png',
+                    size: 18,
+                  ),
+                  onPressed: () => _set('PNG Tinted'),
+                  config: const CNButtonConfig(style: CNButtonStyle.tinted),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset('assets/icons/close.png', size: 18),
+                  onPressed: () => _set('PNG Bordered'),
+                  config: const CNButtonConfig(style: CNButtonStyle.bordered),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset('assets/icons/coins.png', size: 18),
+                  onPressed: () => _set('PNG Glass'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 18,
+                    color: CupertinoColors.systemGreen,
+                  ),
+                  onPressed: () => _set('PNG Colored'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton(
+                  label: 'PNG with Text',
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 16,
+                    color: CupertinoColors.activeGreen,
+                  ),
+                  tint: CupertinoColors.activeGreen,
+                  onPressed: () => _set('PNG with Text'),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    imagePlacement: CNImagePlacement.leading,
+                    imagePadding: 8.0,
+                    shrinkWrap: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+            const Text('Icon Buttons - Different Sizes'),
+            const SizedBox(height: 12),
+            const Text(
+              'Icon buttons with various sizes to demonstrate flexibility',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 12),
+                  onPressed: () => _set('12px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 16),
+                  onPressed: () => _set('16px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 20),
+                  onPressed: () => _set('20px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 24),
+                  onPressed: () => _set('24px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 28),
+                  onPressed: () => _set('28px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNSymbol('heart.fill', size: 32),
+                  onPressed: () => _set('32px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 12,
+                  ),
+                  onPressed: () => _set('PNG 12px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 16,
+                  ),
+                  onPressed: () => _set('PNG 16px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 20,
+                  ),
+                  onPressed: () => _set('PNG 20px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 24,
+                  ),
+                  onPressed: () => _set('PNG 24px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 28,
+                  ),
+                  onPressed: () => _set('PNG 28px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 32,
+                  ),
+                  onPressed: () => _set('PNG 32px'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+            const Text('Adaptive Appearance - Glass Buttons'),
+            const SizedBox(height: 12),
+            const Text(
+              'Same glass button adapts its appearance based on content behind it (like UITabBar)',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Light background
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Light Background',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CNButton(
+                    label: 'Adaptive Button',
+                    icon: const CNSymbol('star.fill', size: 18),
+                    onPressed: () => _set('Light BG'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      shrinkWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Dark background
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: CupertinoColors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Dark Background',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CNButton(
+                    label: 'Adaptive Button',
+                    icon: const CNSymbol('star.fill', size: 18),
+                    onPressed: () => _set('Dark BG'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      shrinkWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Colored backgrounds
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemBlue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Blue BG',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: CupertinoColors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        CNButton.icon(
+                          icon: const CNSymbol('heart.fill', size: 18),
+                          onPressed: () => _set('Blue BG'),
+                          config: const CNButtonConfig(
+                            style: CNButtonStyle.glass,
+                            shrinkWrap: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGreen,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Green BG',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: CupertinoColors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        CNButton.icon(
+                          icon: const CNSymbol('heart.fill', size: 18),
+                          onPressed: () => _set('Green BG'),
+                          config: const CNButtonConfig(
+                            style: CNButtonStyle.glass,
+                            shrinkWrap: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemRed,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Red BG',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: CupertinoColors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        CNButton.icon(
+                          icon: const CNSymbol('heart.fill', size: 18),
+                          onPressed: () => _set('Red BG'),
+                          config: const CNButtonConfig(
+                            style: CNButtonStyle.glass,
+                            shrinkWrap: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Gradient-like background
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    CupertinoColors.systemPurple,
+                    CupertinoColors.systemPink,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Gradient Background',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  CNButton(
+                    label: 'Adaptive Button',
+                    icon: const CNSymbol('sparkles', size: 18),
+                    onPressed: () => _set('Gradient BG'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      shrinkWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 48),
             const Text('Image Placement'),
             const SizedBox(height: 12),
             Wrap(
@@ -512,6 +904,66 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 24),
+            const Text('CNGlassButtonGroup - PNG Icons with Colors'),
+            const SizedBox(height: 12),
+            const Text(
+              'PNG icons with custom colors in grouped buttons',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNGlassButtonGroup(
+              axis: Axis.horizontal,
+              spacing: 8.0,
+              spacingForGlass: 40.0,
+              buttons: [
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 18,
+                    color: CupertinoColors.systemGreen,
+                  ),
+                  onPressed: () => _set('Check PNG'),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    glassEffectUnionId: 'png-group',
+                    glassEffectId: 'png-check',
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/clock.png',
+                    size: 18,
+                    color: CupertinoColors.systemBlue,
+                  ),
+                  onPressed: () => _set('Clock PNG'),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    glassEffectUnionId: 'png-group',
+                    glassEffectId: 'png-clock',
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton.icon(
+                  imageAsset: CNImageAsset(
+                    'assets/icons/coins.png',
+                    size: 18,
+                    color: CupertinoColors.systemYellow,
+                  ),
+                  onPressed: () => _set('Coins PNG'),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    glassEffectUnionId: 'png-group',
+                    glassEffectId: 'png-coins',
+                    shrinkWrap: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             // Glass Effect Container with column of buttons - Using CNGlassButtonGroup
             const Text('Glass Effect Container - Column of Buttons'),
             const SizedBox(height: 12),
@@ -582,7 +1034,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               buttons: [
                 CNButton(
                   label: 'Morph Button 1',
-                  customIcon: CupertinoIcons.heart_fill,
+                  imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
                   onPressed: () => _set('Morph Button 1'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,

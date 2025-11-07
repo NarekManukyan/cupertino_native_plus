@@ -283,6 +283,173 @@ class _PopupMenuButtonDemoPageState extends State<PopupMenuButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 24),
+            const Text(
+              'PNG Menu Items',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CNPopupMenuButton.icon(
+                  buttonIcon: const CNSymbol('ellipsis', size: 18),
+                  buttonImageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 18),
+                  size: 44,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'Check',
+                      imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 18),
+                    ),
+                    CNPopupMenuItem(
+                      label: 'Clock',
+                      imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
+                    ),
+                    const CNPopupMenuDivider(),
+                    CNPopupMenuItem(
+                      label: 'Close',
+                      imageAsset: CNImageAsset('assets/icons/close.png', size: 18),
+                    ),
+                    CNPopupMenuItem(
+                      label: 'Coins',
+                      imageAsset: CNImageAsset('assets/icons/coins.png', size: 18),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.glass,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'PNG Menu Items with Colors',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CNPopupMenuButton.icon(
+                  buttonIcon: const CNSymbol('ellipsis', size: 18),
+                  buttonImageAsset: CNImageAsset(
+                    'assets/icons/checkcircle.png',
+                    size: 18,
+                    color: CupertinoColors.systemBlue,
+                  ),
+                  size: 44,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'Check',
+                      imageAsset: CNImageAsset(
+                        'assets/icons/checkcircle.png',
+                        size: 18,
+                        color: CupertinoColors.systemGreen,
+                      ),
+                    ),
+                    CNPopupMenuItem(
+                      label: 'Clock',
+                      imageAsset: CNImageAsset(
+                        'assets/icons/clock.png',
+                        size: 18,
+                        color: CupertinoColors.systemOrange,
+                      ),
+                    ),
+                    const CNPopupMenuDivider(),
+                    CNPopupMenuItem(
+                      label: 'Close',
+                      imageAsset: CNImageAsset(
+                        'assets/icons/close.png',
+                        size: 18,
+                        color: CupertinoColors.systemRed,
+                      ),
+                    ),
+                    CNPopupMenuItem(
+                      label: 'Coins',
+                      imageAsset: CNImageAsset(
+                        'assets/icons/coins.png',
+                        size: 18,
+                        color: CupertinoColors.systemYellow,
+                      ),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.borderedProminent,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'PNG Button Icons - Different Sizes',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                CNPopupMenuButton.icon(
+                  buttonImageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 12),
+                  size: 32,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'Small',
+                      imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 12),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.glass,
+                ),
+                CNPopupMenuButton.icon(
+                  buttonImageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 16),
+                  size: 36,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'Medium',
+                      imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 16),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.glass,
+                ),
+                CNPopupMenuButton.icon(
+                  buttonImageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 20),
+                  size: 44,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'Large',
+                      imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 20),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.glass,
+                ),
+                CNPopupMenuButton.icon(
+                  buttonImageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 24),
+                  size: 48,
+                  items: [
+                    CNPopupMenuItem(
+                      label: 'XLarge',
+                      imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 24),
+                    ),
+                  ],
+                  onSelected: (index) {
+                    setState(() => _lastSelected = index);
+                  },
+                  buttonStyle: CNButtonStyle.glass,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             if (_lastSelected != null)
               Center(child: Text('Selected index: $_lastSelected')),
           ],

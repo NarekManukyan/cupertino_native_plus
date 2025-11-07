@@ -80,9 +80,9 @@ class CNPopupMenuButton extends StatefulWidget {
        round = false;
 
   /// Creates a round, icon-only popup menu button.
-  const CNPopupMenuButton.icon({
+  CNPopupMenuButton.icon({
     super.key,
-    required this.buttonIcon,
+    this.buttonIcon,
     this.buttonCustomIcon,
     this.buttonImageAsset,
     required this.items,
@@ -95,7 +95,10 @@ class CNPopupMenuButton extends StatefulWidget {
        width = size,
        height = size,
        shrinkWrap = false,
-       super();
+       super() {
+    assert(buttonIcon != null || buttonCustomIcon != null || buttonImageAsset != null, 
+           'At least one of buttonIcon, buttonCustomIcon, or buttonImageAsset must be provided');
+  }
 
   /// Text for the button (null when using [buttonIcon]).
   final String? buttonLabel; // null in icon mode
@@ -133,7 +136,7 @@ class CNPopupMenuButton extends StatefulWidget {
   final CNButtonStyle buttonStyle;
 
   /// Whether this instance is configured as an icon button variant.
-  bool get isIconButton => buttonIcon != null;
+  bool get isIconButton => buttonIcon != null || buttonCustomIcon != null || buttonImageAsset != null;
 
   @override
   State<CNPopupMenuButton> createState() => _CNPopupMenuButtonState();
@@ -202,12 +205,28 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
           if (!snapshot.hasData) {
             return SizedBox(height: widget.height, width: widget.width);
           }
-          return _buildNativePopupMenu(context, customIconData: snapshot.data);
+          return FutureBuilder<Widget>(
+            future: _buildNativePopupMenu(context, customIconData: snapshot.data),
+            builder: (context, widgetSnapshot) {
+              if (!widgetSnapshot.hasData) {
+                return SizedBox(height: widget.height, width: widget.width);
+              }
+              return widgetSnapshot.data!;
+            },
+          );
         },
       );
     }
     
-    return _buildNativePopupMenu(context, customIconData: null);
+    return FutureBuilder<Widget>(
+      future: _buildNativePopupMenu(context, customIconData: null),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return SizedBox(height: widget.height, width: widget.width);
+        }
+        return snapshot.data!;
+      },
+    );
   }
 
   Future<Map<String, dynamic>> _renderCustomIcons(BuildContext context) async {
@@ -251,8 +270,14 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
     };
   }
 
-  Widget _buildNativePopupMenu(BuildContext context, {Map<String, dynamic>? customIconData}) {
+  Future<Widget> _buildNativePopupMenu(BuildContext context, {Map<String, dynamic>? customIconData}) async {
     const viewType = 'CupertinoNativePopupMenuButton';
+
+    // Resolve button image asset path if present
+    String? resolvedButtonAssetPath;
+    if (widget.buttonImageAsset != null && widget.buttonImageAsset!.assetPath.isNotEmpty) {
+      resolvedButtonAssetPath = await resolveAssetPathForPixelRatio(widget.buttonImageAsset!.assetPath);
+    }
 
     final buttonIconBytes = customIconData?['buttonIconBytes'] as Uint8List?;
     final menuIconBytes = customIconData?['menuIconBytes'] as List<Uint8List?>? ?? [];
@@ -299,9 +324,13 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
         
         // Handle imageAsset for menu items
         if (e.imageAsset != null) {
-          imageAssetPaths.add(e.imageAsset!.assetPath);
+          // Resolve asset path based on device pixel ratio
+          final resolvedPath = await resolveAssetPathForPixelRatio(e.imageAsset!.assetPath);
+          imageAssetPaths.add(resolvedPath);
           imageAssetData.add(e.imageAsset!.imageData);
-          imageAssetFormats.add(e.imageAsset!.imageFormat ?? '');
+          // Auto-detect format if not provided (use resolved path)
+          imageAssetFormats.add(e.imageAsset!.imageFormat ?? 
+              detectImageFormat(resolvedPath, e.imageAsset!.imageData) ?? '');
         } else {
           imageAssetPaths.add('');
           imageAssetData.add(null);
@@ -328,9 +357,12 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       if (buttonIconBytes != null)
         'buttonCustomIconBytes': buttonIconBytes,
       if (widget.buttonImageAsset != null) ...{
-        if (widget.buttonImageAsset!.assetPath.isNotEmpty) 'buttonAssetPath': widget.buttonImageAsset!.assetPath,
+        // Use resolved asset path
+        if (resolvedButtonAssetPath != null) 'buttonAssetPath': resolvedButtonAssetPath,
         if (widget.buttonImageAsset!.imageData != null) 'buttonImageData': widget.buttonImageAsset!.imageData,
-        if (widget.buttonImageAsset!.imageFormat != null) 'buttonImageFormat': widget.buttonImageAsset!.imageFormat,
+        // Auto-detect format if not provided (use resolved path)
+        'buttonImageFormat': widget.buttonImageAsset!.imageFormat ?? 
+            detectImageFormat(resolvedButtonAssetPath ?? widget.buttonImageAsset!.assetPath, widget.buttonImageAsset!.imageData),
       },
       if (widget.buttonIcon != null) 'buttonIconName': widget.buttonIcon!.name,
       'buttonIconSize': widget.buttonImageAsset?.size ?? widget.buttonIcon?.size ?? 20.0,
@@ -519,7 +551,9 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
         if (e.imageAsset != null) {
           updImageAssetPaths.add(e.imageAsset!.assetPath);
           updImageAssetData.add(e.imageAsset!.imageData);
-          updImageAssetFormats.add(e.imageAsset!.imageFormat ?? '');
+          // Auto-detect format if not provided
+          updImageAssetFormats.add(e.imageAsset!.imageFormat ?? 
+              detectImageFormat(e.imageAsset!.assetPath, e.imageAsset!.imageData) ?? '');
         } else {
           updImageAssetPaths.add('');
           updImageAssetData.add(null);
@@ -556,9 +590,13 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       
       // Handle button imageAsset (takes precedence over SF Symbol)
       if (widget.buttonImageAsset != null) {
-        updates['buttonAssetPath'] = widget.buttonImageAsset!.assetPath;
+        // Resolve asset path based on device pixel ratio
+        final resolvedAssetPath = await resolveAssetPathForPixelRatio(widget.buttonImageAsset!.assetPath);
+        updates['buttonAssetPath'] = resolvedAssetPath;
         updates['buttonImageData'] = widget.buttonImageAsset!.imageData;
-        updates['buttonImageFormat'] = widget.buttonImageAsset!.imageFormat;
+        // Auto-detect format if not provided (use resolved path)
+        updates['buttonImageFormat'] = widget.buttonImageAsset!.imageFormat ?? 
+            detectImageFormat(resolvedAssetPath, widget.buttonImageAsset!.imageData);
         updates['buttonIconSize'] = widget.buttonImageAsset!.size;
         if (widget.buttonImageAsset!.color != null) {
           updates['buttonIconColor'] = resolveColorToArgb(widget.buttonImageAsset!.color, context);

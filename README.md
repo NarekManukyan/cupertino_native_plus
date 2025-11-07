@@ -47,7 +47,7 @@ This ensures proper version detection for conditional Liquid Glass feature avail
 This package ships a handful of native Liquid Glass widgets. Each widget exposes a simple, Flutter‑friendly API and falls back to a reasonable Flutter implementation on non‑Apple platforms.
 
 **Icon Support:** All components that display icons support three types with a unified priority system:
-- **SVG Assets** (highest priority) - Custom SVG icons from your app's assets
+- **Image Assets** (highest priority) - Custom SVG or PNG icons from your app's assets with automatic resolution selection
 - **Custom Icons** (medium priority) - Flutter `IconData` (CupertinoIcons, Material Icons, etc.)
 - **SF Symbols** (lowest priority) - Native Apple SF Symbols
 
@@ -458,13 +458,13 @@ void main() async {
 
 On unsupported platforms or versions, glass effects are automatically disabled and widgets render normally.
 
-## Custom Icons & SVG Support
+## Custom Icons & Image Asset Support
 
-This package supports three types of icons with a unified priority system: **SVG Assets** > **Custom Icons** > **SF Symbols**.
+This package supports three types of icons with a unified priority system: **Image Assets (SVG/PNG)** > **Custom Icons** > **SF Symbols**.
 
-### SVG Image Assets
+### Image Assets (SVG & PNG)
 
-Render custom SVG icons natively using SVGKit with full color and size customization:
+Render custom SVG or PNG icons natively with full color and size customization. The package automatically selects the appropriate resolution-specific asset based on device pixel ratio (e.g., `assets/icons/3.0x/checkcircle.png` for @3x devices), similar to Flutter's automatic asset selection:
 
 ```dart
 // SVG icon from assets
@@ -597,16 +597,47 @@ const CNIcon(
 
 All components follow the same priority order:
 
-1. **`imageAsset`** - SVG/PNG assets (highest priority)
+1. **`imageAsset`** - SVG/PNG assets with automatic resolution selection (highest priority)
 2. **`customIcon`** - Flutter IconData (medium priority)  
 3. **`symbol`** - SF Symbols (lowest priority)
 
+### Automatic Asset Resolution
+
+The package automatically resolves asset paths based on device pixel ratio, similar to Flutter's automatic asset selection. For example, if you provide `assets/icons/checkcircle.png`, the system will automatically look for:
+- `assets/icons/3.0x/checkcircle.png` (for @3x devices)
+- `assets/icons/2.0x/checkcircle.png` (for @2x devices)
+- `assets/icons/checkcircle.png` (fallback)
+
+If the exact resolution isn't found, it selects the closest bigger size. This ensures optimal image quality on all devices without manual asset management.
+
 ```dart
-// This will use the SVG, ignoring the customIcon and symbol
+// This will use the image asset (SVG or PNG), ignoring the customIcon and symbol
 const CNIcon(
   symbol: CNSymbol('house.fill'),
   customIcon: CupertinoIcons.home,
-  imageAsset: CNImageAsset('assets/icons/home.svg'),
+  imageAsset: CNImageAsset('assets/icons/home.svg'), // or .png
+)
+```
+
+### PNG Image Support
+
+PNG images are fully supported with automatic format detection, color tinting, and proper scaling:
+
+```dart
+// PNG icon with automatic resolution selection
+CNButton.icon(
+  imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 20),
+  onPressed: () {},
+)
+
+// PNG icon with custom color
+CNButton.icon(
+  imageAsset: CNImageAsset(
+    'assets/icons/checkcircle.png',
+    size: 20,
+    color: CupertinoColors.systemBlue,
+  ),
+  onPressed: () {},
 )
 ```
 

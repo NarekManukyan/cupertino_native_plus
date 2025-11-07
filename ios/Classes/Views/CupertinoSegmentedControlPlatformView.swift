@@ -131,12 +131,9 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
     channel.invokeMethod("valueChanged", arguments: ["index": sender.selectedSegmentIndex])
   }
 
+  // Use shared utility functions
   private static func colorFromARGB(_ argb: Int) -> UIColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return UIColor(red: r, green: g, blue: b, alpha: a)
+    return ImageUtils.colorFromARGB(argb)
   }
 
   private func rebuildSegments() {

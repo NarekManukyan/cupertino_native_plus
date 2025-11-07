@@ -208,32 +208,16 @@ class CupertinoIconPlatformView: NSObject, FlutterPlatformView {
     imageView.image = image
   }
 
+  // Use shared utility functions
   private static func colorFromARGB(_ argb: Int) -> UIColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return UIColor(red: r, green: g, blue: b, alpha: a)
+    return ImageUtils.colorFromARGB(argb)
   }
 
   private static func loadFlutterAsset(_ assetPath: String) -> UIImage? {
-    return SVGImageLoader.shared.loadSVG(from: assetPath)
+    return ImageUtils.loadFlutterAsset(assetPath)
   }
 
   private static func createImageFromData(_ data: Data, format: String?, scale: CGFloat) -> UIImage? {
-    guard let format = format?.lowercased() else {
-      // Try to detect format from data or default to PNG
-      return UIImage(data: data, scale: scale)
-    }
-
-    switch format {
-    case "png", "jpg", "jpeg":
-      return UIImage(data: data, scale: scale)
-    case "svg":
-      return SVGImageLoader.shared.loadSVG(from: data)
-    default:
-      // Try as generic image data
-      return UIImage(data: data, scale: scale)
-    }
+    return ImageUtils.createImageFromData(data, format: format, scale: scale)
   }
 }

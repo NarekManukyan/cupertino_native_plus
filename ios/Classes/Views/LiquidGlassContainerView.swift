@@ -19,6 +19,7 @@ class LiquidGlassContainerPlatformView: NSObject, FlutterPlatformView {
     var cornerRadius: CGFloat? = nil
     var tint: UIColor? = nil
     var interactive: Bool = false
+    var isDark: Bool = false
     
     if let dict = args as? [String: Any] {
       if let effectStr = dict["effect"] as? String {
@@ -41,6 +42,9 @@ class LiquidGlassContainerPlatformView: NSObject, FlutterPlatformView {
       if let interactiveBool = dict["interactive"] as? Bool {
         interactive = interactiveBool
       }
+      if let isDarkBool = dict["isDark"] as? Bool {
+        isDark = isDarkBool
+      }
     }
     
     // Create SwiftUI view
@@ -56,6 +60,11 @@ class LiquidGlassContainerPlatformView: NSObject, FlutterPlatformView {
     self.hostingController.view.backgroundColor = .clear
     
     super.init()
+    
+    // Sync Flutter's brightness mode with Swift at initialization
+    if #available(iOS 13.0, *) {
+      self.hostingController.overrideUserInterfaceStyle = isDark ? .dark : .light
+    }
     
     // Add hosting controller as child
     container.addSubview(hostingController.view)

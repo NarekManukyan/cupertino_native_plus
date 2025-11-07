@@ -108,9 +108,11 @@ class CNButton extends StatefulWidget {
   /// 
   /// When padding, width, and minHeight are not provided in [config],
   /// the button will be automatically sized to be circular based on the icon size.
+  /// 
+  /// At least one of [icon], [customIcon], or [imageAsset] must be provided.
   const CNButton.icon({
     super.key,
-    required this.icon,
+    this.icon,
     this.customIcon,
     this.imageAsset,
     this.onPressed,
@@ -120,6 +122,8 @@ class CNButton extends StatefulWidget {
       style: CNButtonStyle.glass,
     ),
   }) : label = null,
+       assert(icon != null || customIcon != null || imageAsset != null,
+           'At least one of icon, customIcon, or imageAsset must be provided'),
        super();
 
   /// Button text (null in icon-only mode).
@@ -147,7 +151,7 @@ class CNButton extends StatefulWidget {
   final CNButtonConfig config;
 
   /// Whether this instance is configured as the icon variant.
-  bool get isIcon => icon != null;
+  bool get isIcon => icon != null || customIcon != null || imageAsset != null;
   
   /// Whether the button is round (always true).
   bool get round => true;
@@ -219,7 +223,26 @@ class _CNButtonState extends State<CNButton> {
     
     // Handle image asset (highest priority)
     if (widget.imageAsset != null) {
-      return _buildNativeButton(context, imageAsset: widget.imageAsset);
+      return FutureBuilder<String>(
+        future: resolveAssetPathForPixelRatio(widget.imageAsset!.assetPath),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            final defaultHeight = widget.config.minHeight ?? 44.0;
+            return SizedBox(height: defaultHeight, width: widget.config.width ?? defaultHeight);
+          }
+          // Create a new CNImageAsset with resolved path
+          final resolvedImageAsset = CNImageAsset(
+            snapshot.data!,
+            size: widget.imageAsset!.size,
+            color: widget.imageAsset!.color,
+            imageFormat: widget.imageAsset!.imageFormat,
+            imageData: widget.imageAsset!.imageData,
+            mode: widget.imageAsset!.mode,
+            gradient: widget.imageAsset!.gradient,
+          );
+          return _buildNativeButton(context, imageAsset: resolvedImageAsset);
+        },
+      );
     }
     
     // Handle custom icon (medium priority)
@@ -261,9 +284,12 @@ class _CNButtonState extends State<CNButton> {
 
     if (imageAsset != null) {
       // Image asset takes precedence
+      // Asset path is already resolved by FutureBuilder
       assetPath = imageAsset.assetPath;
       imageData = imageAsset.imageData;
-      imageFormat = imageAsset.imageFormat;
+      // Auto-detect format if not provided
+      imageFormat = imageAsset.imageFormat ?? 
+          detectImageFormat(imageAsset.assetPath, imageAsset.imageData);
       iconSize = imageAsset.size;
       iconColor = imageAsset.color;
       iconMode = imageAsset.mode;
@@ -567,9 +593,13 @@ class _CNButtonState extends State<CNButton> {
       
       // Handle imageAsset (takes precedence over SF Symbol)
       if (widget.imageAsset != null) {
-        updates['buttonAssetPath'] = widget.imageAsset!.assetPath;
+        // Resolve asset path based on device pixel ratio
+        final resolvedAssetPath = await resolveAssetPathForPixelRatio(widget.imageAsset!.assetPath);
+        updates['buttonAssetPath'] = resolvedAssetPath;
         updates['buttonImageData'] = widget.imageAsset!.imageData;
-        updates['buttonImageFormat'] = widget.imageAsset!.imageFormat;
+        // Auto-detect format if not provided (use resolved path)
+        updates['buttonImageFormat'] = widget.imageAsset!.imageFormat ?? 
+            detectImageFormat(resolvedAssetPath, widget.imageAsset!.imageData);
         updates['buttonIconSize'] = widget.imageAsset!.size;
         if (widget.imageAsset!.color != null) {
           updates['buttonIconColor'] = resolveColorToArgb(widget.imageAsset!.color, context);
