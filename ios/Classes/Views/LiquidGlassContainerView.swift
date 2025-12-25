@@ -156,6 +156,11 @@ struct LiquidGlassContainerSwiftUI: View {
         .allowsHitTesting(false)  // Always false - let Flutter handle gestures
         .glassEffect(glassEffectForConfig(), in: shapeForConfig())
         .frame(width: geometry.size.width, height: geometry.size.height)
+        .animation(.easeInOut(duration: 0.25), value: effect)
+        .animation(.easeInOut(duration: 0.25), value: shape)
+        .animation(.easeInOut(duration: 0.25), value: cornerRadius)
+        .animation(.easeInOut(duration: 0.25), value: tint)
+        .animation(.easeInOut(duration: 0.25), value: interactive)
     }
   }
   

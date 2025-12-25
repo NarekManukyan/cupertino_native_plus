@@ -92,14 +92,12 @@ class _CNIconState extends State<CNIcon> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if we should use native platform view
-    final isIOSOrMacOS =
-        defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
-    final shouldUseNative =
-        isIOSOrMacOS && PlatformVersion.shouldUseNativeGlass;
+    // SF Symbols are available on iOS 13+ and macOS 11+
+    // Always use native rendering for icons on iOS/macOS
+    // (regardless of PlatformVersion initialization or iOS version)
+    final shouldUseNative = PlatformVersion.supportsSFSymbols;
 
-    // Fallback to Flutter widgets for non-iOS/macOS or iOS/macOS < 26
+    // Fallback to Flutter widgets for non-iOS/macOS only
     if (!shouldUseNative) {
       return _buildFlutterIcon(context);
     }
@@ -303,6 +301,8 @@ class _CNIconState extends State<CNIcon> {
       final resolvedAssetPath = await resolveAssetPathForPixelRatio(
         widget.imageAsset!.assetPath,
       );
+      if (!mounted) return;
+
       name = resolvedAssetPath;
       size = widget.size ?? widget.imageAsset!.size;
       color = resolveColorToArgb(

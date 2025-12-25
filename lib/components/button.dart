@@ -11,6 +11,7 @@ import '../style/sf_symbol.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
 import '../utils/version_detector.dart';
+import 'icon.dart';
 
 /// Configuration for CNButton with default values.
 class CNButtonConfig {
@@ -67,6 +68,13 @@ class CNButtonConfig {
   /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
   final bool glassEffectInteractive;
 
+  /// Maximum number of lines for button text.
+  ///
+  /// Defaults to 1 to prevent text wrapping. Set to null for unlimited lines.
+  /// When limited, text will be truncated with ellipsis if too long.
+  final int? maxLines;
+
+  /// Creates a configuration for [CNButton].
   const CNButtonConfig({
     this.padding,
     this.borderRadius,
@@ -79,6 +87,7 @@ class CNButtonConfig {
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
+    this.maxLines = 1,
   });
 }
 
@@ -567,10 +576,15 @@ class _CNButtonState extends State<CNButton> {
   Future<void> _syncPropsToNativeIfNeeded() async {
     final ch = _channel;
     if (ch == null) return;
+    // Capture all context-derived values before any async operations
     final tint = resolveColorToArgb(_effectiveTint, context);
     final preIconName = widget.icon?.name;
     final preIconSize = widget.icon?.size;
     final preIconColor = resolveColorToArgb(widget.icon?.color, context);
+    final preImageAssetColor = resolveColorToArgb(
+      widget.imageAsset?.color,
+      context,
+    );
 
     if (_lastTint != tint && tint != null) {
       await ch.invokeMethod('setStyle', {'tint': tint});
@@ -656,6 +670,8 @@ class _CNButtonState extends State<CNButton> {
           final resolvedAssetPath = await resolveAssetPathForPixelRatio(
             widget.imageAsset!.assetPath,
           );
+          if (!mounted) return;
+
           updates['buttonAssetPath'] = resolvedAssetPath;
           updates['buttonImageData'] = widget.imageAsset!.imageData;
           // Auto-detect format if not provided (use resolved path)
@@ -687,19 +703,13 @@ class _CNButtonState extends State<CNButton> {
         } else {
           // Even if path didn't change, check if other imageAsset properties changed
           final sizeChanged = _lastIconSize != widget.imageAsset!.size;
-          final colorChanged =
-              _lastIconColor !=
-              resolveColorToArgb(widget.imageAsset!.color, context);
+          final colorChanged = _lastIconColor != preImageAssetColor;
 
           if (sizeChanged || colorChanged) {
             updates['buttonIconSize'] = widget.imageAsset!.size;
-            if (widget.imageAsset!.color != null) {
-              if (mounted) {
-                updates['buttonIconColor'] = resolveColorToArgb(
-                  widget.imageAsset!.color,
-                  context,
-                );
-              }
+            if (widget.imageAsset!.color != null &&
+                preImageAssetColor != null) {
+              updates['buttonIconColor'] = preImageAssetColor;
             }
             if (widget.imageAsset!.mode != null) {
               updates['buttonIconRenderingMode'] =
@@ -713,6 +723,8 @@ class _CNButtonState extends State<CNButton> {
             final resolvedAssetPath = await resolveAssetPathForPixelRatio(
               widget.imageAsset!.assetPath,
             );
+            if (!mounted) return;
+
             updates['buttonAssetPath'] = resolvedAssetPath;
             updates['buttonImageData'] = widget.imageAsset!.imageData;
             updates['buttonImageFormat'] =
@@ -844,22 +856,27 @@ class _CNButtonState extends State<CNButton> {
     // For iOS/macOS < 26, use CupertinoButton with appropriate styling
     Widget? iconWidget;
     if (widget.imageAsset != null) {
-      // Handle image asset - would need to load it, but for now use placeholder
-      iconWidget = Icon(CupertinoIcons.ellipsis, size: widget.imageAsset!.size);
+      // Use CNIcon to properly render the image asset
+      iconWidget = CNIcon(
+        imageAsset: widget.imageAsset,
+        size: widget.imageAsset!.size,
+      );
     } else if (widget.customIcon != null) {
       iconWidget = Icon(widget.customIcon, size: widget.icon?.size ?? 20.0);
     } else if (widget.icon != null) {
-      iconWidget = Icon(
-        CupertinoIcons.ellipsis,
-        size: widget.icon?.size ?? 20.0,
+      // Use CNIcon to properly render SF Symbols (instead of placeholder)
+      iconWidget = CNIcon(
+        symbol: widget.icon,
+        size: widget.icon!.size,
+        color: widget.icon!.color,
       );
     }
 
     Widget child;
-    if (widget.isIcon) {
-      child =
-          iconWidget ??
-          Icon(CupertinoIcons.ellipsis, size: widget.icon?.size ?? 20.0);
+    // Check for icon-only button (has icon but no label)
+    final isIconOnlyButton = widget.isIcon && widget.label == null;
+    if (isIconOnlyButton) {
+      child = iconWidget ?? const SizedBox.shrink();
     } else {
       if (iconWidget != null && widget.label != null) {
         // Handle image placement
@@ -871,7 +888,13 @@ class _CNButtonState extends State<CNButton> {
                 iconWidget,
                 if (widget.config.imagePadding != null)
                   SizedBox(width: widget.config.imagePadding!),
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
               ],
             );
             break;
@@ -879,7 +902,13 @@ class _CNButtonState extends State<CNButton> {
             child = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
                 if (widget.config.imagePadding != null)
                   SizedBox(width: widget.config.imagePadding!),
                 iconWidget,
@@ -893,7 +922,13 @@ class _CNButtonState extends State<CNButton> {
                 iconWidget,
                 if (widget.config.imagePadding != null)
                   SizedBox(height: widget.config.imagePadding!),
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
               ],
             );
             break;
@@ -901,7 +936,13 @@ class _CNButtonState extends State<CNButton> {
             child = Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
                 if (widget.config.imagePadding != null)
                   SizedBox(height: widget.config.imagePadding!),
                 iconWidget,
@@ -910,7 +951,13 @@ class _CNButtonState extends State<CNButton> {
             break;
         }
       } else {
-        child = Text(widget.label ?? '');
+        child = Text(
+          widget.label ?? '',
+          maxLines: widget.config.maxLines,
+          overflow: widget.config.maxLines != null
+              ? TextOverflow.ellipsis
+              : null,
+        );
       }
     }
 
@@ -946,16 +993,25 @@ class _CNButtonState extends State<CNButton> {
     }
 
     final defaultHeight = widget.config.minHeight ?? calculatedSize ?? 44.0;
+    final buttonWidth = widget.isIcon
+        ? (widget.config.width ?? calculatedSize ?? defaultHeight)
+        : null;
+    final buttonPadding = widget.isIcon
+        ? (effectivePadding ?? const EdgeInsets.all(8))
+        : (widget.config.padding ??
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8));
+    final borderRadius = widget.config.borderRadius ?? defaultHeight / 2;
+
     return SizedBox(
       height: defaultHeight,
-      width: widget.isIcon
-          ? (widget.config.width ?? calculatedSize ?? defaultHeight)
-          : null,
+      width: buttonWidth,
       child: CupertinoButton(
-        padding: widget.isIcon
-            ? (effectivePadding ?? const EdgeInsets.all(4))
-            : (widget.config.padding ??
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
+        // ignore: deprecated_member_use
+        minSize:
+            0, // Disable built-in minimum size to prevent conflicts with SizedBox
+        padding: buttonPadding,
+        borderRadius: BorderRadius.circular(borderRadius),
+        pressedOpacity: 0.4, // Explicit press feedback
         color: _getCupertinoButtonColor(context),
         onPressed: (widget.enabled && widget.onPressed != null)
             ? widget.onPressed
@@ -969,18 +1025,27 @@ class _CNButtonState extends State<CNButton> {
     // For non-iOS/macOS, use Material design buttons
     Widget? iconWidget;
     if (widget.imageAsset != null) {
-      // For image assets, we'd need to load them - use placeholder for now
-      iconWidget = Icon(Icons.circle, size: widget.imageAsset!.size);
+      // Use CNIcon for proper rendering
+      iconWidget = CNIcon(
+        imageAsset: widget.imageAsset,
+        size: widget.imageAsset!.size,
+      );
     } else if (widget.customIcon != null) {
       iconWidget = Icon(widget.customIcon, size: widget.icon?.size ?? 20.0);
     } else if (widget.icon != null) {
-      // Use a generic Material icon as placeholder
-      iconWidget = Icon(Icons.circle, size: widget.icon?.size ?? 20.0);
+      // Use CNIcon for SF Symbols
+      iconWidget = CNIcon(
+        symbol: widget.icon,
+        size: widget.icon!.size,
+        color: widget.icon!.color,
+      );
     }
 
     Widget child;
-    if (widget.isIcon) {
-      child = iconWidget ?? Icon(Icons.circle, size: widget.icon?.size ?? 20.0);
+    // Check for icon-only button (has icon but no label)
+    final isIconOnlyButton = widget.isIcon && widget.label == null;
+    if (isIconOnlyButton) {
+      child = iconWidget ?? const SizedBox.shrink();
     } else {
       if (iconWidget != null && widget.label != null) {
         switch (widget.config.imagePlacement) {
@@ -991,7 +1056,13 @@ class _CNButtonState extends State<CNButton> {
                 iconWidget,
                 if (widget.config.imagePadding != null)
                   SizedBox(width: widget.config.imagePadding!),
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
               ],
             );
             break;
@@ -999,7 +1070,13 @@ class _CNButtonState extends State<CNButton> {
             child = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
                 if (widget.config.imagePadding != null)
                   SizedBox(width: widget.config.imagePadding!),
                 iconWidget,
@@ -1013,7 +1090,13 @@ class _CNButtonState extends State<CNButton> {
                 iconWidget,
                 if (widget.config.imagePadding != null)
                   SizedBox(height: widget.config.imagePadding!),
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
               ],
             );
             break;
@@ -1021,7 +1104,13 @@ class _CNButtonState extends State<CNButton> {
             child = Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label ?? ''),
+                Text(
+                  widget.label ?? '',
+                  maxLines: widget.config.maxLines,
+                  overflow: widget.config.maxLines != null
+                      ? TextOverflow.ellipsis
+                      : null,
+                ),
                 if (widget.config.imagePadding != null)
                   SizedBox(height: widget.config.imagePadding!),
                 iconWidget,
@@ -1030,7 +1119,13 @@ class _CNButtonState extends State<CNButton> {
             break;
         }
       } else {
-        child = Text(widget.label ?? '');
+        child = Text(
+          widget.label ?? '',
+          maxLines: widget.config.maxLines,
+          overflow: widget.config.maxLines != null
+              ? TextOverflow.ellipsis
+              : null,
+        );
       }
     }
 

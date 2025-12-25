@@ -104,10 +104,19 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     super.init()
 
     container.backgroundColor = .clear
+    container.clipsToBounds = true // Prevent shadow leakage
+    container.layer.shadowOpacity = 0 // Explicitly disable layer shadow
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
 
     let appearance: UITabBarAppearance? = {
-    if #available(iOS 13.0, *) { let ap = UITabBarAppearance(); ap.configureWithDefaultBackground(); return ap }
+    if #available(iOS 13.0, *) {
+      let ap = UITabBarAppearance()
+      ap.configureWithTransparentBackground()
+      // Remove shadow to prevent shadow appearing over modals/bottom sheets
+      ap.shadowColor = .clear
+      ap.shadowImage = UIImage()
+      return ap
+    }
     return nil
   }()
     func buildItems(_ range: Range<Int>) -> [UITabBarItem] {
@@ -158,10 +167,12 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       tabBarLeft = left; tabBarRight = right
       left.translatesAutoresizingMaskIntoConstraints = false
       right.translatesAutoresizingMaskIntoConstraints = false
+      left.clipsToBounds = true; right.clipsToBounds = true // Prevent shadow leakage
+      left.layer.shadowOpacity = 0; right.layer.shadowOpacity = 0
       left.delegate = self; right.delegate = self
       if let bg = bg { left.barTintColor = bg; right.barTintColor = bg }
       if #available(iOS 10.0, *), let tint = tint { left.tintColor = tint; right.tintColor = tint }
-      if let ap = appearance { if #available(iOS 13.0, *) { left.standardAppearance = ap; right.standardAppearance = ap } }
+      if let ap = appearance { if #available(iOS 13.0, *) { left.standardAppearance = ap; right.standardAppearance = ap; if #available(iOS 15.0, *) { left.scrollEdgeAppearance = ap; right.scrollEdgeAppearance = ap } } }
       
       left.items = buildItems(0..<leftEnd)
       right.items = buildItems(leftEnd..<count)
@@ -218,6 +229,9 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       }
       // Force layout update for background and text rendering on iOS < 16
       // Re-assign items after layout to ensure labels render properly
+      // Capture selectedIndex for restoration after item re-assignment
+      let capturedSelectedIndex = selectedIndex
+      let capturedLeftEnd = leftEnd
       DispatchQueue.main.async { [weak self, weak left, weak right] in
         guard let self = self, let left = left, let right = right else { return }
         self.container.setNeedsLayout()
@@ -231,6 +245,17 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
         let rightItems = right.items
         left.items = leftItems
         right.items = rightItems
+        // Restore selection after re-assigning items (re-assignment can reset selection)
+        if capturedSelectedIndex < capturedLeftEnd, let items = left.items, capturedSelectedIndex < items.count {
+          left.selectedItem = items[capturedSelectedIndex]
+          right.selectedItem = nil
+        } else if let items = right.items {
+          let idx = capturedSelectedIndex - capturedLeftEnd
+          if idx >= 0 && idx < items.count {
+            right.selectedItem = items[idx]
+            left.selectedItem = nil
+          }
+        }
         // Force another update cycle for text rendering
         DispatchQueue.main.async { [weak left, weak right] in
           guard let left = left, let right = right else { return }
@@ -247,6 +272,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       tabBar = bar
       bar.delegate = self
       bar.translatesAutoresizingMaskIntoConstraints = false
+      bar.clipsToBounds = true // Prevent shadow leakage from tab bar itself
+      bar.layer.shadowOpacity = 0
       if let bg = bg { bar.barTintColor = bg }
       if #available(iOS 10.0, *), let tint = tint { bar.tintColor = tint }
       if let ap = appearance { if #available(iOS 13.0, *) { bar.standardAppearance = ap; if #available(iOS 15.0, *) { bar.scrollEdgeAppearance = ap } } }
@@ -438,7 +465,13 @@ channel.setMethodCallHandler { [weak self] call, result in
           let imageAssetFormats = self.currentImageAssetFormats
           let activeImageAssetFormats = self.currentActiveImageAssetFormats
           let appearance: UITabBarAppearance? = {
-            if #available(iOS 13.0, *) { let ap = UITabBarAppearance(); ap.configureWithDefaultBackground(); return ap }
+            if #available(iOS 13.0, *) {
+              let ap = UITabBarAppearance()
+              ap.configureWithTransparentBackground()
+              ap.shadowColor = .clear
+              ap.shadowImage = UIImage()
+              return ap
+            }
             return nil
           }()
           func buildItems(_ range: Range<Int>) -> [UITabBarItem] {
@@ -489,8 +522,10 @@ channel.setMethodCallHandler { [weak self] call, result in
             self.tabBarLeft = left; self.tabBarRight = right
             left.translatesAutoresizingMaskIntoConstraints = false
             right.translatesAutoresizingMaskIntoConstraints = false
+            left.clipsToBounds = true; right.clipsToBounds = true
+            left.layer.shadowOpacity = 0; right.layer.shadowOpacity = 0
             left.delegate = self; right.delegate = self
-            if let ap = appearance { if #available(iOS 13.0, *) { left.standardAppearance = ap; right.standardAppearance = ap } }
+            if let ap = appearance { if #available(iOS 13.0, *) { left.standardAppearance = ap; right.standardAppearance = ap; if #available(iOS 15.0, *) { left.scrollEdgeAppearance = ap; right.scrollEdgeAppearance = ap } } }
             left.items = buildItems(0..<leftEnd)
             right.items = buildItems(leftEnd..<count)
             if selectedIndex < leftEnd, let items = left.items { left.selectedItem = items[selectedIndex]; right.selectedItem = nil }
@@ -534,6 +569,9 @@ channel.setMethodCallHandler { [weak self] call, result in
             }
             // Force layout update for background and text rendering on iOS < 16
             // Re-assign items after layout to ensure labels render properly
+            // Capture selectedIndex for restoration after item re-assignment
+            let capturedSelectedIndex = selectedIndex
+            let capturedLeftEnd = leftEnd
             DispatchQueue.main.async { [weak self, weak left, weak right] in
               guard let self = self, let left = left, let right = right else { return }
               self.container.setNeedsLayout()
@@ -547,6 +585,17 @@ channel.setMethodCallHandler { [weak self] call, result in
               let rightItems = right.items
               left.items = leftItems
               right.items = rightItems
+              // Restore selection after re-assigning items (re-assignment can reset selection)
+              if capturedSelectedIndex < capturedLeftEnd, let items = left.items, capturedSelectedIndex < items.count {
+                left.selectedItem = items[capturedSelectedIndex]
+                right.selectedItem = nil
+              } else if let items = right.items {
+                let idx = capturedSelectedIndex - capturedLeftEnd
+                if idx >= 0 && idx < items.count {
+                  right.selectedItem = items[idx]
+                  left.selectedItem = nil
+                }
+              }
               // Force another update cycle for text rendering
               DispatchQueue.main.async { [weak left, weak right] in
                 guard let left = left, let right = right else { return }
@@ -563,6 +612,8 @@ channel.setMethodCallHandler { [weak self] call, result in
             self.tabBar = bar
             bar.delegate = self
             bar.translatesAutoresizingMaskIntoConstraints = false
+            bar.clipsToBounds = true
+            bar.layer.shadowOpacity = 0
             if let ap = appearance { if #available(iOS 13.0, *) { bar.standardAppearance = ap; if #available(iOS 15.0, *) { bar.scrollEdgeAppearance = ap } } }
             bar.items = buildItems(0..<count)
             if let items = bar.items, selectedIndex >= 0, selectedIndex < items.count { bar.selectedItem = items[selectedIndex] }
@@ -645,6 +696,42 @@ channel.setMethodCallHandler { [weak self] call, result in
           if #available(iOS 13.0, *) { self.container.overrideUserInterfaceStyle = isDark ? .dark : .light }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setBadges":
+        // Lightweight badge-only update without rebuilding items
+        if let args = call.arguments as? [String: Any], let badges = args["badges"] as? [String] {
+          self.currentBadges = badges
+          // Update single bar
+          if let bar = self.tabBar, let items = bar.items {
+            for (i, item) in items.enumerated() {
+              if i < badges.count && !badges[i].isEmpty {
+                item.badgeValue = badges[i]
+              } else {
+                item.badgeValue = nil
+              }
+            }
+          }
+          // Update split bars
+          if let left = self.tabBarLeft, let leftItems = left.items,
+             let right = self.tabBarRight, let rightItems = right.items {
+            let leftEnd = leftItems.count
+            for (i, item) in leftItems.enumerated() {
+              if i < badges.count && !badges[i].isEmpty {
+                item.badgeValue = badges[i]
+              } else {
+                item.badgeValue = nil
+              }
+            }
+            for (i, item) in rightItems.enumerated() {
+              let badgeIndex = leftEnd + i
+              if badgeIndex < badges.count && !badges[badgeIndex].isEmpty {
+                item.badgeValue = badges[badgeIndex]
+              } else {
+                item.badgeValue = nil
+              }
+            }
+          }
+          result(nil)
+        } else { result(FlutterError(code: "bad_args", message: "Missing badges", details: nil)) }
       case "refresh":
         // Force refresh for label rendering on iOS < 16
         // UITabBar only fully layouts labels when items are selected
@@ -703,15 +790,11 @@ channel.setMethodCallHandler { [weak self] call, result in
                   selectNextLeft()
                 }
               } else {
-                // Restore original or first item
-                if let original = leftOriginal {
-                  left.selectedItem = original
-                } else {
-                  left.selectedItem = leftItems.first
-                }
+                // Restore original selection (nil means no selection on this bar)
+                left.selectedItem = leftOriginal
                 left.setNeedsLayout()
                 left.layoutIfNeeded()
-                
+
                 // Process right items
                 var rightIndex = 0
                 func selectNextRight() {
@@ -724,12 +807,8 @@ channel.setMethodCallHandler { [weak self] call, result in
                       selectNextRight()
                     }
                   } else {
-                    // Restore original or first item
-                    if let original = rightOriginal {
-                      right.selectedItem = original
-                    } else {
-                      right.selectedItem = rightItems.first
-                    }
+                    // Restore original selection (nil means no selection on this bar)
+                    right.selectedItem = rightOriginal
                     right.setNeedsLayout()
                     right.layoutIfNeeded()
                     // Restore delegates

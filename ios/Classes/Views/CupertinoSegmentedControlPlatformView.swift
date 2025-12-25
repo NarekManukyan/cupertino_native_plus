@@ -94,18 +94,25 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         result(["width": Double(size.width), "height": Double(size.height)])
       case "setSelectedIndex":
         if let args = call.arguments as? [String: Any], let idx = (args["index"] as? NSNumber)?.intValue {
-          self.control.selectedSegmentIndex = idx
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            self.control.selectedSegmentIndex = idx
+          }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing index", details: nil)) }
       case "setEnabled":
         if let args = call.arguments as? [String: Any], let e = (args["enabled"] as? NSNumber)?.boolValue {
-          self.control.isEnabled = e
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            self.control.isEnabled = e
+            self.control.alpha = e ? 1.0 : 0.5
+          }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing enabled", details: nil)) }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
-          if #available(iOS 13.0, *), let n = args["tint"] as? NSNumber {
-            self.control.selectedSegmentTintColor = Self.colorFromARGB(n.intValue)
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            if #available(iOS 13.0, *), let n = args["tint"] as? NSNumber {
+              self.control.selectedSegmentTintColor = Self.colorFromARGB(n.intValue)
+            }
           }
           if let n = args["iconColor"] as? NSNumber { self.defaultIconColor = Self.colorFromARGB(n.intValue) }
           if let s = args["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }

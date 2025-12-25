@@ -7,6 +7,9 @@ public class CupertinoNativePlugin: NSObject, FlutterPlugin {
     let instance = CupertinoNativePlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
 
+    // Setup native tab bar manager (runtime check inside)
+    CNNativeTabBarManager.shared.setup(messenger: registrar.messenger())
+
     // Register platform view factories
     let sliderFactory = CupertinoSliderViewFactory(messenger: registrar.messenger())
     registrar.register(sliderFactory, withId: "CupertinoNativeSlider")
@@ -35,6 +38,19 @@ public class CupertinoNativePlugin: NSObject, FlutterPlugin {
     
     let liquidGlassContainerFactory = LiquidGlassContainerFactory(messenger: registrar.messenger())
     registrar.register(liquidGlassContainerFactory, withId: "CupertinoNativeLiquidGlassContainer")
+
+    // Search bar
+    let searchBarFactory = CupertinoSearchBarFactory(messenger: registrar.messenger())
+    registrar.register(searchBarFactory, withId: "CNSearchBar")
+
+    // Floating island (Dynamic Island style)
+    let floatingIslandFactory = FloatingIslandFactory(messenger: registrar.messenger())
+    registrar.register(floatingIslandFactory, withId: "CNFloatingIsland")
+
+    // Search scaffold (UITabBarController with UISearchController for iOS 26+ liquid glass)
+    // Factory is available on all iOS, runtime check happens inside
+    let searchScaffoldFactory = CNSearchScaffoldViewFactory(messenger: registrar.messenger())
+    registrar.register(searchScaffoldFactory, withId: "CNSearchScaffold")
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

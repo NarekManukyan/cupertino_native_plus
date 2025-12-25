@@ -40,6 +40,7 @@ class LiquidGlassConfig {
   /// Whether the glass effect should be interactive (responds to touch/pointer).
   final bool interactive;
 
+  /// Creates a configuration for Liquid Glass effects.
   const LiquidGlassConfig({
     this.effect = CNGlassEffect.regular,
     this.shape = CNGlassEffectShape.capsule,

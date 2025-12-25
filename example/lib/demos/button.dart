@@ -1,4 +1,4 @@
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 import 'package:flutter/cupertino.dart';
 
 class ButtonDemoPage extends StatefulWidget {
@@ -865,40 +865,37 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Home',
                   imageAsset: CNImageAsset('assets/icons/home.svg', size: 16),
                   onPressed: () => _set('Home'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-home',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Search',
                   imageAsset: CNImageAsset('assets/icons/search.svg', size: 16),
                   onPressed: () => _set('Search'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-search',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Profile',
                   imageAsset: CNImageAsset(
                     'assets/icons/profile.svg',
                     size: 16,
                   ),
                   onPressed: () => _set('Profile'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-profile',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -919,46 +916,43 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton.icon(
+                CNButtonData.icon(
                   imageAsset: CNImageAsset(
                     'assets/icons/checkcircle.png',
                     size: 18,
                     color: CupertinoColors.systemGreen,
                   ),
                   onPressed: () => _set('Check PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-check',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton.icon(
+                CNButtonData.icon(
                   imageAsset: CNImageAsset(
                     'assets/icons/clock.png',
                     size: 18,
                     color: CupertinoColors.systemBlue,
                   ),
                   onPressed: () => _set('Clock PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-clock',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton.icon(
+                CNButtonData.icon(
                   imageAsset: CNImageAsset(
                     'assets/icons/coins.png',
                     size: 18,
                     color: CupertinoColors.systemYellow,
                   ),
                   onPressed: () => _set('Coins PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-coins',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -980,36 +974,33 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 12.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Option 1',
                   onPressed: () => _set('Option 1'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-1',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Option 2',
                   onPressed: () => _set('Option 2'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-2',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Option 3',
                   onPressed: () => _set('Option 3'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-3',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
@@ -1032,34 +1023,31 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 24.0,
               spacingForGlass: 24.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 1',
                   imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
                   onPressed: () => _set('Morph Button 1'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 2',
                   customIcon: CupertinoIcons.star_fill,
                   onPressed: () => _set('Morph Button 2'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 3',
                   customIcon: CupertinoIcons.bookmark_fill,
                   onPressed: () => _set('Morph Button 3'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -1125,30 +1113,30 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton.icon(
+                CNButtonData.icon(
                   icon: const CNSymbol('play.fill', size: 18),
                   onPressed: () => _set('Play'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'play-button',
                     glassEffectInteractive: true,
                   ),
                 ),
-                CNButton.icon(
+                CNButtonData.icon(
                   icon: const CNSymbol('pause.fill', size: 18),
                   onPressed: () => _set('Pause'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'pause-button',
                     glassEffectInteractive: true,
                   ),
                 ),
-                CNButton.icon(
+                CNButtonData.icon(
                   icon: const CNSymbol('stop.fill', size: 18),
                   onPressed: () => _set('Stop'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'stop-button',
@@ -1606,7 +1594,7 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
   @override
   Widget build(BuildContext context) {
     final currentSet = _buttonSets[_currentButtonSet];
-    final buttons = <CNButton>[];
+    final buttons = <CNButtonData>[];
 
     for (int i = 0; i < currentSet.length; i++) {
       final buttonData = currentSet[i];
@@ -1620,7 +1608,7 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
       if (buttonData.containsKey('path')) {
         // Image asset button
         buttons.add(
-          CNButton(
+          CNButtonData(
             label: buttonData['label'] as String,
             imageAsset: CNImageAsset(
               buttonData['path'] as String,
@@ -1628,18 +1616,17 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
               color: isFavorited ? CupertinoColors.systemRed : null,
             ),
             onPressed: onPressed,
-            config: CNButtonConfig(
+            config: CNButtonDataConfig(
               style: CNButtonStyle.glass,
               glassEffectUnionId: 'test-group',
               glassEffectId: 'test-button-$i',
-              shrinkWrap: true,
             ),
           ),
         );
       } else if (buttonData.containsKey('symbol')) {
         // SF Symbol button
         buttons.add(
-          CNButton(
+          CNButtonData(
             label: buttonData['label'] as String,
             icon: CNSymbol(
               buttonData['symbol'] as String,
@@ -1647,11 +1634,10 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
               color: isFavorited ? CupertinoColors.systemRed : null,
             ),
             onPressed: onPressed,
-            config: CNButtonConfig(
+            config: CNButtonDataConfig(
               style: CNButtonStyle.glass,
               glassEffectUnionId: 'test-group',
               glassEffectId: 'test-button-$i',
-              shrinkWrap: true,
             ),
           ),
         );

@@ -1,0 +1,5 @@
+${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh
+${BUILT_PRODUCTS_DIR}/CocoaLumberjack/CocoaLumberjack.framework
+${BUILT_PRODUCTS_DIR}/SVGKit/SVGKit.framework
+${BUILT_PRODUCTS_DIR}/cupertino_native_better/cupertino_native_better.framework
+${BUILT_PRODUCTS_DIR}/integration_test/integration_test.framework

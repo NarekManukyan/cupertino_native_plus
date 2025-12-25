@@ -141,7 +141,7 @@ class _CNSwitchState extends State<CNSwitch> {
         child: CupertinoSwitch(
           value: widget.value,
           onChanged: widget.enabled ? widget.onChanged : null,
-          activeColor: _effectiveColor,
+          activeTrackColor: _effectiveColor,
         ),
       );
     }

@@ -6,6 +6,8 @@ import '../utils/version_detector.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
 import '../channel/params.dart';
+import '../style/button_data.dart';
+import '../style/image_placement.dart';
 import 'button.dart';
 
 /// A group of buttons that can be rendered together for proper Liquid Glass blending effects.
@@ -15,10 +17,37 @@ import 'button.dart';
 ///
 /// On iOS 26+ and macOS 26+, this uses native SwiftUI rendering for proper
 /// Liquid Glass effects. For older versions, it falls back to Flutter widgets.
+///
+/// **Breaking Change in v1.1.0**: This widget now accepts [CNButtonData] models
+/// instead of [CNButton] widgets. Use the [CNGlassButtonGroup.fromWidgets]
+/// constructor for backward compatibility.
+///
+/// Example:
+/// ```dart
+/// CNGlassButtonGroup(
+///   buttons: [
+///     CNButtonData.icon(
+///       icon: CNSFSymbol.house,
+///       onPressed: () => print('Home'),
+///     ),
+///     CNButtonData.icon(
+///       icon: CNSFSymbol.gear,
+///       onPressed: () => print('Settings'),
+///     ),
+///     CNButtonData(
+///       label: 'More',
+///       icon: CNSFSymbol.ellipsis,
+///       onPressed: () => print('More'),
+///     ),
+///   ],
+///   axis: Axis.horizontal,
+///   spacing: 8.0,
+/// )
+/// ```
 class CNGlassButtonGroup extends StatefulWidget {
-  /// Creates a group of glass buttons.
+  /// Creates a group of glass buttons using data models.
   ///
-  /// The [buttons] list contains the button widgets.
+  /// The [buttons] list contains button data models.
   /// The [axis] determines whether buttons are laid out horizontally (Axis.horizontal)
   /// or vertically (Axis.vertical).
   /// The [spacing] controls the spacing between buttons in the layout (HStack/VStack).
@@ -31,10 +60,28 @@ class CNGlassButtonGroup extends StatefulWidget {
     this.axis = Axis.horizontal,
     this.spacing = 8.0,
     this.spacingForGlass = 40.0,
-  });
+  }) : _buttonWidgets = null;
 
-  /// List of buttons.
-  final List<CNButton> buttons;
+  /// Creates a group from existing CNButton widgets.
+  ///
+  /// This constructor provides backward compatibility with the pre-1.1.0 API.
+  /// Prefer using the default constructor with [CNButtonData] for new code.
+  ///
+  /// @Deprecated('Use the default constructor with CNButtonData instead')
+  const CNGlassButtonGroup.fromWidgets({
+    super.key,
+    required List<CNButton> buttonWidgets,
+    this.axis = Axis.horizontal,
+    this.spacing = 8.0,
+    this.spacingForGlass = 40.0,
+  }) : buttons = const [],
+       _buttonWidgets = buttonWidgets;
+
+  /// List of button data models.
+  final List<CNButtonData> buttons;
+
+  /// Internal: List of button widgets (for backward compatibility).
+  final List<CNButton>? _buttonWidgets;
 
   /// Layout axis for buttons.
   final Axis axis;
@@ -44,6 +91,10 @@ class CNGlassButtonGroup extends StatefulWidget {
 
   /// Spacing value for Liquid Glass blending (affects how glass effects merge).
   final double spacingForGlass;
+
+  /// Returns the effective button count (from data or widgets).
+  int get _effectiveButtonCount =>
+      _buttonWidgets != null ? _buttonWidgets.length : buttons.length;
 
   @override
   State<CNGlassButtonGroup> createState() => _CNGlassButtonGroupState();
@@ -55,6 +106,9 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   Axis? _lastAxis;
   double? _lastSpacing;
   double? _lastSpacingForGlass;
+
+  /// Whether we're using widget mode (backward compatibility).
+  bool get _usingWidgets => widget._buttonWidgets != null;
 
   @override
   void didUpdateWidget(covariant CNGlassButtonGroup oldWidget) {
@@ -71,22 +125,27 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         isIOSOrMacOS && PlatformVersion.shouldUseNativeGlass;
 
     if (!shouldUseNative) {
-      // Fallback to Flutter widgets
       return _buildFlutterFallback(context);
     }
 
-    // For iOS 26+ and macOS 26+, use native GlassButtonGroup
     return _buildNativeGroup(context);
   }
 
   Widget _buildNativeGroup(BuildContext context) {
     const viewType = 'CupertinoNativeGlassButtonGroup';
 
-    // Convert buttons to maps asynchronously if needed
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: Future.wait(
-        widget.buttons.map((button) => _buttonToMapAsync(button, context)),
-      ),
+      future: _usingWidgets
+          ? Future.wait(
+              widget._buttonWidgets!.map(
+                (button) => _buttonWidgetToMapAsync(button, context),
+              ),
+            )
+          : Future.wait(
+              widget.buttons.map(
+                (button) => _buttonDataToMapAsync(button, context),
+              ),
+            ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox.shrink();
@@ -114,16 +173,10 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
                 onPlatformViewCreated: _onCreated,
               );
 
-        // For horizontal layout, use fixed height
         if (widget.axis == Axis.horizontal) {
-          // Use config minHeight if available, otherwise default to 44.0
-          final buttonHeight = widget.buttons.isNotEmpty
-              ? (widget.buttons.first.config.minHeight ?? 44.0)
-              : 44.0;
+          final buttonHeight = _getEffectiveMinHeight();
           return LayoutBuilder(
             builder: (context, constraints) {
-              // If width is unbounded (e.g., in a Row), don't constrain width
-              // Otherwise, use full width
               if (constraints.hasBoundedWidth) {
                 return ClipRect(
                   child: SizedBox(
@@ -133,11 +186,9 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
                   ),
                 );
               } else {
-                // Unbounded width - let platform view size itself
-                // Estimate width based on button count and sizes
                 final estimatedWidth =
-                    widget.buttons.length * 44.0 +
-                    ((widget.buttons.length - 1) * widget.spacing);
+                    widget._effectiveButtonCount * 44.0 +
+                    ((widget._effectiveButtonCount - 1) * widget.spacing);
                 return ClipRect(
                   child: SizedBox(
                     width: estimatedWidth,
@@ -149,15 +200,10 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
             },
           );
         } else {
-          // For vertical layout, calculate approximate height based on button count
-          // Each button is ~44px + spacing
-          // Use config minHeight if available, otherwise default to 44.0
-          final buttonHeight = widget.buttons.isNotEmpty
-              ? (widget.buttons.first.config.minHeight ?? 44.0)
-              : 44.0;
+          final buttonHeight = _getEffectiveMinHeight();
           final estimatedHeight =
-              (widget.buttons.length * buttonHeight) +
-              ((widget.buttons.length - 1) * widget.spacing);
+              (widget._effectiveButtonCount * buttonHeight) +
+              ((widget._effectiveButtonCount - 1) * widget.spacing);
           return ClipRect(
             child: LimitedBox(
               maxHeight: estimatedHeight.clamp(44.0, 400.0),
@@ -169,23 +215,36 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     );
   }
 
+  double _getEffectiveMinHeight() {
+    if (_usingWidgets && widget._buttonWidgets!.isNotEmpty) {
+      return widget._buttonWidgets!.first.config.minHeight ?? 44.0;
+    } else if (widget.buttons.isNotEmpty) {
+      return widget.buttons.first.config.minHeight ?? 44.0;
+    }
+    return 44.0;
+  }
+
   void _onCreated(int id) {
-    // Set up method channel to receive button press events and send updates
     final channel = MethodChannel('CupertinoNativeGlassButtonGroup_$id');
     _channel = channel;
     channel.setMethodCallHandler((call) async {
       if (call.method == 'buttonPressed') {
         final index = call.arguments['index'] as int?;
-        if (index != null && index >= 0 && index < widget.buttons.length) {
-          final button = widget.buttons[index];
-          button.onPressed?.call();
+        if (index != null && index >= 0) {
+          if (_usingWidgets && index < widget._buttonWidgets!.length) {
+            widget._buttonWidgets![index].onPressed?.call();
+          } else if (!_usingWidgets && index < widget.buttons.length) {
+            widget.buttons[index].onPressed?.call();
+          }
         }
       }
     });
-    // Cache initial state
-    _lastButtonSnapshots = widget.buttons
-        .map((b) => _ButtonSnapshot.fromButton(b))
-        .toList();
+
+    _lastButtonSnapshots = _usingWidgets
+        ? widget._buttonWidgets!
+              .map((b) => _ButtonSnapshot.fromButtonWidget(b))
+              .toList()
+        : widget.buttons.map((b) => _ButtonSnapshot.fromButtonData(b)).toList();
     _lastAxis = widget.axis;
     _lastSpacing = widget.spacing;
     _lastSpacingForGlass = widget.spacingForGlass;
@@ -195,44 +254,61 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     final ch = _channel;
     if (ch == null) return;
 
-    // Create snapshots of current buttons
-    final currentSnapshots = widget.buttons
-        .map((b) => _ButtonSnapshot.fromButton(b))
-        .toList();
+    // Capture context before any async operations
+    final capturedContext = context;
 
-    // Check if buttons changed
+    final currentSnapshots = _usingWidgets
+        ? widget._buttonWidgets!
+              .map((b) => _ButtonSnapshot.fromButtonWidget(b))
+              .toList()
+        : widget.buttons.map((b) => _ButtonSnapshot.fromButtonData(b)).toList();
+
     final buttonsChanged =
         _lastButtonSnapshots == null ||
         _lastButtonSnapshots!.length != currentSnapshots.length ||
         !_snapshotsEqual(_lastButtonSnapshots!, currentSnapshots);
 
-    // Check if layout parameters changed
     final axisChanged = _lastAxis != widget.axis;
     final spacingChanged = _lastSpacing != widget.spacing;
     final spacingForGlassChanged =
         _lastSpacingForGlass != widget.spacingForGlass;
 
-    // If buttons changed, update all buttons
     if (buttonsChanged) {
-      // Check if it's a full replacement or individual changes
       if (_lastButtonSnapshots == null ||
           _lastButtonSnapshots!.length != currentSnapshots.length) {
-        // Full replacement - update all buttons
-        final buttonsData = await Future.wait(
-          widget.buttons.map((button) => _buttonToMapAsync(button, context)),
-        );
+        final buttonsData = _usingWidgets
+            ? await Future.wait(
+                widget._buttonWidgets!.map(
+                  (button) => _buttonWidgetToMapAsync(button, capturedContext),
+                ),
+              )
+            : await Future.wait(
+                widget.buttons.map(
+                  (button) => _buttonDataToMapAsync(button, capturedContext),
+                ),
+              );
 
         await ch.invokeMethod('updateButtons', {'buttons': buttonsData});
       } else {
-        // Individual button changes - update only changed buttons
         for (int i = 0; i < currentSnapshots.length; i++) {
           if (i >= _lastButtonSnapshots!.length ||
               !_lastButtonSnapshots![i].equals(currentSnapshots[i])) {
-            // This button changed, update it
-            final buttonData = await _buttonToMapAsync(
-              widget.buttons[i],
-              context,
-            );
+            if (!mounted) return;
+            // ignore: use_build_context_synchronously
+            final buttonData = _usingWidgets
+                // ignore: use_build_context_synchronously
+                ? await _buttonWidgetToMapAsync(
+                    widget._buttonWidgets![i],
+                    // ignore: use_build_context_synchronously
+                    capturedContext,
+                  )
+                // ignore: use_build_context_synchronously
+                : await _buttonDataToMapAsync(
+                    widget.buttons[i],
+                    // ignore: use_build_context_synchronously
+                    capturedContext,
+                  );
+            if (!mounted) return;
             await ch.invokeMethod('updateButton', {
               'index': i,
               'button': buttonData,
@@ -243,9 +319,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       _lastButtonSnapshots = currentSnapshots;
     }
 
-    // Update layout parameters if changed (these would require full rebuild, but for now just track)
     if (axisChanged || spacingChanged || spacingForGlassChanged) {
-      // For layout changes, we'd need to rebuild, but let's just track for now
       _lastAxis = widget.axis;
       _lastSpacing = widget.spacing;
       _lastSpacingForGlass = widget.spacingForGlass;
@@ -261,9 +335,33 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   }
 
   Widget _buildFlutterFallback(BuildContext context) {
-    // Just return the buttons directly - they're already CNButton widgets
-    final children = widget.buttons.map((button) {
-      // Create a new button with shrinkWrap enabled for proper layout in group
+    final children = _usingWidgets
+        ? _buildWidgetChildren()
+        : _buildDataChildren();
+
+    if (widget.axis == Axis.horizontal) {
+      return Wrap(
+        spacing: widget.spacing,
+        runSpacing: widget.spacing,
+        children: children,
+      );
+    } else {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: children
+            .map(
+              (child) => Padding(
+                padding: EdgeInsets.only(bottom: widget.spacing),
+                child: child,
+              ),
+            )
+            .toList(),
+      );
+    }
+  }
+
+  List<Widget> _buildWidgetChildren() {
+    return widget._buttonWidgets!.map((button) {
       if (button.isIcon) {
         return CNButton.icon(
           icon: button.icon,
@@ -310,34 +408,65 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         );
       }
     }).toList();
-
-    if (widget.axis == Axis.horizontal) {
-      return Wrap(
-        spacing: widget.spacing,
-        runSpacing: widget.spacing,
-        children: children,
-      );
-    } else {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: children
-            .map(
-              (child) => Padding(
-                padding: EdgeInsets.only(bottom: widget.spacing),
-                child: child,
-              ),
-            )
-            .toList(),
-      );
-    }
   }
 
-  Future<Map<String, dynamic>> _buttonToMapAsync(
-    CNButton button,
+  List<Widget> _buildDataChildren() {
+    return widget.buttons.map((data) {
+      if (data.isIcon) {
+        return CNButton.icon(
+          icon: data.icon,
+          customIcon: data.customIcon,
+          imageAsset: data.imageAsset,
+          onPressed: data.onPressed,
+          enabled: data.enabled,
+          tint: data.tint,
+          config: CNButtonConfig(
+            width: data.config.width,
+            style: data.config.style,
+            shrinkWrap: true,
+            padding: data.config.padding,
+            borderRadius: data.config.borderRadius,
+            minHeight: data.config.minHeight,
+            imagePadding: data.config.imagePadding,
+            imagePlacement:
+                data.config.imagePlacement ?? CNImagePlacement.leading,
+            glassEffectUnionId: data.config.glassEffectUnionId,
+            glassEffectId: data.config.glassEffectId,
+            glassEffectInteractive: data.config.glassEffectInteractive,
+          ),
+        );
+      } else {
+        return CNButton(
+          label: data.label!,
+          icon: data.icon,
+          customIcon: data.customIcon,
+          imageAsset: data.imageAsset,
+          onPressed: data.onPressed,
+          enabled: data.enabled,
+          tint: data.tint,
+          config: CNButtonConfig(
+            width: data.config.width,
+            style: data.config.style,
+            shrinkWrap: true,
+            padding: data.config.padding,
+            borderRadius: data.config.borderRadius,
+            minHeight: data.config.minHeight,
+            imagePadding: data.config.imagePadding,
+            imagePlacement:
+                data.config.imagePlacement ?? CNImagePlacement.leading,
+            glassEffectUnionId: data.config.glassEffectUnionId,
+            glassEffectId: data.config.glassEffectId,
+            glassEffectInteractive: data.config.glassEffectInteractive,
+          ),
+        );
+      }
+    }).toList();
+  }
+
+  Future<Map<String, dynamic>> _buttonDataToMapAsync(
+    CNButtonData button,
     BuildContext context,
   ) async {
-    // Capture context-dependent values before async operations
-    // Priority: imageAsset.color > icon.color (for customIcon, icon.color is used)
     final iconColorArgb = button.imageAsset?.color != null
         ? resolveColorToArgb(button.imageAsset!.color, context)
         : (button.icon?.color != null
@@ -347,10 +476,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         ? resolveColorToArgb(button.tint, context)
         : null;
 
-    // Helper to convert button to map
     Uint8List? iconBytes;
-
-    // Convert custom icon to bytes if provided
     if (button.customIcon != null) {
       iconBytes = await iconDataToImageBytes(
         button.customIcon!,
@@ -358,30 +484,25 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       );
     }
 
-    // Convert image asset to bytes if provided
     Uint8List? imageBytes;
     String? imageFormat;
     String? resolvedAssetPath;
     if (button.imageAsset != null) {
-      // Resolve asset path based on device pixel ratio
       resolvedAssetPath = await resolveAssetPathForPixelRatio(
         button.imageAsset!.assetPath,
       );
       imageBytes = button.imageAsset!.imageData;
-      // Auto-detect format if not provided (use resolved path)
       imageFormat =
           button.imageAsset!.imageFormat ??
           detectImageFormat(resolvedAssetPath, button.imageAsset!.imageData);
     }
 
-    // Determine icon size - priority: imageAsset > icon > default
     final iconSize = button.imageAsset?.size ?? button.icon?.size ?? 20.0;
 
     return {
       if (button.label != null) 'label': button.label,
       if (button.icon != null) 'iconName': button.icon!.name,
       if (button.icon != null) 'iconSize': button.icon!.size,
-      // Use iconSize from imageAsset if available, otherwise from icon
       if (button.imageAsset != null) 'iconSize': iconSize,
       if (iconColorArgb != null) 'iconColor': iconColorArgb,
       if (iconBytes != null) 'iconBytes': iconBytes,
@@ -409,7 +530,86 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
           'paddingLeft': button.config.padding!.left,
         if (button.config.padding!.right != 0.0)
           'paddingRight': button.config.padding!.right,
-        // Support horizontal/vertical as convenience
+        if (button.config.padding!.left == button.config.padding!.right &&
+            button.config.padding!.left != 0.0)
+          'paddingHorizontal': button.config.padding!.left,
+        if (button.config.padding!.top == button.config.padding!.bottom &&
+            button.config.padding!.top != 0.0)
+          'paddingVertical': button.config.padding!.top,
+      },
+      if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
+      if (button.config.imagePadding != null)
+        'imagePadding': button.config.imagePadding,
+    };
+  }
+
+  Future<Map<String, dynamic>> _buttonWidgetToMapAsync(
+    CNButton button,
+    BuildContext context,
+  ) async {
+    final iconColorArgb = button.imageAsset?.color != null
+        ? resolveColorToArgb(button.imageAsset!.color, context)
+        : (button.icon?.color != null
+              ? resolveColorToArgb(button.icon!.color, context)
+              : null);
+    final tintArgb = button.tint != null
+        ? resolveColorToArgb(button.tint, context)
+        : null;
+
+    Uint8List? iconBytes;
+    if (button.customIcon != null) {
+      iconBytes = await iconDataToImageBytes(
+        button.customIcon!,
+        size: button.icon?.size ?? 20.0,
+      );
+    }
+
+    Uint8List? imageBytes;
+    String? imageFormat;
+    String? resolvedAssetPath;
+    if (button.imageAsset != null) {
+      resolvedAssetPath = await resolveAssetPathForPixelRatio(
+        button.imageAsset!.assetPath,
+      );
+      imageBytes = button.imageAsset!.imageData;
+      imageFormat =
+          button.imageAsset!.imageFormat ??
+          detectImageFormat(resolvedAssetPath, button.imageAsset!.imageData);
+    }
+
+    final iconSize = button.imageAsset?.size ?? button.icon?.size ?? 20.0;
+
+    return {
+      if (button.label != null) 'label': button.label,
+      if (button.icon != null) 'iconName': button.icon!.name,
+      if (button.icon != null) 'iconSize': button.icon!.size,
+      if (button.imageAsset != null) 'iconSize': iconSize,
+      if (iconColorArgb != null) 'iconColor': iconColorArgb,
+      if (iconBytes != null) 'iconBytes': iconBytes,
+      if (imageBytes != null) 'imageBytes': imageBytes,
+      if (imageFormat != null) 'imageFormat': imageFormat,
+      if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
+        'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
+      'enabled': button.enabled,
+      if (tintArgb != null) 'tint': tintArgb,
+      'minHeight': button.config.minHeight ?? 44.0,
+      'style': button.config.style.name,
+      if (button.config.glassEffectUnionId != null)
+        'glassEffectUnionId': button.config.glassEffectUnionId,
+      if (button.config.glassEffectId != null)
+        'glassEffectId': button.config.glassEffectId,
+      'glassEffectInteractive': button.config.glassEffectInteractive,
+      if (button.config.borderRadius != null)
+        'borderRadius': button.config.borderRadius,
+      if (button.config.padding != null) ...{
+        if (button.config.padding!.top != 0.0)
+          'paddingTop': button.config.padding!.top,
+        if (button.config.padding!.bottom != 0.0)
+          'paddingBottom': button.config.padding!.bottom,
+        if (button.config.padding!.left != 0.0)
+          'paddingLeft': button.config.padding!.left,
+        if (button.config.padding!.right != 0.0)
+          'paddingRight': button.config.padding!.right,
         if (button.config.padding!.left == button.config.padding!.right &&
             button.config.padding!.left != 0.0)
           'paddingHorizontal': button.config.padding!.left,
@@ -454,20 +654,37 @@ class _ButtonSnapshot {
     this.tint,
   });
 
-  factory _ButtonSnapshot.fromButton(CNButton button) {
+  factory _ButtonSnapshot.fromButtonWidget(CNButton button) {
     return _ButtonSnapshot(
       label: button.label,
       iconName: button.icon?.name,
       iconSize: button.icon?.size,
-      iconColor: button.icon?.color?.value,
+      iconColor: button.icon?.color?.toARGB32(),
       imageAssetPath: button.imageAsset?.assetPath,
       imageAssetDataLength: button.imageAsset?.imageData?.length,
       imageAssetSize: button.imageAsset?.size,
-      imageAssetColor: button.imageAsset?.color?.value,
+      imageAssetColor: button.imageAsset?.color?.toARGB32(),
       customIconHash: button.customIcon?.hashCode,
       style: button.config.style.name,
       enabled: button.enabled,
-      tint: button.tint?.value,
+      tint: button.tint?.toARGB32(),
+    );
+  }
+
+  factory _ButtonSnapshot.fromButtonData(CNButtonData button) {
+    return _ButtonSnapshot(
+      label: button.label,
+      iconName: button.icon?.name,
+      iconSize: button.icon?.size,
+      iconColor: button.icon?.color?.toARGB32(),
+      imageAssetPath: button.imageAsset?.assetPath,
+      imageAssetDataLength: button.imageAsset?.imageData?.length,
+      imageAssetSize: button.imageAsset?.size,
+      imageAssetColor: button.imageAsset?.color?.toARGB32(),
+      customIconHash: button.customIcon?.hashCode,
+      style: button.config.style.name,
+      enabled: button.enabled,
+      tint: button.tint?.toARGB32(),
     );
   }
 
