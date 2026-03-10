@@ -305,48 +305,41 @@ class _CNTabBarState extends State<CNTabBar> {
     )
         .toList();
 
-    // Extract imageAsset data and resolve asset paths based on device pixel ratio
-    final imageAssetPaths = await Future.wait(
-      widget.items.map(
-            (e) async => e.imageAsset != null
-            ? await resolveAssetPathForPixelRatio(e.imageAsset!.assetPath)
-            : '',
-      ),
-    );
-    final activeImageAssetPaths = await Future.wait(
-      widget.items.map(
-            (e) async => e.activeImageAsset != null
-            ? await resolveAssetPathForPixelRatio(e.activeImageAsset!.assetPath)
-            : '',
-      ),
-    );
+    // Use raw asset paths (no pixel-ratio resolution) so iOS loads them with
+    // the correct iconScale and scales to the target size. Resolving to @3x
+    // paths causes UIImage(contentsOfFile:) to load at scale 1.0, making
+    // icons appear 3× too large on high-density displays.
+    final imageAssetPaths = widget.items
+        .map((e) => e.imageAsset?.assetPath ?? '')
+        .toList();
+    final activeImageAssetPaths = widget.items
+        .map((e) => e.activeImageAsset?.assetPath ?? '')
+        .toList();
     final imageAssetData = widget.items
         .map((e) => e.imageAsset?.imageData)
         .toList();
     final activeImageAssetData = widget.items
         .map((e) => e.activeImageAsset?.imageData)
         .toList();
-    // Auto-detect format if not provided (use resolved paths)
-    final imageAssetFormats = await Future.wait(
-      widget.items.asMap().entries.map((entry) async {
-        final e = entry.value;
-        if (e.imageAsset == null) return '';
-        final resolvedPath = imageAssetPaths[entry.key];
-        return e.imageAsset!.imageFormat ??
-            detectImageFormat(resolvedPath, e.imageAsset!.imageData) ??
-            '';
-      }),
-    );
-    final activeImageAssetFormats = await Future.wait(
-      widget.items.asMap().entries.map((entry) async {
-        final e = entry.value;
-        if (e.activeImageAsset == null) return '';
-        final resolvedPath = activeImageAssetPaths[entry.key];
-        return e.activeImageAsset!.imageFormat ??
-            detectImageFormat(resolvedPath, e.activeImageAsset!.imageData) ??
-            '';
-      }),
-    );
+    final imageAssetFormats = widget.items
+        .map(
+          (e) =>
+          e.imageAsset?.imageFormat ??
+              detectImageFormat(e.imageAsset?.assetPath, e.imageAsset?.imageData) ??
+              '',
+    )
+        .toList();
+    final activeImageAssetFormats = widget.items
+        .map(
+          (e) =>
+          e.activeImageAsset?.imageFormat ??
+              detectImageFormat(
+                e.activeImageAsset?.assetPath,
+                e.activeImageAsset?.imageData,
+              ) ??
+              '',
+    )
+        .toList();
 
     final creationParams = <String, dynamic>{
       'labels': labels,
