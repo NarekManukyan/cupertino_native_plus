@@ -534,6 +534,9 @@ class _CNTabBarState extends State<CNTabBar> {
             '',
       )
           .toList();
+      final sizes = widget.items
+          .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
+          .toList();
 
       await ch.invokeMethod('setItems', {
         'labels': labels,
@@ -550,6 +553,7 @@ class _CNTabBarState extends State<CNTabBar> {
         'activeImageAssetData': activeImageAssetData,
         'imageAssetFormats': imageAssetFormats,
         'activeImageAssetFormats': activeImageAssetFormats,
+        'sfSymbolSizes': sizes,
         'iconScale': iconScale,
         'selectedIndex': widget.currentIndex,
       });
