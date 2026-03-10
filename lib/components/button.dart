@@ -1104,7 +1104,7 @@ class _CNButtonState extends State<CNButton> {
         return _effectiveTint;
       case CNButtonStyle.glass:
         // For iOS < 26, approximate glass with tinted appearance
-        return _effectiveTint?.withValues(alpha: 0.1);
+        return _effectiveTint?.withOpacity(0.1);
       default:
         return null;
     }
@@ -1117,7 +1117,7 @@ class _CNButtonState extends State<CNButton> {
       case CNButtonStyle.prominentGlass:
         return _effectiveTint ?? Theme.of(context).primaryColor;
       case CNButtonStyle.glass:
-        return Theme.of(context).primaryColor.withValues(alpha: 0.1);
+        return Theme.of(context).primaryColor.withOpacity(0.1);
       default:
         return Colors.transparent;
     }

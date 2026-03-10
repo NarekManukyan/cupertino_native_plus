@@ -828,8 +828,7 @@ channel.setMethodCallHandler { [weak self] call, result in
       badgeView.isUserInteractionEnabled = false
       badgeView.layer.zPosition = 999
       let rawColor = (globalIndex < currentBadgeColors.count ? currentBadgeColors[globalIndex] : nil)
-      let color = (rawColor ?? UIColor.systemRed).withAlphaComponent(1.0)
-      badgeView.backgroundColor = color
+      badgeView.backgroundColor = rawColor ?? UIColor.systemRed
       badgeView.layer.masksToBounds = true
       badgeView.layer.borderWidth = 0
       bar.clipsToBounds = false

@@ -153,7 +153,7 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: CupertinoColors.systemBlue.withValues(alpha: 0.8),
+                  color: CupertinoColors.systemBlue.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Icon(
@@ -188,7 +188,7 @@ class _ImageTabPage extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: CupertinoColors.black.withValues(alpha: 0.2),
+              color: CupertinoColors.black..withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             margin: const EdgeInsets.only(top: 12),
