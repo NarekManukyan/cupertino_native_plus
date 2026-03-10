@@ -16,6 +16,9 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var currentSymbols: [String] = []
   private var currentActiveSymbols: [String] = []
   private var currentBadges: [String] = []
+  private var currentHasBadgeFlags: [Bool] = []
+  private var currentBadgeColors: [UIColor?] = []
+  private static let badgeViewTagBase = 0xC0FFEE
   private var currentCustomIconBytes: [Data?] = []
   private var currentActiveCustomIconBytes: [Data?] = []
   private var currentImageAssetPaths: [String] = []
@@ -37,6 +40,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     var symbols: [String] = []
     var activeSymbols: [String] = []
     var badges: [String] = []
+    var hasBadgeFlags: [Bool] = []
+    var badgeColors: [UIColor?] = []
     var customIconBytes: [Data?] = []
     var activeCustomIconBytes: [Data?] = []
     var imageAssetPaths: [String] = []
@@ -62,6 +67,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       symbols = (dict["sfSymbols"] as? [String]) ?? []
       activeSymbols = (dict["activeSfSymbols"] as? [String]) ?? []
       badges = (dict["badges"] as? [String]) ?? []
+      hasBadgeFlags = (dict["hasBadgeFlags"] as? [Bool]) ?? []
+      badgeColors = Self.parseUIColorArray(dict["badgeColors"])
       if let bytesArray = dict["customIconBytes"] as? [FlutterStandardTypedData?] {
         customIconBytes = bytesArray.map { $0?.data }
       }
@@ -143,9 +150,6 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
         
         let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
         let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-        if i < badges.count && !badges[i].isEmpty {
-          item.badgeValue = badges[i]
-        }
         items.append(item)
       }
       return items
@@ -286,6 +290,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     self.currentSymbols = symbols
     self.currentActiveSymbols = activeSymbols
     self.currentBadges = badges
+    self.currentHasBadgeFlags = hasBadgeFlags
+    self.currentBadgeColors = badgeColors
     self.currentCustomIconBytes = customIconBytes
     self.currentActiveCustomIconBytes = activeCustomIconBytes
     self.currentImageAssetPaths = imageAssetPaths
@@ -313,6 +319,8 @@ channel.setMethodCallHandler { [weak self] call, result in
           let symbols = (args["sfSymbols"] as? [String]) ?? []
           let activeSymbols = (args["activeSfSymbols"] as? [String]) ?? []
           let badges = (args["badges"] as? [String]) ?? []
+          let hasBadgeFlags = (args["hasBadgeFlags"] as? [Bool]) ?? []
+          let badgeColors = Self.parseUIColorArray(args["badgeColors"])
           var customIconBytes: [Data?] = []
           var activeCustomIconBytes: [Data?] = []
           var imageAssetPaths: [String] = []
@@ -345,6 +353,8 @@ channel.setMethodCallHandler { [weak self] call, result in
           self.currentSymbols = symbols
           self.currentActiveSymbols = activeSymbols
           self.currentBadges = badges
+          self.currentHasBadgeFlags = hasBadgeFlags
+          self.currentBadgeColors = badgeColors
           self.currentCustomIconBytes = customIconBytes
           self.currentActiveCustomIconBytes = activeCustomIconBytes
           self.currentImageAssetPaths = imageAssetPaths
@@ -386,9 +396,6 @@ channel.setMethodCallHandler { [weak self] call, result in
               
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
-              }
               items.append(item)
             }
             return items
@@ -403,10 +410,12 @@ channel.setMethodCallHandler { [weak self] call, result in
               let idx = selectedIndex - leftEnd
               if idx >= 0 && idx < items.count { right.selectedItem = items[idx]; left.selectedItem = nil }
             }
+            self.scheduleBadgeLayout()
             result(nil)
           } else if let bar = self.tabBar {
             bar.items = buildItems(0..<count)
             if let items = bar.items, selectedIndex >= 0, selectedIndex < items.count { bar.selectedItem = items[selectedIndex] }
+            self.scheduleBadgeLayout()
             result(nil)
           } else {
             result(FlutterError(code: "state_error", message: "Tab bars not initialized", details: nil))
@@ -474,9 +483,6 @@ channel.setMethodCallHandler { [weak self] call, result in
               
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
-              }
               items.append(item)
             }
             return items
@@ -594,6 +600,7 @@ channel.setMethodCallHandler { [weak self] call, result in
             }
           }
           self.isSplit = split; self.rightCountVal = rightCount; self.leftInsetVal = leftInset; self.rightInsetVal = rightInset
+          self.scheduleBadgeLayout()
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing layout", details: nil)) }
       case "setSelectedIndex":
@@ -748,6 +755,128 @@ channel.setMethodCallHandler { [weak self] call, result in
         result(FlutterMethodNotImplemented)
       }
     }
+    scheduleBadgeLayout()
+  }
+
+  // MARK: - Badge Helpers
+
+  private static func parseUIColorArray(_ raw: Any?) -> [UIColor?] {
+    if raw == nil { return [] }
+    if let arr = raw as? [Any?] {
+      return arr.map { v in
+        if v == nil || v is NSNull { return nil }
+        if let n = v as? NSNumber { return Self.colorFromARGB(n.intValue) }
+        return nil
+      }
+    }
+    if let arr = raw as? [Any] {
+      return arr.map { v in
+        if v is NSNull { return nil }
+        if let n = v as? NSNumber { return Self.colorFromARGB(n.intValue) }
+        return nil
+      }
+    }
+    return []
+  }
+
+  private func isBlankBadgeText(_ text: String) -> Bool {
+    return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  /// Returns the best-guess icon frame for a given slot index.
+  private func iconAnchor(forSlot slot: Int, in bar: UITabBar, count: Int) -> CGRect {
+    guard count > 0 else { return bar.bounds }
+    let barWidth = bar.bounds.width
+    let slotWidth = barWidth / CGFloat(count)
+    let slotX = slotWidth * CGFloat(slot)
+    let slotRect = CGRect(x: slotX, y: 0, width: slotWidth, height: bar.bounds.height)
+    func findImageView(_ view: UIView) -> UIImageView? {
+      for sub in view.subviews {
+        let frame = sub.convert(sub.bounds, to: bar)
+        if frame.intersects(slotRect) {
+          if let iv = sub as? UIImageView, iv.bounds.width > 5 { return iv }
+          if let iv = findImageView(sub) { return iv }
+        }
+      }
+      return nil
+    }
+    if let iv = findImageView(bar) { return iv.convert(iv.bounds, to: bar) }
+    let topY = bar.bounds.height * 0.12
+    let iconH = bar.bounds.height * 0.4
+    return CGRect(x: slotX, y: topY, width: slotWidth, height: iconH)
+  }
+
+  private func applyBadges(to bar: UITabBar, itemOffset: Int) {
+    let count = bar.items?.count ?? 0
+    guard count > 0 else { return }
+    for localIndex in 0..<count {
+      let globalIndex = itemOffset + localIndex
+      let tag = Self.badgeViewTagBase + globalIndex
+      let existing = bar.viewWithTag(tag)
+      let shouldShow = globalIndex < currentHasBadgeFlags.count && currentHasBadgeFlags[globalIndex]
+      let badgeText = (globalIndex < currentBadges.count) ? currentBadges[globalIndex] : ""
+      let hasText = shouldShow && !isBlankBadgeText(badgeText)
+      let wantsDotOnly = shouldShow && !hasText
+
+      if !shouldShow {
+        existing?.removeFromSuperview()
+        continue
+      }
+
+      let badgeView = existing ?? UIView(frame: .zero)
+      badgeView.tag = tag
+      badgeView.isUserInteractionEnabled = false
+      badgeView.layer.zPosition = 999
+      let rawColor = (globalIndex < currentBadgeColors.count ? currentBadgeColors[globalIndex] : nil)
+      let color = (rawColor ?? UIColor.systemRed).withAlphaComponent(1.0)
+      badgeView.backgroundColor = color
+      badgeView.layer.masksToBounds = true
+      badgeView.layer.borderWidth = 0
+      bar.clipsToBounds = false
+      let anchor = iconAnchor(forSlot: localIndex, in: bar, count: count)
+
+      if wantsDotOnly {
+        let size: CGFloat = 10.0
+        badgeView.layer.cornerRadius = size / 2
+        badgeView.subviews.forEach { $0.removeFromSuperview() }
+        if badgeView.superview == nil { bar.addSubview(badgeView) }
+        bar.bringSubviewToFront(badgeView)
+        badgeView.frame = CGRect(x: anchor.maxX - size / 2, y: anchor.minY - size / 2 + 4, width: size, height: size)
+      } else if hasText {
+        let label: UILabel = (badgeView.subviews.compactMap { $0 as? UILabel }.first) ?? UILabel(frame: .zero)
+        if label.superview == nil { badgeView.addSubview(label) }
+        label.text = badgeText
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        label.textAlignment = .center
+        label.sizeToFit()
+        let h: CGFloat = 18
+        let padX: CGFloat = 6
+        let w = max(h, label.bounds.width + padX * 2)
+        badgeView.layer.cornerRadius = h / 2
+        label.frame = CGRect(x: (w - label.bounds.width) / 2, y: (h - label.bounds.height) / 2, width: label.bounds.width, height: label.bounds.height)
+        if badgeView.superview == nil { bar.addSubview(badgeView) }
+        bar.bringSubviewToFront(badgeView)
+        badgeView.frame = CGRect(x: anchor.maxX - w / 2, y: anchor.minY - h / 2 + 4, width: w, height: h)
+      }
+    }
+  }
+
+  private func scheduleBadgeLayout() {
+    let apply = { [weak self] in
+      guard let self = self else { return }
+      if let bar = self.tabBar {
+        bar.layoutIfNeeded()
+        self.applyBadges(to: bar, itemOffset: 0)
+      }
+      if let left = self.tabBarLeft, let right = self.tabBarRight {
+        left.layoutIfNeeded(); right.layoutIfNeeded()
+        self.applyBadges(to: left, itemOffset: 0)
+        self.applyBadges(to: right, itemOffset: left.items?.count ?? 0)
+      }
+    }
+    DispatchQueue.main.async(execute: apply)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: apply)
   }
 
   func view() -> UIView { container }

@@ -15,7 +15,9 @@ class CNTabBarItem {
     this.label,
     this.icon,
     this.activeIcon,
-    this.badge,
+    this.hasBadge = false,
+    this.badgeText,
+    this.badgeColor,
     this.customIcon,
     this.activeCustomIcon,
     this.imageAsset,
@@ -33,10 +35,15 @@ class CNTabBarItem {
   /// If not provided, [icon] is used for both states.
   final CNSymbol? activeIcon;
 
-  /// Optional badge text to display on the tab bar item.
-  /// On iOS, this displays as a red badge with the text.
-  /// On macOS, badges are not supported by NSSegmentedControl.
-  final String? badge;
+  /// Whether to show a badge on this item. Has no effect on macOS.
+  final bool hasBadge;
+
+  /// Text to display inside the badge. When null or empty and [hasBadge] is
+  /// true, a small circular dot indicator is shown instead.
+  final String? badgeText;
+
+  /// Badge background color. Defaults to system red when null.
+  final Color? badgeColor;
 
   /// Optional custom icon for unselected state.
   /// Use icons from CupertinoIcons, Icons, or any custom IconData.
@@ -84,17 +91,17 @@ class CNTabBar extends StatefulWidget {
     this.rightCount = 1,
     this.shrinkCentered = true,
     this.splitSpacing =
-        12.0, // Apple's recommended spacing for visual separation
+    12.0, // Apple's recommended spacing for visual separation
   }) : assert(items.length >= 2, 'Tab bar must have at least 2 items'),
-       assert(
-         items.length <= 5,
-         'Tab bar should have 5 or fewer items for optimal usability',
-       ),
-       assert(rightCount >= 1, 'Right count must be at least 1'),
-       assert(
-         rightCount < items.length,
-         'Right count must be less than total items',
-       );
+        assert(
+        items.length <= 5,
+        'Tab bar should have 5 or fewer items for optimal usability',
+        ),
+        assert(rightCount >= 1, 'Right count must be at least 1'),
+        assert(
+        rightCount < items.length,
+        'Right count must be less than total items',
+        );
 
   /// Items to display in the tab bar.
   final List<CNTabBarItem> items;
@@ -152,6 +159,8 @@ class _CNTabBarState extends State<CNTabBar> {
   List<String>? _lastSymbols;
   List<String>? _lastActiveSymbols;
   List<String>? _lastBadges;
+  List<bool>? _lastHasBadgeFlags;
+  List<int?>? _lastBadgeColors;
   bool? _lastSplit;
   int? _lastRightCount;
   double? _lastSplitSpacing;
@@ -177,7 +186,7 @@ class _CNTabBarState extends State<CNTabBar> {
     // Check if we should use native platform view
     final isIOSOrMacOS =
         defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
+            defaultTargetPlatform == TargetPlatform.macOS;
     final shouldUseNative =
         isIOSOrMacOS && PlatformVersion.shouldUseNativeGlass;
 
@@ -272,37 +281,41 @@ class _CNTabBarState extends State<CNTabBar> {
   }
 
   Future<Widget> _buildNativeTabBar(
-    BuildContext context, {
-    required List<Uint8List?> customIconBytes,
-    required List<Uint8List?> activeCustomIconBytes,
-  }) async {
+      BuildContext context, {
+        required List<Uint8List?> customIconBytes,
+        required List<Uint8List?> activeCustomIconBytes,
+      }) async {
     final labels = widget.items.map((e) => e.label ?? '').toList();
     final symbols = widget.items.map((e) => e.icon?.name ?? '').toList();
     final activeSymbols = widget.items
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
-    final badges = widget.items.map((e) => e.badge ?? '').toList();
+    final badges = widget.items.map((e) => e.badgeText ?? '').toList();
+    final hasBadgeFlags = widget.items.map((e) => e.hasBadge).toList();
+    final badgeColors = widget.items
+        .map((e) => resolveColorToArgb(e.badgeColor, context))
+        .toList();
     final sizes = widget.items
         .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
         .toList();
     final colors = widget.items
         .map(
           (e) =>
-              resolveColorToArgb(e.icon?.color ?? e.imageAsset?.color, context),
-        )
+          resolveColorToArgb(e.icon?.color ?? e.imageAsset?.color, context),
+    )
         .toList();
 
     // Extract imageAsset data and resolve asset paths based on device pixel ratio
     final imageAssetPaths = await Future.wait(
       widget.items.map(
-        (e) async => e.imageAsset != null
+            (e) async => e.imageAsset != null
             ? await resolveAssetPathForPixelRatio(e.imageAsset!.assetPath)
             : '',
       ),
     );
     final activeImageAssetPaths = await Future.wait(
       widget.items.map(
-        (e) async => e.activeImageAsset != null
+            (e) async => e.activeImageAsset != null
             ? await resolveAssetPathForPixelRatio(e.activeImageAsset!.assetPath)
             : '',
       ),
@@ -340,6 +353,8 @@ class _CNTabBarState extends State<CNTabBar> {
       'sfSymbols': symbols,
       'activeSfSymbols': activeSymbols,
       'badges': badges,
+      'hasBadgeFlags': hasBadgeFlags,
+      'badgeColors': badgeColors,
       'customIconBytes': customIconBytes,
       'activeCustomIconBytes': activeCustomIconBytes,
       'imageAssetPaths': imageAssetPaths,
@@ -369,17 +384,17 @@ class _CNTabBarState extends State<CNTabBar> {
     final viewType = 'CupertinoNativeTabBar';
     final platformView = defaultTargetPlatform == TargetPlatform.iOS
         ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          )
+      viewType: viewType,
+      creationParams: creationParams,
+      creationParamsCodec: const StandardMessageCodec(),
+      onPlatformViewCreated: _onCreated,
+    )
         : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          );
+      viewType: viewType,
+      creationParams: creationParams,
+      creationParamsCodec: const StandardMessageCodec(),
+      onPlatformViewCreated: _onCreated,
+    );
 
     final h = widget.height ?? _intrinsicHeight ?? 50.0;
     if (!widget.split && widget.shrinkCentered) {
@@ -463,13 +478,21 @@ class _CNTabBarState extends State<CNTabBar> {
     final activeSymbols = widget.items
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
-    final badges = widget.items.map((e) => e.badge ?? '').toList();
+    final badges = widget.items.map((e) => e.badgeText ?? '').toList();
+    final hasBadgeFlags = widget.items.map((e) => e.hasBadge).toList();
+    final badgeColors = widget.items
+        .map((e) => resolveColorToArgb(e.badgeColor, context))
+        .toList();
 
     // Check if basic properties changed
     if (_lastLabels?.join('|') != labels.join('|') ||
         _lastSymbols?.join('|') != symbols.join('|') ||
         _lastActiveSymbols?.join('|') != activeSymbols.join('|') ||
-        _lastBadges?.join('|') != badges.join('|')) {
+        _lastBadges?.join('|') != badges.join('|') ||
+        _lastHasBadgeFlags?.map((e) => e.toString()).join('|') !=
+            hasBadgeFlags.map((e) => e.toString()).join('|') ||
+        _lastBadgeColors?.map((e) => e?.toString() ?? '').join('|') !=
+            badgeColors.map((e) => e?.toString() ?? '').join('|')) {
       // Re-render custom icons if items changed
       final iconBytes = await _renderCustomIcons();
       final customIconBytes = iconBytes[0];
@@ -492,24 +515,24 @@ class _CNTabBarState extends State<CNTabBar> {
       final imageAssetFormats = widget.items
           .map(
             (e) =>
-                e.imageAsset?.imageFormat ??
-                detectImageFormat(
-                  e.imageAsset?.assetPath,
-                  e.imageAsset?.imageData,
-                ) ??
-                '',
-          )
+        e.imageAsset?.imageFormat ??
+            detectImageFormat(
+              e.imageAsset?.assetPath,
+              e.imageAsset?.imageData,
+            ) ??
+            '',
+      )
           .toList();
       final activeImageAssetFormats = widget.items
           .map(
             (e) =>
-                e.activeImageAsset?.imageFormat ??
-                detectImageFormat(
-                  e.activeImageAsset?.assetPath,
-                  e.activeImageAsset?.imageData,
-                ) ??
-                '',
-          )
+        e.activeImageAsset?.imageFormat ??
+            detectImageFormat(
+              e.activeImageAsset?.assetPath,
+              e.activeImageAsset?.imageData,
+            ) ??
+            '',
+      )
           .toList();
 
       await ch.invokeMethod('setItems', {
@@ -517,6 +540,8 @@ class _CNTabBarState extends State<CNTabBar> {
         'sfSymbols': symbols,
         'activeSfSymbols': activeSymbols,
         'badges': badges,
+        'hasBadgeFlags': hasBadgeFlags,
+        'badgeColors': badgeColors,
         'customIconBytes': customIconBytes,
         'activeCustomIconBytes': activeCustomIconBytes,
         'imageAssetPaths': imageAssetPaths,
@@ -532,6 +557,8 @@ class _CNTabBarState extends State<CNTabBar> {
       _lastSymbols = symbols;
       _lastActiveSymbols = activeSymbols;
       _lastBadges = badges;
+      _lastHasBadgeFlags = hasBadgeFlags;
+      _lastBadgeColors = badgeColors;
       // Re-measure width in case content changed
       _requestIntrinsicSize();
     }
@@ -576,7 +603,11 @@ class _CNTabBarState extends State<CNTabBar> {
     _lastActiveSymbols = widget.items
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
-    _lastBadges = widget.items.map((e) => e.badge ?? '').toList();
+    _lastBadges = widget.items.map((e) => e.badgeText ?? '').toList();
+    _lastHasBadgeFlags = widget.items.map((e) => e.hasBadge).toList();
+    _lastBadgeColors = widget.items
+        .map((e) => resolveColorToArgb(e.badgeColor, context))
+        .toList();
     // Note: Custom icon bytes are cached in _syncPropsToNativeIfNeeded when rendered
   }
 

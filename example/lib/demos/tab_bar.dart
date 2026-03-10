@@ -57,69 +57,77 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
             child: CNTabBar(
               items: _useAlternateIcons
                   ? [
-                      // Alternate SVG icons to test setState
-                      CNTabBarItem(
-                        label: 'Home',
-                        imageAsset: CNImageAsset('assets/icons/profile.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/profile-filled.svg',
-                        ),
-                        badge: '5',
-                      ),
-                      CNTabBarItem(
-                        label: 'Search',
-                        imageAsset: CNImageAsset('assets/icons/chat.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/chat-filled.svg',
-                        ),
-                        badge: '8',
-                      ),
-                      CNTabBarItem(
-                        label: 'Profile',
-                        imageAsset: CNImageAsset('assets/icons/home.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/home_filled.svg',
-                        ),
-                      ),
-                      CNTabBarItem(
-                        imageAsset: CNImageAsset('assets/icons/search.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/search-filled.svg',
-                        ),
-                      ),
-                    ]
+                // Alternate SVG icons to test setState
+                CNTabBarItem(
+                  label: 'Home',
+                  imageAsset: CNImageAsset('assets/icons/profile.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/profile-filled.svg',
+                  ),
+                  hasBadge: true,
+                  badgeText: '5',
+                  badgeColor: Colors.orange,
+                ),
+                CNTabBarItem(
+                  label: 'Search',
+                  imageAsset: CNImageAsset('assets/icons/chat.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/chat-filled.svg',
+                  ),
+                  hasBadge: true,
+                  badgeColor: Colors.green,
+                ),
+                CNTabBarItem(
+                  label: 'Profile',
+                  imageAsset: CNImageAsset('assets/icons/home.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/home_filled.svg',
+                  ),
+                ),
+                CNTabBarItem(
+                  imageAsset: CNImageAsset('assets/icons/search.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/search-filled.svg',
+                  ),
+                ),
+              ]
                   : [
-                      // Original SVG icons
-                      CNTabBarItem(
-                        label: 'Home',
-                        imageAsset: CNImageAsset('assets/icons/home.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/home_filled.svg',
-                        ),
-                        badge: '3',
-                      ),
-                      CNTabBarItem(
-                        label: 'Search',
-                        imageAsset: CNImageAsset('assets/icons/search.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/search-filled.svg',
-                        ),
-                        badge: '12',
-                      ),
-                      CNTabBarItem(
-                        label: 'Profile',
-                        imageAsset: CNImageAsset('assets/icons/profile.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/profile-filled.svg',
-                        ),
-                      ),
-                      CNTabBarItem(
-                        imageAsset: CNImageAsset('assets/icons/chat.svg'),
-                        activeImageAsset: CNImageAsset(
-                          'assets/icons/chat-filled.svg',
-                        ),
-                      ),
-                    ],
+                // Original SVG icons
+                CNTabBarItem(
+                  label: 'Home',
+                  imageAsset: CNImageAsset('assets/icons/home.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/home_filled.svg',
+                  ),
+                  hasBadge: true,
+                  badgeText: '3',
+                  badgeColor: Colors.blue,
+                ),
+                CNTabBarItem(
+                  label: 'Search',
+                  imageAsset: CNImageAsset('assets/icons/search.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/search-filled.svg',
+                  ),
+                  hasBadge: true,
+                  badgeText: '12',
+                ),
+                CNTabBarItem(
+                  label: 'Profile',
+                  imageAsset: CNImageAsset('assets/icons/profile.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/profile-filled.svg',
+                  ),
+                  hasBadge: true,
+                  badgeColor: Colors.purple,
+                ),
+                CNTabBarItem(
+                  imageAsset: CNImageAsset('assets/icons/chat.svg'),
+                  activeImageAsset: CNImageAsset(
+                    'assets/icons/chat-filled.svg',
+                  ),
+                ),
+              ],
               currentIndex: _index,
               split: true,
               rightCount: 1,
@@ -145,7 +153,7 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: CupertinoColors.systemBlue.withOpacity(0.8),
+                  color: CupertinoColors.systemBlue.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Icon(
