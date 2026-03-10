@@ -188,7 +188,7 @@ class _ImageTabPage extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: CupertinoColors.black..withOpacity(0.2),
+              color: CupertinoColors.black.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             margin: const EdgeInsets.only(top: 12),
