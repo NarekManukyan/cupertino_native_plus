@@ -32,6 +32,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var rightInsetVal: CGFloat = 0
   private var splitSpacingVal: CGFloat = 12 // Apple's recommended spacing for visual separation
   private var currentIconSizes: [CGFloat] = [] // Track icon sizes for dynamic height calculation
+  private var containerBoundsObservation: NSKeyValueObservation?
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "CupertinoNativeTabBar_\(viewId)", binaryMessenger: messenger)
@@ -113,6 +114,14 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
 
     container.backgroundColor = .clear
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
+
+    containerBoundsObservation = container.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
+      guard let self = self else { return }
+      let oldWidth = change.oldValue?.width ?? 0
+      let newWidth = change.newValue?.width ?? 0
+      guard newWidth > 0, oldWidth != newWidth else { return }
+      self.scheduleBadgeLayout()
+    }
 
     let appearance: UITabBarAppearance? = {
     if #available(iOS 13.0, *) { let ap = UITabBarAppearance(); ap.configureWithDefaultBackground(); return ap }
@@ -326,7 +335,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     self.leftInsetVal = leftInset
     self.rightInsetVal = rightInset
     self.currentIconSizes = sizes.compactMap { $0 }.map { CGFloat(truncating: $0) }
-channel.setMethodCallHandler { [weak self] call, result in
+    channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
@@ -879,6 +888,7 @@ channel.setMethodCallHandler { [weak self] call, result in
   private func applyBadges(to bar: UITabBar, itemOffset: Int) {
     let count = bar.items?.count ?? 0
     guard count > 0 else { return }
+    guard bar.bounds.width > 0 else { return }
     for localIndex in 0..<count {
       let globalIndex = itemOffset + localIndex
       let tag = Self.badgeViewTagBase + globalIndex
@@ -934,6 +944,8 @@ channel.setMethodCallHandler { [weak self] call, result in
   private func scheduleBadgeLayout() {
     let apply = { [weak self] in
       guard let self = self else { return }
+      self.container.setNeedsLayout()
+      self.container.layoutIfNeeded()
       if let bar = self.tabBar {
         bar.layoutIfNeeded()
         self.applyBadges(to: bar, itemOffset: 0)
