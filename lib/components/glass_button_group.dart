@@ -401,21 +401,10 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (button.config.borderRadius != null)
         'borderRadius': button.config.borderRadius,
       if (button.config.padding != null) ...{
-        if (button.config.padding!.top != 0.0)
-          'paddingTop': button.config.padding!.top,
-        if (button.config.padding!.bottom != 0.0)
-          'paddingBottom': button.config.padding!.bottom,
-        if (button.config.padding!.left != 0.0)
-          'paddingLeft': button.config.padding!.left,
-        if (button.config.padding!.right != 0.0)
-          'paddingRight': button.config.padding!.right,
-        // Support horizontal/vertical as convenience
-        if (button.config.padding!.left == button.config.padding!.right &&
-            button.config.padding!.left != 0.0)
-          'paddingHorizontal': button.config.padding!.left,
-        if (button.config.padding!.top == button.config.padding!.bottom &&
-            button.config.padding!.top != 0.0)
-          'paddingVertical': button.config.padding!.top,
+        'paddingTop': button.config.padding!.top,
+        'paddingBottom': button.config.padding!.bottom,
+        'paddingLeft': button.config.padding!.left,
+        'paddingRight': button.config.padding!.right,
       },
       if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
       if (button.config.imagePadding != null)
