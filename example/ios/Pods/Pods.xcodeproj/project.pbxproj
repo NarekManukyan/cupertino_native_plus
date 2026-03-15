@@ -123,7 +123,7 @@
 		46248B46BC21C60A8C0558802B6DDD3E /* CSSRuleList.h in Headers */ = {isa = PBXBuildFile; fileRef = 46DC7CD8C9C5A9B6C63CC6496031A8B2 /* CSSRuleList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4729C5B40D0B1E54989A60B34E42259C /* CupertinoPopupMenuButtonFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21BE46FE74BEE2F189DA304BF94FD13B /* CupertinoPopupMenuButtonFactory.swift */; };
 		4764B7ED0F55E1EB9722FE8C0A359D00 /* DocumentStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 96D80A8591D50925CFF615B2B0243242 /* DocumentStyle.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		49A89E9B1616F5391EA0A7B5C50CB13B /* ImageCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A72D3A9EFE18344170C3AF34A2CB051 /* ImageCacheManager.swift */; };
+		49A89E9B1616F5391EA0A7B5C50CB13B /* ImageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A72D3A9EFE18344170C3AF34A2CB051 /* ImageManager.swift */; };
 		4B1AA3C9E83624CA78B29477CB9B98D8 /* SVGKParser.m in Sources */ = {isa = PBXBuildFile; fileRef = F5DBFD31F923FB495229DAD5A01EFFFB /* SVGKParser.m */; settings = {COMPILER_FLAGS = "-DOS_OBJECT_USE_OBJC=0"; }; };
 		4C17F1E203BCA0BD2920594005D607CF /* SVGClipPathElement.m in Sources */ = {isa = PBXBuildFile; fileRef = B99A5BD3BEB73453EF12F0A0E039D65C /* SVGClipPathElement.m */; settings = {COMPILER_FLAGS = "-DOS_OBJECT_USE_OBJC=0"; }; };
 		4C7F7FCB48A4F94B893B76EFD4478142 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0DA200C327E7F0F711BCD32FD18B038 /* QuartzCore.framework */; };
@@ -516,7 +516,7 @@
 		36BFA863D4AD87189064D0AB1D5D9AA3 /* CupertinoTabBarSearchView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CupertinoTabBarSearchView.swift; path = ../../../../../../../../ios/Classes/Views/CupertinoTabBarSearchView.swift; sourceTree = "<group>"; };
 		39EA11A71DA0DC3CBD491B9C095D52B2 /* Flutter.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Flutter.release.xcconfig; sourceTree = "<group>"; };
 		3A2D02B062860416353A41B2F80E39BC /* DDAssertMacros.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = DDAssertMacros.h; path = Sources/CocoaLumberjack/include/CocoaLumberjack/DDAssertMacros.h; sourceTree = "<group>"; };
-		3A72D3A9EFE18344170C3AF34A2CB051 /* ImageCacheManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ImageCacheManager.swift; path = ../../../../../../../../ios/Classes/Utils/ImageCacheManager.swift; sourceTree = "<group>"; };
+		3A72D3A9EFE18344170C3AF34A2CB051 /* ImageManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ImageManager.swift; path = ../../../../../../../../ios/Classes/Utils/ImageManager.swift; sourceTree = "<group>"; };
 		3B8966D7413205B898AA0127D7694834 /* integration_test-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "integration_test-Info.plist"; sourceTree = "<group>"; };
 		3B94690287B5CDE106643081B38A9BCC /* Text.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = Text.h; path = "Source/DOM classes/Core DOM/Text.h"; sourceTree = "<group>"; };
 		3CE68F2415BB1E7E238326A297047636 /* CupertinoIconPlatformView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CupertinoIconPlatformView.swift; path = ../../../../../../../../ios/Classes/Views/CupertinoIconPlatformView.swift; sourceTree = "<group>"; };
@@ -1186,7 +1186,7 @@
 		83E44A8D070740B2B940C99D6FE48601 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				3A72D3A9EFE18344170C3AF34A2CB051 /* ImageCacheManager.swift */,
+				3A72D3A9EFE18344170C3AF34A2CB051 /* ImageManager.swift */,
 				8CCEA5848728216773989DD6C385975C /* ImageUtils.swift */,
 				4A3E9FCDD51A3DBEB9F5D4F6B4FD3EB0 /* SpotlightManager.swift */,
 				F649077FA5323054A6AB63C8B61BC033 /* SVGImageLoader.swift */,
@@ -2239,7 +2239,7 @@
 				A35AF679143CCB2E6D54CDA8840CB78A /* GlassButtonConfig.swift in Sources */,
 				A2A35AE78D9F730258855035B23AA3B4 /* GlassButtonGroupView.swift in Sources */,
 				5C3C86C1FD30E2EDE9B7236B8337D400 /* GlassButtonSwiftUI.swift in Sources */,
-				49A89E9B1616F5391EA0A7B5C50CB13B /* ImageCacheManager.swift in Sources */,
+				49A89E9B1616F5391EA0A7B5C50CB13B /* ImageManager.swift in Sources */,
 				9D6475625B3237A48166D17E604EC2AC /* ImageUtils.swift in Sources */,
 				C532E833C1A80E4C641E41FB25D23AC3 /* LiquidGlassContainerFactory.swift in Sources */,
 				DF8BFFACEB9F74F5220A3DE0871B21E1 /* LiquidGlassContainerView.swift in Sources */,

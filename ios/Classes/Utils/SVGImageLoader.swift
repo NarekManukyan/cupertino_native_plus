@@ -2,73 +2,29 @@ import UIKit
 import SVGKit
 import Flutter
 
-/// Centralized SVG image loading utility with caching and error handling
+/// Renders SVG to UIImage (asset path or data). No caching — ImageManager caches all results.
 final class SVGImageLoader {
-    
-    // MARK: - Singleton
+
     static let shared = SVGImageLoader()
-    
-    // MARK: - Properties
-    private let cache = NSCache<NSString, UIImage>()
+
     private let preloadQueue = DispatchQueue(label: "svg.preload", qos: .userInitiated)
     private var isInitialized = false
-    
-    // MARK: - Initialization
+
     private init() {
-        setupCache()
         preloadSVGKit()
     }
-    
-    // MARK: - Public API
-    
-    /// Load SVG image from Flutter asset path
-    /// - Parameters:
-    ///   - assetPath: Flutter asset path (e.g., "assets/icons/home.svg")
-    ///   - size: Desired size for the SVG
-    /// - Returns: Rendered UIImage or nil if failed
+
+    /// Load SVG from Flutter asset path and render to UIImage. Caching is done by ImageManager.
     func loadSVG(from assetPath: String, size: CGSize = CGSize(width: 24, height: 24)) -> UIImage? {
-        let cacheKey = "\(assetPath)_\(size.width)x\(size.height)" as NSString
-        
-        // Check cache first
-        if let cachedImage = cache.object(forKey: cacheKey) {
-            return cachedImage
-        }
-        
-        // Load from bundle
-        guard let image = loadSVGFromBundle(assetPath: assetPath, size: size) else {
-            return nil
-        }
-        
-        // Cache successful result
-        cache.setObject(image, forKey: cacheKey)
-        return image
+        loadSVGFromBundle(assetPath: assetPath, size: size)
     }
-    
-    /// Load SVG image from raw data
-    /// - Parameters:
-    ///   - data: SVG data bytes
-    ///   - size: Desired size for the SVG
-    /// - Returns: Rendered UIImage or nil if failed
+
+    /// Load SVG from raw data and render to UIImage. Caching is done by ImageManager.
     func loadSVG(from data: Data, size: CGSize = CGSize(width: 24, height: 24)) -> UIImage? {
-        let cacheKey = "data_\(data.hashValue)_\(size.width)x\(size.height)" as NSString
-        
-        // Check cache first
-        if let cachedImage = cache.object(forKey: cacheKey) {
-            return cachedImage
-        }
-        
-        // Load from data
-        guard let image = loadSVGFromData(data: data, size: size) else {
-            return nil
-        }
-        
-        // Cache successful result
-        cache.setObject(image, forKey: cacheKey)
-        return image
+        loadSVGFromData(data: data, size: size)
     }
-    
-    /// Preload SVG assets for better performance
-    /// - Parameter assetPaths: Array of asset paths to preload
+
+    /// Preload SVG assets (warms SVGKit and can be used to prime ImageManager cache via ImageUtils).
     func preloadAssets(_ assetPaths: [String]) {
         preloadQueue.async { [weak self] in
             for path in assetPaths {
@@ -76,26 +32,12 @@ final class SVGImageLoader {
             }
         }
     }
-    
-    /// Preload SVG assets from a list of paths (useful for dynamic preloading)
-    /// - Parameter assetPaths: Array of asset paths to preload
+
     func preloadAssetsFromPaths(_ assetPaths: [String]) {
         guard !assetPaths.isEmpty else { return }
         preloadAssets(assetPaths)
     }
-    
-    /// Clear the image cache
-    func clearCache() {
-        cache.removeAllObjects()
-    }
-    
-    // MARK: - Private Methods
-    
-    private func setupCache() {
-        cache.countLimit = 100
-        cache.totalCostLimit = 50 * 1024 * 1024 // 50MB
-    }
-    
+
     private func preloadSVGKit() {
         guard !isInitialized else { return }
         

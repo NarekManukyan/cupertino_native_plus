@@ -11,6 +11,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private var currentButtonStyle: String = "automatic"
   private var usesSwiftUI: Bool = false
   private var makeRound: Bool = false
+  private var currentTintWhenGlassInverted: UIColor?
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "CupertinoNativeButton_\(viewId)", binaryMessenger: messenger)
@@ -46,6 +47,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     var glassEffectUnionId: String? = nil
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
+    var tintWhenGlassInverted: UIColor? = nil
 
     if let dict = args as? [String: Any] {
       if let t = dict["buttonTitle"] as? String { title = t }
@@ -83,11 +85,14 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let gueId = dict["glassEffectUnionId"] as? String { glassEffectUnionId = gueId }
       if let geId = dict["glassEffectId"] as? String { glassEffectId = geId }
       if let geInteractive = dict["glassEffectInteractive"] as? NSNumber { glassEffectInteractive = geInteractive.boolValue }
+      if let n = dict["tintWhenGlassInverted"] as? NSNumber { tintWhenGlassInverted = Self.colorFromARGB(n.intValue) }
     }
 
     super.init()
+    self.currentTintWhenGlassInverted = tintWhenGlassInverted
 
     container.backgroundColor = .clear
+    container.clipsToBounds = false
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
 
     // Create final image first (needed for both SwiftUI and UIKit paths)
@@ -190,6 +195,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         iconSize: iconSize ?? 20,
         iconColor: iconColor,
         tint: tint,
+        tintWhenGlassInverted: tintWhenGlassInverted,
         isRound: makeRound,
         style: buttonStyle,
         enabled: enabled,
@@ -277,30 +283,37 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
-        if usesSwiftUI {
-          // For SwiftUI buttons, return estimated size
-          // In a real implementation, you might want to measure the actual SwiftUI view
-          result(["width": 80.0, "height": 32.0])
-        } else if let button = self.button {
-          let size = button.intrinsicContentSize
-        result(["width": Double(size.width), "height": Double(size.height)])
-        } else {
-          result(["width": 80.0, "height": 32.0])
+        // Defer result until after layout so Flutter gets size only when native has finished layout.
+        // This avoids sizing issues from reading intrinsicContentSize before the first layout pass.
+        DispatchQueue.main.async { [weak self] in
+          guard let self = self else { return }
+          if usesSwiftUI {
+            result(["width": 80.0, "height": 32.0])
+          } else if let button = self.button {
+            self.view().layoutIfNeeded()
+            let size = button.intrinsicContentSize
+            result(["width": Double(size.width), "height": Double(size.height)])
+          } else {
+            result(["width": 80.0, "height": 32.0])
+          }
         }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
+          if let n = args["tintWhenGlassInverted"] as? NSNumber {
+            self.currentTintWhenGlassInverted = Self.colorFromARGB(n.intValue)
+          }
           if usesSwiftUI {
-            // For SwiftUI buttons, style changes would require recreating the view
-            // This is a limitation - in a production app, you might want to handle this differently
+            // SwiftUI button uses tintWhenGlassInverted from creation params; updates via setStyle not applied to SwiftUI path
             result(nil)
           } else if let button = self.button {
-          if let n = args["tint"] as? NSNumber {
-              button.tintColor = Self.colorFromARGB(n.intValue)
-            // Re-apply style so configuration picks up new base colors
+            if let n = args["tint"] as? NSNumber {
+              let tintColor = Self.colorFromARGB(n.intValue)
+              let isDark = self.container.traitCollection.userInterfaceStyle == .dark
+              button.tintColor = (isDark && self.currentTintWhenGlassInverted != nil) ? self.currentTintWhenGlassInverted! : tintColor
               self.applyButtonStyle(buttonStyle: self.currentButtonStyle, round: self.makeRound)
-          }
-          if let bs = args["buttonStyle"] as? String {
-            self.currentButtonStyle = bs
+            }
+            if let bs = args["buttonStyle"] as? String {
+              self.currentButtonStyle = bs
               self.applyButtonStyle(buttonStyle: bs, round: self.makeRound)
             }
           }
@@ -501,6 +514,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     iconSize: CGFloat,
     iconColor: UIColor?,
     tint: UIColor?,
+    tintWhenGlassInverted: UIColor?,
     isRound: Bool,
     style: String,
     enabled: Bool,
@@ -540,6 +554,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       let iconSize: CGFloat
       let iconColor: Color?
       let tint: Color?
+      let tintWhenGlassInverted: Color?
       let isRound: Bool
       let style: String
       let isEnabled: Bool
@@ -557,6 +572,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           iconSize: iconSize,
           iconColor: iconColor,
           tint: tint,
+          tintWhenGlassInverted: tintWhenGlassInverted,
           isRound: isRound,
           style: style,
           isEnabled: isEnabled,
@@ -577,6 +593,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       iconSize: iconSize,
       iconColor: iconColor != nil ? Color(iconColor!) : nil,
       tint: tint != nil ? Color(tint!) : nil,
+      tintWhenGlassInverted: tintWhenGlassInverted != nil ? Color(tintWhenGlassInverted!) : nil,
       isRound: isRound,
       style: style,
       isEnabled: enabled,

@@ -90,16 +90,20 @@ final class ImageUtils {
   }
   
   // MARK: - Image Loading
-  
-  /// Loads an image from Flutter asset path with format detection and optional tinting
-  /// - Parameters:
-  ///   - assetPath: Flutter asset path (e.g., "assets/icons/home.svg")
-  ///   - size: Optional size for the image (defaults to 24x24 for SVG, original for raster)
-  ///   - format: Optional format string (if nil, will be auto-detected)
-  ///   - color: Optional color to tint the image
-  ///   - scale: Image scale (defaults to main screen scale)
-  /// - Returns: UIImage or nil if failed
+
+  /// Loads an image from Flutter asset path with format detection, optional tinting, and caching. Uses ImageManager.
   static func loadFlutterAsset(
+    _ assetPath: String,
+    size: CGSize? = nil,
+    format: String? = nil,
+    color: UIColor? = nil,
+    scale: CGFloat = UIScreen.main.scale
+  ) -> UIImage? {
+    ImageManager.shared.image(assetPath: assetPath, size: size, color: color, format: format, scale: scale)
+  }
+
+  /// Uncached load for Flutter asset (used by ImageManager only).
+  static func loadFlutterAssetUncached(
     _ assetPath: String,
     size: CGSize? = nil,
     format: String? = nil,
@@ -110,39 +114,28 @@ final class ImageUtils {
     guard let path = Bundle.main.path(forResource: flutterKey, ofType: nil) else {
       return nil
     }
-    
-    // Detect format
+
     let detectedFormat = format ?? detectImageFormat(assetPath: assetPath)
-    
+
     var image: UIImage?
-    
+
     if detectedFormat == "svg" {
-      // Use SVGImageLoader for SVG files
       let svgSize = size ?? CGSize(width: 24, height: 24)
       image = SVGImageLoader.shared.loadSVG(from: assetPath, size: svgSize)
     } else {
-      // Use UIImage for raster images (PNG, JPG, etc.)
       image = UIImage(contentsOfFile: path)
     }
-    
-    // Apply tinting if color is provided
+
     if let img = image, let col = color, #available(iOS 13.0, *) {
       let targetSize = size ?? img.size
       let isSVG = detectedFormat == "svg"
       return tintImage(img, with: col, size: targetSize, isSVG: isSVG, scale: scale)
     }
-    
+
     return image
   }
-  
-  /// Creates an image from raw data with format detection and optional tinting
-  /// - Parameters:
-  ///   - data: Image data bytes
-  ///   - format: Optional format string (if nil, will be auto-detected)
-  ///   - size: Optional size for SVG images
-  ///   - color: Optional color to tint the image
-  ///   - scale: Image scale (defaults to main screen scale)
-  /// - Returns: UIImage or nil if failed
+
+  /// Creates an image from raw data with format detection, optional tinting, and caching. Uses ImageManager.
   static func createImageFromData(
     _ data: Data,
     format: String? = nil,
@@ -150,26 +143,34 @@ final class ImageUtils {
     color: UIColor? = nil,
     scale: CGFloat = UIScreen.main.scale
   ) -> UIImage? {
-    // Detect format
+    ImageManager.shared.image(data: data, size: size, color: color, format: format, scale: scale)
+  }
+
+  /// Uncached create from data (used by ImageManager only).
+  static func createImageFromDataUncached(
+    _ data: Data,
+    format: String? = nil,
+    size: CGSize? = nil,
+    color: UIColor? = nil,
+    scale: CGFloat = UIScreen.main.scale
+  ) -> UIImage? {
     let detectedFormat = format ?? detectImageFormat(assetPath: nil, imageData: data)
-    
+
     var image: UIImage?
-    
+
     if detectedFormat == "svg" {
       let svgSize = size ?? CGSize(width: 24, height: 24)
       image = SVGImageLoader.shared.loadSVG(from: data, size: svgSize)
     } else {
-      // Try as raster image
       image = UIImage(data: data, scale: scale)
     }
-    
-    // Apply tinting if color is provided
+
     if let img = image, let col = color, #available(iOS 13.0, *) {
       let targetSize = size ?? img.size
       let isSVG = detectedFormat == "svg"
       return tintImage(img, with: col, size: targetSize, isSVG: isSVG, scale: scale)
     }
-    
+
     return image
   }
   

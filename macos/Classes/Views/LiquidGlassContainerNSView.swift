@@ -13,7 +13,8 @@ class LiquidGlassContainerNSView: NSObject, FlutterPlatformView {
     self.container = NSView(frame: frame)
     self.container.wantsLayer = true
     self.container.layer?.backgroundColor = NSColor.clear.cgColor
-    
+    self.container.layer?.masksToBounds = false
+
     // Parse arguments
     var effect: String = "regular"
     var shape: String = "capsule"

@@ -35,6 +35,7 @@ class CNButtonData {
     this.onPressed,
     this.enabled = true,
     this.tint,
+    this.tintWhenGlassInverted,
     this.config = const CNButtonDataConfig(),
   }) : isIcon = false;
 
@@ -46,6 +47,7 @@ class CNButtonData {
     this.onPressed,
     this.enabled = true,
     this.tint,
+    this.tintWhenGlassInverted,
     this.config = const CNButtonDataConfig(),
   }) : label = null,
        isIcon = true;
@@ -71,6 +73,10 @@ class CNButtonData {
   /// Tint color for the button.
   final Color? tint;
 
+  /// Tint for label/icon when the glass is in its inverted state (e.g. dark mode).
+  /// See [CNButtonDataConfig.tintWhenGlassInverted].
+  final Color? tintWhenGlassInverted;
+
   /// Configuration for the button appearance.
   final CNButtonDataConfig config;
 
@@ -86,6 +92,7 @@ class CNButtonData {
     VoidCallback? onPressed,
     bool? enabled,
     Color? tint,
+    Color? tintWhenGlassInverted,
     CNButtonDataConfig? config,
   }) {
     if (isIcon) {
@@ -96,6 +103,8 @@ class CNButtonData {
         onPressed: onPressed ?? this.onPressed,
         enabled: enabled ?? this.enabled,
         tint: tint ?? this.tint,
+        tintWhenGlassInverted:
+            tintWhenGlassInverted ?? this.tintWhenGlassInverted,
         config: config ?? this.config,
       );
     }
@@ -107,6 +116,8 @@ class CNButtonData {
       onPressed: onPressed ?? this.onPressed,
       enabled: enabled ?? this.enabled,
       tint: tint ?? this.tint,
+      tintWhenGlassInverted:
+          tintWhenGlassInverted ?? this.tintWhenGlassInverted,
       config: config ?? this.config,
     );
   }
@@ -129,6 +140,7 @@ class CNButtonDataConfig {
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
+    this.tintWhenGlassInverted,
   });
 
   /// Fixed width for the button.
@@ -161,6 +173,9 @@ class CNButtonDataConfig {
   /// Whether the glass effect responds to touches.
   final bool glassEffectInteractive;
 
+  /// Tint for label/icon when the glass is in its inverted state (e.g. dark mode).
+  final Color? tintWhenGlassInverted;
+
   /// Creates a copy with the given fields replaced.
   CNButtonDataConfig copyWith({
     double? width,
@@ -173,6 +188,7 @@ class CNButtonDataConfig {
     String? glassEffectUnionId,
     String? glassEffectId,
     bool? glassEffectInteractive,
+    Color? tintWhenGlassInverted,
   }) {
     return CNButtonDataConfig(
       width: width ?? this.width,
@@ -186,6 +202,8 @@ class CNButtonDataConfig {
       glassEffectId: glassEffectId ?? this.glassEffectId,
       glassEffectInteractive:
           glassEffectInteractive ?? this.glassEffectInteractive,
+      tintWhenGlassInverted:
+          tintWhenGlassInverted ?? this.tintWhenGlassInverted,
     );
   }
 }

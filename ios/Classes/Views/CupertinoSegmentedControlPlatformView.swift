@@ -90,8 +90,13 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
-        let size = self.control.intrinsicContentSize
-        result(["width": Double(size.width), "height": Double(size.height)])
+        // Defer result until after layout so Flutter gets size only when native has finished layout.
+        DispatchQueue.main.async { [weak self] in
+          guard let self = self else { return }
+          self.view().layoutIfNeeded()
+          let size = self.control.intrinsicContentSize
+          result(["width": Double(size.width), "height": Double(size.height)])
+        }
       case "setSelectedIndex":
         if let args = call.arguments as? [String: Any], let idx = (args["index"] as? NSNumber)?.intValue {
           UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {

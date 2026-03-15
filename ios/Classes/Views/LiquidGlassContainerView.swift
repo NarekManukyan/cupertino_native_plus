@@ -12,7 +12,8 @@ class LiquidGlassContainerPlatformView: NSObject, FlutterPlatformView {
     self.channel = FlutterMethodChannel(name: "CupertinoNativeLiquidGlassContainer_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.container.backgroundColor = .clear
-    
+    self.container.clipsToBounds = false
+
     // Parse arguments
     var effect: String = "regular"
     var shape: String = "capsule"

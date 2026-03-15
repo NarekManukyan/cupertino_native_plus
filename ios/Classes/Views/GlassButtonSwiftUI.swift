@@ -11,6 +11,7 @@ struct GlassButtonSwiftUI: View {
   let iconSize: CGFloat
   let iconColor: Color?
   let tint: Color?
+  let tintWhenGlassInverted: Color?
   let isRound: Bool
   let style: String
   let isEnabled: Bool
@@ -21,6 +22,14 @@ struct GlassButtonSwiftUI: View {
   var namespace: Namespace.ID
   let config: GlassButtonConfig
   
+  /// Only set an explicit foreground when the user provided a tint. When nil, we do not set
+  /// .foregroundStyle so the glass effect's built-in foreground effects apply — the system then
+  /// adapts label/icon color based on content behind the glass (not interface dark/light).
+  /// tintWhenGlassInverted cannot be honored for content-based inversion because Apple does not
+  /// expose a "glass appearance" API; for adaptation, leave both tint and tintWhenGlassInverted unset.
+  private var explicitLabelStyle: Color? { tint }
+  private var explicitIconStyle: Color? { iconColor ?? tint }
+
   var body: some View {
     Button(action: onPressed) {
       HStack(spacing: config.spacing) {
@@ -32,12 +41,12 @@ struct GlassButtonSwiftUI: View {
         } else if let iconName = iconName {
           Image(systemName: iconName)
             .font(.system(size: iconSize))
-            .foregroundColor(iconColor != nil ? Color(iconColor!) : nil)
+            .applyForegroundStyle(explicitIconStyle)
         }
         
         if let title = title {
           Text(title)
-            .foregroundColor(tint != nil ? Color(tint!) : nil)
+            .applyForegroundStyle(explicitLabelStyle)
         }
       }
       .padding(config.padding)
@@ -84,9 +93,18 @@ struct GlassButtonSwiftUI: View {
   }
 }
 
-// Helper to apply glass effect modifiers conditionally
+// Apply foregroundStyle only when a color is provided; otherwise leave foreground to the glass effect.
 @available(iOS 26.0, *)
 extension View {
+  @ViewBuilder
+  func applyForegroundStyle(_ color: Color?) -> some View {
+    if let color = color {
+      self.foregroundStyle(color)
+    } else {
+      self
+    }
+  }
+
   @ViewBuilder
   func applyGlassEffectModifiers(unionId: String?, id: String?, namespace: Namespace.ID) -> some View {
     if let unionId = unionId {

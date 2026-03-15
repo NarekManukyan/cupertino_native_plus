@@ -512,6 +512,14 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
       'enabled': button.enabled,
       if (tintArgb != null) 'tint': tintArgb,
+      if ((button.config.tintWhenGlassInverted ??
+              button.tintWhenGlassInverted) !=
+          null)
+        'tintWhenGlassInverted': resolveColorToArgb(
+          (button.config.tintWhenGlassInverted ??
+              button.tintWhenGlassInverted)!,
+          context,
+        ),
       'minHeight': button.config.minHeight ?? 44.0,
       'style': button.config.style.name,
       if (button.config.glassEffectUnionId != null)
@@ -592,6 +600,11 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
       'enabled': button.enabled,
       if (tintArgb != null) 'tint': tintArgb,
+      if (button.config.tintWhenGlassInverted != null)
+        'tintWhenGlassInverted': resolveColorToArgb(
+          button.config.tintWhenGlassInverted!,
+          context,
+        ),
       'minHeight': button.config.minHeight ?? 44.0,
       'style': button.config.style.name,
       if (button.config.glassEffectUnionId != null)
@@ -638,6 +651,7 @@ class _ButtonSnapshot {
   final String style;
   final bool enabled;
   final int? tint;
+  final int? tintWhenGlassInverted;
 
   _ButtonSnapshot({
     this.label,
@@ -652,6 +666,7 @@ class _ButtonSnapshot {
     required this.style,
     required this.enabled,
     this.tint,
+    this.tintWhenGlassInverted,
   });
 
   factory _ButtonSnapshot.fromButtonWidget(CNButton button) {
@@ -668,6 +683,7 @@ class _ButtonSnapshot {
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
+      tintWhenGlassInverted: button.config.tintWhenGlassInverted?.toARGB32(),
     );
   }
 
@@ -685,6 +701,9 @@ class _ButtonSnapshot {
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
+      tintWhenGlassInverted:
+          (button.config.tintWhenGlassInverted ?? button.tintWhenGlassInverted)
+              ?.toARGB32(),
     );
   }
 
@@ -700,6 +719,7 @@ class _ButtonSnapshot {
         customIconHash == other.customIconHash &&
         style == other.style &&
         enabled == other.enabled &&
-        tint == other.tint;
+        tint == other.tint &&
+        tintWhenGlassInverted == other.tintWhenGlassInverted;
   }
 }

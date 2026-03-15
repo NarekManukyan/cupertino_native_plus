@@ -328,11 +328,17 @@ channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
-        if let bar = self.tabBar ?? self.tabBarLeft ?? self.tabBarRight {
-          let size = bar.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
-          result(["width": Double(size.width), "height": Double(size.height)])
-        } else {
-          result(["width": Double(self.container.bounds.width), "height": 50.0])
+        // Defer result until after layout so Flutter gets size only when native has finished layout.
+        DispatchQueue.main.async { [weak self] in
+          guard let self = self else { return }
+          self.container.setNeedsLayout()
+          self.container.layoutIfNeeded()
+          if let bar = self.tabBar ?? self.tabBarLeft ?? self.tabBarRight {
+            let size = bar.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+            result(["width": Double(size.width), "height": Double(size.height)])
+          } else {
+            result(["width": Double(self.container.bounds.width), "height": 50.0])
+          }
         }
       case "setItems":
         if let args = call.arguments as? [String: Any] {

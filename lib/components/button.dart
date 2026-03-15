@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -68,6 +70,16 @@ class CNButtonConfig {
   /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
   final bool glassEffectInteractive;
 
+  /// Tint for label and icon when the interface is in dark mode (UIKit path only).
+  ///
+  /// For glass buttons, the system adapts foreground to the *content behind the glass*
+  /// automatically when [tint] is null (no API exposes "glass is inverted"). To get that
+  /// adaptation, leave both [tint] and [tintWhenGlassInverted] unset. When [tint] is set,
+  /// this value is used in dark interface mode on the UIKit single-button path.
+  ///
+  /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
+  final Color? tintWhenGlassInverted;
+
   /// Maximum number of lines for button text.
   ///
   /// Defaults to 1 to prevent text wrapping. Set to null for unlimited lines.
@@ -87,6 +99,7 @@ class CNButtonConfig {
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
+    this.tintWhenGlassInverted,
     this.maxLines = 1,
   });
 }
@@ -176,6 +189,7 @@ class _CNButtonState extends State<CNButton> {
   MethodChannel? _channel;
   bool? _lastIsDark;
   int? _lastTint;
+  int? _lastTintWhenGlassInverted;
   String? _lastTitle;
   String? _lastIconName;
   double? _lastIconSize;
@@ -409,6 +423,11 @@ class _CNButtonState extends State<CNButton> {
       if (widget.config.glassEffectId != null)
         'glassEffectId': widget.config.glassEffectId,
       'glassEffectInteractive': widget.config.glassEffectInteractive,
+      if (widget.config.tintWhenGlassInverted != null)
+        'tintWhenGlassInverted': resolveColorToArgb(
+          widget.config.tintWhenGlassInverted!,
+          context,
+        ),
     };
 
     final platformView = defaultTargetPlatform == TargetPlatform.iOS
@@ -525,6 +544,9 @@ class _CNButtonState extends State<CNButton> {
     _intrinsicWidth = null;
     _intrinsicHeight = null;
     _lastTint = resolveColorToArgb(_effectiveTint, context);
+    _lastTintWhenGlassInverted = widget.config.tintWhenGlassInverted != null
+        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
+        : null;
     _lastIsDark = _isDark;
     _lastTitle = widget.label;
     _lastIconName = widget.icon?.name;
@@ -537,9 +559,9 @@ class _CNButtonState extends State<CNButton> {
     _lastImageAssetPath = widget.imageAsset?.assetPath;
     _lastImageAssetData = widget.imageAsset?.imageData;
     _lastCustomIcon = widget.customIcon;
-    // Always request intrinsic size to get both width and height
-    // Use a small delay to ensure native view has finished layout
-    Future.delayed(const Duration(milliseconds: 10), () {
+    // Request intrinsic size after this frame so native can run layout first.
+    // Native defers getIntrinsicSize result until after layoutIfNeeded(), so no fixed delay needed.
+    scheduleMicrotask(() {
       if (mounted && _channel != null) {
         _requestIntrinsicSize();
       }
@@ -586,9 +608,23 @@ class _CNButtonState extends State<CNButton> {
       context,
     );
 
+    final tintWhenInverted = widget.config.tintWhenGlassInverted != null
+        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
+        : null;
     if (_lastTint != tint && tint != null) {
-      await ch.invokeMethod('setStyle', {'tint': tint});
+      final style = <String, dynamic>{'tint': tint};
+      if (tintWhenInverted != null)
+        style['tintWhenGlassInverted'] = tintWhenInverted;
+      await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
+    }
+    if (_lastTintWhenGlassInverted != tintWhenInverted) {
+      final style = <String, dynamic>{};
+      if (tint != null) style['tint'] = tint;
+      if (tintWhenInverted != null)
+        style['tintWhenGlassInverted'] = tintWhenInverted;
+      if (style.isNotEmpty) await ch.invokeMethod('setStyle', style);
+      _lastTintWhenGlassInverted = tintWhenInverted;
     }
     if (_lastStyle != widget.config.style) {
       await ch.invokeMethod('setStyle', {
@@ -835,10 +871,25 @@ class _CNButtonState extends State<CNButton> {
       await ch.invokeMethod('setBrightness', {'isDark': isDark});
       _lastIsDark = isDark;
     }
-    // Also propagate theme-driven tint changes (e.g., accent color changes)
+    // Also propagate theme-driven tint changes and inverted tint
+    final tintWhenInverted = widget.config.tintWhenGlassInverted != null
+        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
+        : null;
     if (_lastTint != tint && tint != null) {
-      await ch.invokeMethod('setStyle', {'tint': tint});
+      final style = <String, dynamic>{'tint': tint};
+      if (tintWhenInverted != null)
+        style['tintWhenGlassInverted'] = tintWhenInverted;
+      await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
+    }
+    if (_lastTintWhenGlassInverted != tintWhenInverted &&
+        tintWhenInverted != null) {
+      final style = <String, dynamic>{
+        'tintWhenGlassInverted': tintWhenInverted,
+      };
+      if (tint != null) style['tint'] = tint;
+      await ch.invokeMethod('setStyle', style);
+      _lastTintWhenGlassInverted = tintWhenInverted;
     }
   }
 
