@@ -643,7 +643,7 @@ CNButton.icon(
 
 ### Badge Support
 
-Display notification badges on tab bar items (iOS only):
+Display notification badges on tab bar items (iOS only). Badges are rendered as custom `UIView` overlays — they do not use `UITabBarItem.badgeValue`, so they support full color customization and consistent behavior across all supported iOS versions.
 
 ```dart
 CNTabBar(
@@ -651,16 +651,60 @@ CNTabBar(
     CNTabBarItem(
       label: 'Home',
       icon: CNSymbol('house.fill'),
-      badge: '3', // Red badge with "3"
+      hasBadge: true,
+      badgeText: '3', // Badge with "3"
+      badgeColor: Colors.blue, // Custom badge color
     ),
     CNTabBarItem(
       label: 'Messages',
       icon: CNSymbol('message.fill'),
-      badge: '12',
+      hasBadge: true,
+      badgeText: '12',
+      badgeColor: Colors.orange,
+    ),
+    CNTabBarItem(
+      label: 'Notifications',
+      icon: CNSymbol('bell.fill'),
+      hasBadge: true, // Small circular indicator (no badgeText)
+      badgeColor: Colors.green,
     ),
   ],
   currentIndex: _tabIndex,
   onTap: (i) => setState(() => _tabIndex = i),
+)
+```
+
+#### Badge Features:
+- **Simple Badge Control**: Use `hasBadge: true` to show a badge indicator
+- **Text Badges**: Add `badgeText` to show text/numbers in the badge
+- **Empty Badge Indicators**: Omit `badgeText` (or leave it empty) to show a small circular dot indicator
+- **Custom Badge Colors**: Use `badgeColor` to set any badge background color
+- **Automatic Fallback**: If `badgeColor` is not specified, the badge defaults to system red
+
+#### Badge Examples:
+```dart
+// Text badge
+CNTabBarItem(
+label: 'Messages',
+icon: CNSymbol('message.fill'),
+hasBadge: true,
+badgeText: '5',
+badgeColor: Colors.red,
+)
+
+// Empty circular indicator
+CNTabBarItem(
+label: 'Notifications',
+icon: CNSymbol('bell.fill'),
+hasBadge: true, // No badgeText = small dot
+badgeColor: Colors.green,
+)
+
+// No badge
+CNTabBarItem(
+label: 'Settings',
+icon: CNSymbol('gearshape.fill'),
+hasBadge: false, // Or omit entirely (default)
 )
 ```
 

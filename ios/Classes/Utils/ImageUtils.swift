@@ -122,7 +122,13 @@ final class ImageUtils {
       image = SVGImageLoader.shared.loadSVG(from: assetPath, size: svgSize)
     } else {
       // Use UIImage for raster images (PNG, JPG, etc.)
-      image = UIImage(contentsOfFile: path)
+      let raw = UIImage(contentsOfFile: path)
+      // Scale to target size if specified; avoids oversized icons when PNG pixel dimensions exceed tab bar limits
+      if let targetSize = size, let img = raw {
+        image = scaleImage(img, to: targetSize, scale: scale)
+      } else {
+        image = raw
+      }
     }
     
     // Apply tinting if color is provided
@@ -160,7 +166,13 @@ final class ImageUtils {
       image = SVGImageLoader.shared.loadSVG(from: data, size: svgSize)
     } else {
       // Try as raster image
-      image = UIImage(data: data, scale: scale)
+      let raw = UIImage(data: data, scale: scale)
+      // Scale to target size if specified; avoids oversized icons when PNG pixel dimensions exceed tab bar limits
+      if let targetSize = size, let img = raw {
+        image = scaleImage(img, to: targetSize, scale: scale)
+      } else {
+        image = raw
+      }
     }
     
     // Apply tinting if color is provided

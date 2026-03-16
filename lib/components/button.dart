@@ -378,19 +378,10 @@ class _CNButtonState extends State<CNButton> {
       if (widget.config.imagePadding != null)
         'imagePadding': widget.config.imagePadding,
       if (effectivePadding != null) ...{
-        if (effectivePadding.top != 0.0) 'paddingTop': effectivePadding.top,
-        if (effectivePadding.bottom != 0.0)
-          'paddingBottom': effectivePadding.bottom,
-        if (effectivePadding.left != 0.0) 'paddingLeft': effectivePadding.left,
-        if (effectivePadding.right != 0.0)
-          'paddingRight': effectivePadding.right,
-        // Support horizontal/vertical as convenience
-        if (effectivePadding.left == effectivePadding.right &&
-            effectivePadding.left != 0.0)
-          'paddingHorizontal': effectivePadding.left,
-        if (effectivePadding.top == effectivePadding.bottom &&
-            effectivePadding.top != 0.0)
-          'paddingVertical': effectivePadding.top,
+        'paddingTop': effectivePadding.top,
+        'paddingBottom': effectivePadding.bottom,
+        'paddingLeft': effectivePadding.left,
+        'paddingRight': effectivePadding.right,
       },
       if (widget.config.borderRadius != null)
         'borderRadius': widget.config.borderRadius,
@@ -1104,7 +1095,7 @@ class _CNButtonState extends State<CNButton> {
         return _effectiveTint;
       case CNButtonStyle.glass:
         // For iOS < 26, approximate glass with tinted appearance
-        return _effectiveTint?.withValues(alpha: 0.1);
+        return _effectiveTint?.withOpacity(0.1);
       default:
         return null;
     }
@@ -1117,7 +1108,7 @@ class _CNButtonState extends State<CNButton> {
       case CNButtonStyle.prominentGlass:
         return _effectiveTint ?? Theme.of(context).primaryColor;
       case CNButtonStyle.glass:
-        return Theme.of(context).primaryColor.withValues(alpha: 0.1);
+        return Theme.of(context).primaryColor.withOpacity(0.1);
       default:
         return Colors.transparent;
     }

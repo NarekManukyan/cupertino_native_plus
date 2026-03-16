@@ -16,6 +16,9 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var currentSymbols: [String] = []
   private var currentActiveSymbols: [String] = []
   private var currentBadges: [String] = []
+  private var currentHasBadgeFlags: [Bool] = []
+  private var currentBadgeColors: [UIColor?] = []
+  private static let badgeViewTagBase = 0xC0FFEE
   private var currentCustomIconBytes: [Data?] = []
   private var currentActiveCustomIconBytes: [Data?] = []
   private var currentImageAssetPaths: [String] = []
@@ -28,6 +31,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var leftInsetVal: CGFloat = 0
   private var rightInsetVal: CGFloat = 0
   private var splitSpacingVal: CGFloat = 12 // Apple's recommended spacing for visual separation
+  private var currentIconSizes: [CGFloat] = [] // Track icon sizes for dynamic height calculation
+  private var containerBoundsObservation: NSKeyValueObservation?
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "CupertinoNativeTabBar_\(viewId)", binaryMessenger: messenger)
@@ -37,6 +42,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     var symbols: [String] = []
     var activeSymbols: [String] = []
     var badges: [String] = []
+    var hasBadgeFlags: [Bool] = []
+    var badgeColors: [UIColor?] = []
     var customIconBytes: [Data?] = []
     var activeCustomIconBytes: [Data?] = []
     var imageAssetPaths: [String] = []
@@ -46,7 +53,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     var imageAssetFormats: [String] = []
     var activeImageAssetFormats: [String] = []
     var iconScale: CGFloat = UIScreen.main.scale
-    var sizes: [NSNumber] = [] // ignored; use system metrics
+    var sizes: [NSNumber?] = []
     var colors: [NSNumber] = [] // ignored; use tintColor
     var selectedIndex: Int = 0
     var isDark: Bool = false
@@ -62,6 +69,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       symbols = (dict["sfSymbols"] as? [String]) ?? []
       activeSymbols = (dict["activeSfSymbols"] as? [String]) ?? []
       badges = (dict["badges"] as? [String]) ?? []
+      hasBadgeFlags = (dict["hasBadgeFlags"] as? [Bool]) ?? []
+      badgeColors = Self.parseUIColorArray(dict["badgeColors"])
       if let bytesArray = dict["customIconBytes"] as? [FlutterStandardTypedData?] {
         customIconBytes = bytesArray.map { $0?.data }
       }
@@ -81,7 +90,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       if let scale = dict["iconScale"] as? NSNumber {
         iconScale = CGFloat(truncating: scale)
       }
-      sizes = (dict["sfSymbolSizes"] as? [NSNumber]) ?? []
+      sizes = (dict["sfSymbolSizes"] as? [NSNumber?]) ?? []
       colors = (dict["sfSymbolColors"] as? [NSNumber]) ?? []
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
@@ -106,6 +115,14 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     container.backgroundColor = .clear
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
 
+    containerBoundsObservation = container.observe(\.bounds, options: [.old, .new]) { [weak self] _, change in
+      guard let self = self else { return }
+      let oldWidth = change.oldValue?.width ?? 0
+      let newWidth = change.newValue?.width ?? 0
+      guard newWidth > 0, oldWidth != newWidth else { return }
+      self.scheduleBadgeLayout()
+    }
+
     let appearance: UITabBarAppearance? = {
     if #available(iOS 13.0, *) { let ap = UITabBarAppearance(); ap.configureWithDefaultBackground(); return ap }
     return nil
@@ -115,36 +132,54 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       for i in range {
         var image: UIImage? = nil
         var selectedImage: UIImage? = nil
-        
+
+        // Extract size for this item from sizes array
+        let imgSize: CGSize? = (i < sizes.count) ? sizes[i].flatMap { $0.doubleValue > 0 ? CGSize(width: $0.doubleValue, height: $0.doubleValue) : nil } : nil
+
         // Priority: imageAsset > customIconBytes > SF Symbol
         // Unselected image
         if i < imageAssetData.count, let data = imageAssetData[i] {
-          image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: iconScale)
+          image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: iconScale, size: imgSize)
         } else if i < imageAssetPaths.count && !imageAssetPaths[i].isEmpty {
-          image = Self.loadFlutterAsset(imageAssetPaths[i])
+          image = Self.loadFlutterAsset(imageAssetPaths[i], size: imgSize)
         } else if i < customIconBytes.count, let data = customIconBytes[i] {
           image = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
         } else if i < symbols.count && !symbols[i].isEmpty {
-          image = UIImage(systemName: symbols[i])
+          // Apply size configuration if specified
+          if i < sizes.count, let sizeNum = sizes[i], sizeNum.doubleValue > 0 {
+            let config = UIImage.SymbolConfiguration(pointSize: CGFloat(sizeNum.doubleValue))
+            image = UIImage(systemName: symbols[i], withConfiguration: config)
+          } else {
+            image = UIImage(systemName: symbols[i])
+          }
         }
         
         // Selected image: Use active versions if available
         if i < activeImageAssetData.count, let data = activeImageAssetData[i] {
-          selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: iconScale)
+          selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: iconScale, size: imgSize)
         } else if i < activeImageAssetPaths.count && !activeImageAssetPaths[i].isEmpty {
-          selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i])
+          selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i], size: imgSize)
         } else if i < activeCustomIconBytes.count, let data = activeCustomIconBytes[i] {
           selectedImage = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
         } else if i < activeSymbols.count && !activeSymbols[i].isEmpty {
-          selectedImage = UIImage(systemName: activeSymbols[i])
+          // Apply size configuration if specified
+          if i < sizes.count, let sizeNum = sizes[i], sizeNum.doubleValue > 0 {
+            let config = UIImage.SymbolConfiguration(pointSize: CGFloat(sizeNum.doubleValue))
+            selectedImage = UIImage(systemName: activeSymbols[i], withConfiguration: config)
+          } else {
+            selectedImage = UIImage(systemName: activeSymbols[i])
+          }
         } else {
           selectedImage = image // Fallback to same image
         }
         
         let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
         let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-        if i < badges.count && !badges[i].isEmpty {
-          item.badgeValue = badges[i]
+        // Adjust title position for larger icons to prevent overlap
+        // Default icon size is ~25pt
+        if i < sizes.count, let sizeNum = sizes[i], sizeNum.doubleValue > 25 {
+          let offset = CGFloat(sizeNum.doubleValue - 25)
+          item.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: offset)
         }
         items.append(item)
       }
@@ -286,6 +321,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     self.currentSymbols = symbols
     self.currentActiveSymbols = activeSymbols
     self.currentBadges = badges
+    self.currentHasBadgeFlags = hasBadgeFlags
+    self.currentBadgeColors = badgeColors
     self.currentCustomIconBytes = customIconBytes
     self.currentActiveCustomIconBytes = activeCustomIconBytes
     self.currentImageAssetPaths = imageAssetPaths
@@ -297,13 +334,19 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     self.iconScale = iconScale
     self.leftInsetVal = leftInset
     self.rightInsetVal = rightInset
-channel.setMethodCallHandler { [weak self] call, result in
+    self.currentIconSizes = sizes.compactMap { $0 }.map { CGFloat(truncating: $0) }
+    channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
         if let bar = self.tabBar ?? self.tabBarLeft ?? self.tabBarRight {
           let size = bar.sizeThatFits(CGSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
-          result(["width": Double(size.width), "height": Double(size.height)])
+          // Adjust height for larger icons - default icon is ~25pt, default height is ~49pt
+          let defaultIconSize: CGFloat = 25.0
+          let maxIconSize = self.currentIconSizes.max() ?? defaultIconSize
+          let extraHeight = max(0, maxIconSize - defaultIconSize)
+          let dynamicHeight = size.height + extraHeight
+          result(["width": Double(size.width), "height": Double(dynamicHeight)])
         } else {
           result(["width": Double(self.container.bounds.width), "height": 50.0])
         }
@@ -313,6 +356,8 @@ channel.setMethodCallHandler { [weak self] call, result in
           let symbols = (args["sfSymbols"] as? [String]) ?? []
           let activeSymbols = (args["activeSfSymbols"] as? [String]) ?? []
           let badges = (args["badges"] as? [String]) ?? []
+          let hasBadgeFlags = (args["hasBadgeFlags"] as? [Bool]) ?? []
+          let badgeColors = Self.parseUIColorArray(args["badgeColors"])
           var customIconBytes: [Data?] = []
           var activeCustomIconBytes: [Data?] = []
           var imageAssetPaths: [String] = []
@@ -321,6 +366,7 @@ channel.setMethodCallHandler { [weak self] call, result in
           var activeImageAssetData: [Data?] = []
           var imageAssetFormats: [String] = []
           var activeImageAssetFormats: [String] = []
+          let sizes = (args["sfSymbolSizes"] as? [NSNumber?]) ?? []
           if let bytesArray = args["customIconBytes"] as? [FlutterStandardTypedData?] {
             customIconBytes = bytesArray.map { $0?.data }
           }
@@ -345,6 +391,8 @@ channel.setMethodCallHandler { [weak self] call, result in
           self.currentSymbols = symbols
           self.currentActiveSymbols = activeSymbols
           self.currentBadges = badges
+          self.currentHasBadgeFlags = hasBadgeFlags
+          self.currentBadgeColors = badgeColors
           self.currentCustomIconBytes = customIconBytes
           self.currentActiveCustomIconBytes = activeCustomIconBytes
           self.currentImageAssetPaths = imageAssetPaths
@@ -353,41 +401,63 @@ channel.setMethodCallHandler { [weak self] call, result in
           self.currentActiveImageAssetData = activeImageAssetData
           self.currentImageAssetFormats = imageAssetFormats
           self.currentActiveImageAssetFormats = activeImageAssetFormats
+          // Store icon sizes for dynamic height calculation
+          self.currentIconSizes = sizes.compactMap { $0?.doubleValue }.map { CGFloat($0) }
           func buildItems(_ range: Range<Int>) -> [UITabBarItem] {
             var items: [UITabBarItem] = []
             for i in range {
               var image: UIImage? = nil
               var selectedImage: UIImage? = nil
-              
+
+              // Extract size for this item from sizes array
+              let imgSize: CGSize? = (i < sizes.count) ? sizes[i].flatMap { $0.doubleValue > 0 ? CGSize(width: $0.doubleValue, height: $0.doubleValue) : nil } : nil
+
               // Priority: imageAsset > customIconBytes > SF Symbol
               // Unselected image
               if i < imageAssetData.count, let data = imageAssetData[i] {
-                image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: self.iconScale)
+                image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: self.iconScale, size: imgSize)
               } else if i < imageAssetPaths.count && !imageAssetPaths[i].isEmpty {
-                image = Self.loadFlutterAsset(imageAssetPaths[i])
+                image = Self.loadFlutterAsset(imageAssetPaths[i], size: imgSize)
               } else if i < customIconBytes.count, let data = customIconBytes[i] {
                 image = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
               } else if i < symbols.count && !symbols[i].isEmpty {
-                image = UIImage(systemName: symbols[i])
+                // Apply size configuration if specified
+                if i < sizes.count, let sizeNum = sizes[i], sizeNum.doubleValue > 0 {
+                  let config = UIImage.SymbolConfiguration(pointSize: CGFloat(sizeNum.doubleValue))
+                  image = UIImage(systemName: symbols[i], withConfiguration: config)
+                } else {
+                  image = UIImage(systemName: symbols[i])
+                }
               }
-              
+
               // Selected image: Use active versions if available
               if i < activeImageAssetData.count, let data = activeImageAssetData[i] {
-                selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: self.iconScale)
+                selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: self.iconScale, size: imgSize)
               } else if i < activeImageAssetPaths.count && !activeImageAssetPaths[i].isEmpty {
-                selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i])
+                selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i], size: imgSize)
               } else if i < activeCustomIconBytes.count, let data = activeCustomIconBytes[i] {
                 selectedImage = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
               } else if i < activeSymbols.count && !activeSymbols[i].isEmpty {
-                selectedImage = UIImage(systemName: activeSymbols[i])
+                // Apply size configuration if specified
+                if i < sizes.count, let sizeNum = sizes[i], sizeNum.doubleValue > 0 {
+                  let config = UIImage.SymbolConfiguration(pointSize: CGFloat(sizeNum.doubleValue))
+                  selectedImage = UIImage(systemName: activeSymbols[i], withConfiguration: config)
+                } else {
+                  selectedImage = UIImage(systemName: activeSymbols[i])
+                }
               } else {
                 selectedImage = image // Fallback to same image
               }
-              
+
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
+              // Adjust title position for larger icons to prevent overlap
+              if i < sizes.count, let sizeNum = sizes[i] {
+                let pointSize = sizeNum.doubleValue
+                if pointSize > 25 {
+                  let offset = CGFloat(pointSize - 25)
+                  item.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: offset)
+                }
               }
               items.append(item)
             }
@@ -403,10 +473,12 @@ channel.setMethodCallHandler { [weak self] call, result in
               let idx = selectedIndex - leftEnd
               if idx >= 0 && idx < items.count { right.selectedItem = items[idx]; left.selectedItem = nil }
             }
+            self.scheduleBadgeLayout()
             result(nil)
           } else if let bar = self.tabBar {
             bar.items = buildItems(0..<count)
             if let items = bar.items, selectedIndex >= 0, selectedIndex < items.count { bar.selectedItem = items[selectedIndex] }
+            self.scheduleBadgeLayout()
             result(nil)
           } else {
             result(FlutterError(code: "state_error", message: "Tab bars not initialized", details: nil))
@@ -441,42 +513,55 @@ channel.setMethodCallHandler { [weak self] call, result in
             if #available(iOS 13.0, *) { let ap = UITabBarAppearance(); ap.configureWithDefaultBackground(); return ap }
             return nil
           }()
+          let iconSizes = self.currentIconSizes
           func buildItems(_ range: Range<Int>) -> [UITabBarItem] {
             var items: [UITabBarItem] = []
             for i in range {
               var image: UIImage? = nil
               var selectedImage: UIImage? = nil
-              
+
+              // Extract size for this item from stored icon sizes
+              let imgSize: CGSize? = (i < iconSizes.count && iconSizes[i] > 0) ? CGSize(width: iconSizes[i], height: iconSizes[i]) : nil
+
               // Priority: imageAsset > customIconBytes > SF Symbol
               // Unselected image
               if i < imageAssetData.count, let data = imageAssetData[i] {
-                image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: self.iconScale)
+                image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: self.iconScale, size: imgSize)
               } else if i < imageAssetPaths.count && !imageAssetPaths[i].isEmpty {
-                image = Self.loadFlutterAsset(imageAssetPaths[i])
+                image = Self.loadFlutterAsset(imageAssetPaths[i], size: imgSize)
               } else if i < customIconBytes.count, let data = customIconBytes[i] {
                 image = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
               } else if i < symbols.count && !symbols[i].isEmpty {
-                image = UIImage(systemName: symbols[i])
+                // Apply size configuration if stored
+                if i < iconSizes.count && iconSizes[i] > 0 {
+                  let config = UIImage.SymbolConfiguration(pointSize: iconSizes[i])
+                  image = UIImage(systemName: symbols[i], withConfiguration: config)
+                } else {
+                  image = UIImage(systemName: symbols[i])
+                }
               }
-              
+
               // Selected image: Use active versions if available
               if i < activeImageAssetData.count, let data = activeImageAssetData[i] {
-                selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: self.iconScale)
+                selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: self.iconScale, size: imgSize)
               } else if i < activeImageAssetPaths.count && !activeImageAssetPaths[i].isEmpty {
-                selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i])
+                selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i], size: imgSize)
               } else if i < activeCustomIconBytes.count, let data = activeCustomIconBytes[i] {
                 selectedImage = UIImage(data: data, scale: self.iconScale)?.withRenderingMode(.alwaysTemplate)
               } else if i < activeSymbols.count && !activeSymbols[i].isEmpty {
-                selectedImage = UIImage(systemName: activeSymbols[i])
+                // Apply size configuration if stored
+                if i < iconSizes.count && iconSizes[i] > 0 {
+                  let config = UIImage.SymbolConfiguration(pointSize: iconSizes[i])
+                  selectedImage = UIImage(systemName: activeSymbols[i], withConfiguration: config)
+                } else {
+                  selectedImage = UIImage(systemName: activeSymbols[i])
+                }
               } else {
                 selectedImage = image // Fallback to same image
               }
               
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
-              }
               items.append(item)
             }
             return items
@@ -594,6 +679,7 @@ channel.setMethodCallHandler { [weak self] call, result in
             }
           }
           self.isSplit = split; self.rightCountVal = rightCount; self.leftInsetVal = leftInset; self.rightInsetVal = rightInset
+          self.scheduleBadgeLayout()
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing layout", details: nil)) }
       case "setSelectedIndex":
@@ -748,6 +834,130 @@ channel.setMethodCallHandler { [weak self] call, result in
         result(FlutterMethodNotImplemented)
       }
     }
+    scheduleBadgeLayout()
+  }
+
+  // MARK: - Badge Helpers
+
+  private static func parseUIColorArray(_ raw: Any?) -> [UIColor?] {
+    if raw == nil { return [] }
+    if let arr = raw as? [Any?] {
+      return arr.map { v in
+        if v == nil || v is NSNull { return nil }
+        if let n = v as? NSNumber { return Self.colorFromARGB(n.intValue) }
+        return nil
+      }
+    }
+    if let arr = raw as? [Any] {
+      return arr.map { v in
+        if v is NSNull { return nil }
+        if let n = v as? NSNumber { return Self.colorFromARGB(n.intValue) }
+        return nil
+      }
+    }
+    return []
+  }
+
+  private func isBlankBadgeText(_ text: String) -> Bool {
+    return text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+  }
+
+  /// Returns the best-guess icon frame for a given slot index.
+  private func iconAnchor(forSlot slot: Int, in bar: UITabBar, count: Int) -> CGRect {
+    guard count > 0 else { return bar.bounds }
+    let barWidth = bar.bounds.width
+    let slotWidth = barWidth / CGFloat(count)
+    let slotX = slotWidth * CGFloat(slot)
+    let slotRect = CGRect(x: slotX, y: 0, width: slotWidth, height: bar.bounds.height)
+    func findImageView(_ view: UIView) -> UIImageView? {
+      for sub in view.subviews {
+        let frame = sub.convert(sub.bounds, to: bar)
+        if frame.intersects(slotRect) {
+          if let iv = sub as? UIImageView, iv.bounds.width > 5 { return iv }
+          if let iv = findImageView(sub) { return iv }
+        }
+      }
+      return nil
+    }
+    if let iv = findImageView(bar) { return iv.convert(iv.bounds, to: bar) }
+    let topY = bar.bounds.height * 0.12
+    let iconH = bar.bounds.height * 0.4
+    return CGRect(x: slotX, y: topY, width: slotWidth, height: iconH)
+  }
+
+  private func applyBadges(to bar: UITabBar, itemOffset: Int) {
+    let count = bar.items?.count ?? 0
+    guard count > 0 else { return }
+    guard bar.bounds.width > 0 else { return }
+    for localIndex in 0..<count {
+      let globalIndex = itemOffset + localIndex
+      let tag = Self.badgeViewTagBase + globalIndex
+      let existing = bar.viewWithTag(tag)
+      let shouldShow = globalIndex < currentHasBadgeFlags.count && currentHasBadgeFlags[globalIndex]
+      let badgeText = (globalIndex < currentBadges.count) ? currentBadges[globalIndex] : ""
+      let hasText = shouldShow && !isBlankBadgeText(badgeText)
+      let wantsDotOnly = shouldShow && !hasText
+
+      if !shouldShow {
+        existing?.removeFromSuperview()
+        continue
+      }
+
+      let badgeView = existing ?? UIView(frame: .zero)
+      badgeView.tag = tag
+      badgeView.isUserInteractionEnabled = false
+      badgeView.layer.zPosition = 999
+      let rawColor = (globalIndex < currentBadgeColors.count ? currentBadgeColors[globalIndex] : nil)
+      badgeView.backgroundColor = rawColor ?? UIColor.systemRed
+      badgeView.layer.masksToBounds = true
+      badgeView.layer.borderWidth = 0
+      bar.clipsToBounds = false
+      let anchor = iconAnchor(forSlot: localIndex, in: bar, count: count)
+
+      if wantsDotOnly {
+        let size: CGFloat = 10.0
+        badgeView.layer.cornerRadius = size / 2
+        badgeView.subviews.forEach { $0.removeFromSuperview() }
+        if badgeView.superview == nil { bar.addSubview(badgeView) }
+        bar.bringSubviewToFront(badgeView)
+        badgeView.frame = CGRect(x: anchor.maxX - size / 2, y: anchor.minY - size / 2 + 4, width: size, height: size)
+      } else if hasText {
+        let label: UILabel = (badgeView.subviews.compactMap { $0 as? UILabel }.first) ?? UILabel(frame: .zero)
+        if label.superview == nil { badgeView.addSubview(label) }
+        label.text = badgeText
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        label.textAlignment = .center
+        label.sizeToFit()
+        let h: CGFloat = 18
+        let padX: CGFloat = 6
+        let w = max(h, label.bounds.width + padX * 2)
+        badgeView.layer.cornerRadius = h / 2
+        label.frame = CGRect(x: (w - label.bounds.width) / 2, y: (h - label.bounds.height) / 2, width: label.bounds.width, height: label.bounds.height)
+        if badgeView.superview == nil { bar.addSubview(badgeView) }
+        bar.bringSubviewToFront(badgeView)
+        badgeView.frame = CGRect(x: anchor.maxX - w / 2, y: anchor.minY - h / 2 + 4, width: w, height: h)
+      }
+    }
+  }
+
+  private func scheduleBadgeLayout() {
+    let apply = { [weak self] in
+      guard let self = self else { return }
+      self.container.setNeedsLayout()
+      self.container.layoutIfNeeded()
+      if let bar = self.tabBar {
+        bar.layoutIfNeeded()
+        self.applyBadges(to: bar, itemOffset: 0)
+      }
+      if let left = self.tabBarLeft, let right = self.tabBarRight {
+        left.layoutIfNeeded(); right.layoutIfNeeded()
+        self.applyBadges(to: left, itemOffset: 0)
+        self.applyBadges(to: right, itemOffset: left.items?.count ?? 0)
+      }
+    }
+    DispatchQueue.main.async(execute: apply)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: apply)
   }
 
   func view() -> UIView { container }
@@ -778,12 +988,12 @@ channel.setMethodCallHandler { [weak self] call, result in
     return ImageUtils.colorFromARGB(argb)
   }
 
-  private static func loadFlutterAsset(_ assetPath: String) -> UIImage? {
-    return ImageUtils.loadFlutterAsset(assetPath)
+  private static func loadFlutterAsset(_ assetPath: String, size: CGSize? = nil) -> UIImage? {
+    return ImageUtils.loadFlutterAsset(assetPath, size: size)
   }
 
-  private static func createImageFromData(_ data: Data, format: String?, scale: CGFloat) -> UIImage? {
-    return ImageUtils.createImageFromData(data, format: format, scale: scale)
+  private static func createImageFromData(_ data: Data, format: String?, scale: CGFloat, size: CGSize? = nil) -> UIImage? {
+    return ImageUtils.createImageFromData(data, format: format, size: size, scale: scale)
   }
 
 }
