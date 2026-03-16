@@ -20,6 +20,7 @@ class CNTabBarItem {
     this.icon,
     this.activeIcon,
     this.badge,
+    this.badgeColor,
     this.customIcon,
     this.activeCustomIcon,
     this.imageAsset,
@@ -42,6 +43,12 @@ class CNTabBarItem {
   /// dot-only indicator, or a non-empty string for badge text (e.g. a count).
   /// On iOS, this displays as a red badge; on macOS, badges are not supported.
   final String? badge;
+
+  /// Optional badge background color for this item.
+  ///
+  /// On iOS, this sets the badge background color for text badges and is also
+  /// used for dot-only badges (when [badge] is [CNTabBarItem.badgeDot]).
+  final Color? badgeColor;
 
   /// Value for [badge] that shows a dot with no number or text.
   static const String badgeDot = '';
@@ -208,6 +215,7 @@ class _CNTabBarState extends State<CNTabBar> {
   List<String>? _lastSymbols;
   List<String>? _lastActiveSymbols;
   List<String?>? _lastBadges;
+  List<int?>? _lastBadgeColors;
   bool? _lastSplit;
   int? _lastRightCount;
   double? _lastSplitSpacing;
@@ -353,7 +361,10 @@ class _CNTabBarState extends State<CNTabBar> {
         // For imageAsset, we don't need to render to bytes - native code will handle it
         customIconBytes.add(null);
       } else if (item.customIcon != null) {
-        final bytes = await iconDataToImageBytes(item.customIcon!, size: 25.0);
+        final bytes = await iconDataToImageBytes(
+          item.customIcon!,
+          size: widget.iconSize ?? 25.0,
+        );
         customIconBytes.add(bytes);
       } else {
         customIconBytes.add(null);
@@ -366,7 +377,7 @@ class _CNTabBarState extends State<CNTabBar> {
       } else if (item.activeCustomIcon != null) {
         final bytes = await iconDataToImageBytes(
           item.activeCustomIcon!,
-          size: 25.0,
+          size: widget.iconSize ?? 25.0,
         );
         activeCustomIconBytes.add(bytes);
       } else if (item.customIcon != null) {
@@ -402,6 +413,9 @@ class _CNTabBarState extends State<CNTabBar> {
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
     final badges = widget.items.map((e) => e.badge).toList();
+    final badgeColors = widget.items
+        .map((e) => resolveColorToArgb(e.badgeColor, context))
+        .toList();
 
     // Extract imageAsset data. For xcasset-backed images, we skip resolving
     // Flutter asset paths and rely solely on [xcassetName].
@@ -475,6 +489,7 @@ class _CNTabBarState extends State<CNTabBar> {
       'sfSymbols': symbols,
       'activeSfSymbols': activeSymbols,
       'badges': badges,
+      'badgeColors': badgeColors,
       'customIconBytes': customIconBytes,
       'activeCustomIconBytes': activeCustomIconBytes,
       'imageAssetPaths': imageAssetPaths,
@@ -694,21 +709,29 @@ class _CNTabBarState extends State<CNTabBar> {
           .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
           .toList();
       final badges = widget.items.map((e) => e.badge).toList();
+      final badgeColors = widget.items
+          .map((e) => resolveColorToArgb(e.badgeColor, context))
+          .toList();
 
       // Fast path: if ONLY badges changed, use lightweight setBadges method
       final badgesChanged = !listEquals(_lastBadges, badges);
+      final badgeColorsChanged = !listEquals(_lastBadgeColors, badgeColors);
       final labelsChanged = _lastLabels?.join('|') != labels.join('|');
       final symbolsChanged = _lastSymbols?.join('|') != symbols.join('|');
       final activeSymbolsChanged =
           _lastActiveSymbols?.join('|') != activeSymbols.join('|');
 
-      if (badgesChanged &&
+      if ((badgesChanged || badgeColorsChanged) &&
           !labelsChanged &&
           !symbolsChanged &&
           !activeSymbolsChanged) {
         // Only badges changed - use lightweight update
-        await ch.invokeMethod('setBadges', {'badges': badges});
+        await ch.invokeMethod('setBadges', {
+          'badges': badges,
+          'badgeColors': badgeColors,
+        });
         _lastBadges = badges;
+        _lastBadgeColors = badgeColors;
         return;
       }
 
@@ -716,11 +739,19 @@ class _CNTabBarState extends State<CNTabBar> {
       if (labelsChanged ||
           symbolsChanged ||
           activeSymbolsChanged ||
-          badgesChanged) {
+          badgesChanged ||
+          badgeColorsChanged) {
         // Re-render custom icons if items changed
         final iconBytes = await _renderCustomIcons();
         final customIconBytes = iconBytes[0];
         final activeCustomIconBytes = iconBytes[1];
+
+        final sizes = widget.items
+            .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
+            .toList();
+        final badgeColors = widget.items
+            .map((e) => resolveColorToArgb(e.badgeColor, context))
+            .toList();
 
         // Extract imageAsset properties
         final imageAssetPaths = widget.items
@@ -734,6 +765,12 @@ class _CNTabBarState extends State<CNTabBar> {
             .toList();
         final activeImageAssetData = widget.items
             .map((e) => e.activeImageAsset?.imageData)
+            .toList();
+        final imageAssetXcassetNames = widget.items
+            .map((e) => e.imageAsset?.xcassetName ?? '')
+            .toList();
+        final activeImageAssetXcassetNames = widget.items
+            .map((e) => e.activeImageAsset?.xcassetName ?? '')
             .toList();
         // Auto-detect format if not provided
         final imageAssetFormats = widget.items
@@ -764,6 +801,7 @@ class _CNTabBarState extends State<CNTabBar> {
           'sfSymbols': symbols,
           'activeSfSymbols': activeSymbols,
           'badges': badges,
+          'badgeColors': badgeColors,
           'customIconBytes': customIconBytes,
           'activeCustomIconBytes': activeCustomIconBytes,
           'imageAssetPaths': imageAssetPaths,
@@ -773,12 +811,16 @@ class _CNTabBarState extends State<CNTabBar> {
           'imageAssetFormats': imageAssetFormats,
           'activeImageAssetFormats': activeImageAssetFormats,
           'iconScale': iconScale,
+          'sfSymbolSizes': sizes,
+          'imageAssetXcassetNames': imageAssetXcassetNames,
+          'activeImageAssetXcassetNames': activeImageAssetXcassetNames,
           'selectedIndex': widget.currentIndex,
         });
         _lastLabels = labels;
         _lastSymbols = symbols;
         _lastActiveSymbols = activeSymbols;
         _lastBadges = badges;
+        _lastBadgeColors = badgeColors;
         // Re-measure width in case content changed
         _requestIntrinsicSize();
       }
@@ -831,6 +873,9 @@ class _CNTabBarState extends State<CNTabBar> {
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
     _lastBadges = widget.items.map((e) => e.badge).toList();
+    _lastBadgeColors = widget.items
+        .map((e) => resolveColorToArgb(e.badgeColor, context))
+        .toList();
     // Note: Custom icon bytes are cached in _syncPropsToNativeIfNeeded when rendered
   }
 
