@@ -146,6 +146,56 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     }
   }
 
+  /// Activates split tab bar constraints when container has a valid width to avoid
+  /// unsatisfiable constraint warnings when platform view is still at width 0.
+  private func activateSplitConstraintsIfNeeded(
+    left: UITabBar,
+    right: UITabBar,
+    count: Int,
+    rightCount: Int,
+    leftInset: CGFloat,
+    rightInset: CGFloat
+  ) {
+    guard container.bounds.width > 0 else {
+      DispatchQueue.main.async { [weak self] in
+        self?.activateSplitConstraintsIfNeeded(left: left, right: right, count: count, rightCount: rightCount, leftInset: leftInset, rightInset: rightInset)
+      }
+      return
+    }
+    let spacing = splitSpacingVal
+    let leftWidth = left.sizeThatFits(.zero).width + leftInset * 2
+    let rightWidth = right.sizeThatFits(.zero).width + rightInset * 2
+    let minItemWidth: CGFloat = 44.0
+    let adjustedRightWidth = max(rightWidth, minItemWidth * CGFloat(rightCount))
+    let adjustedLeftWidth = max(leftWidth, minItemWidth * CGFloat(count - rightCount))
+    let adjustedTotal = adjustedLeftWidth + adjustedRightWidth + spacing
+    if adjustedTotal > container.bounds.width {
+      let rightFraction = CGFloat(rightCount) / CGFloat(count)
+      NSLayoutConstraint.activate([
+        right.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -rightInset),
+        right.topAnchor.constraint(equalTo: container.topAnchor),
+        right.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        right.widthAnchor.constraint(equalTo: container.widthAnchor, multiplier: rightFraction),
+        left.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: leftInset),
+        left.trailingAnchor.constraint(equalTo: right.leadingAnchor, constant: -spacing),
+        left.topAnchor.constraint(equalTo: container.topAnchor),
+        left.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+      ])
+    } else {
+      NSLayoutConstraint.activate([
+        right.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -rightInset),
+        right.topAnchor.constraint(equalTo: container.topAnchor),
+        right.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        right.widthAnchor.constraint(equalToConstant: adjustedRightWidth),
+        left.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: leftInset),
+        left.topAnchor.constraint(equalTo: container.topAnchor),
+        left.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        left.widthAnchor.constraint(equalToConstant: adjustedLeftWidth),
+        left.trailingAnchor.constraint(lessThanOrEqualTo: right.leadingAnchor, constant: -spacing),
+      ])
+    }
+  }
+
   private func scheduleBadgeLayout() {
     let apply = { [weak self] in
       guard let self = self else { return }
@@ -370,55 +420,12 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
         left.selectedItem = nil
       }
       container.addSubview(left); container.addSubview(right)
-      // Compute content-fitting widths for both bars and apply symmetric spacing
-      let spacing: CGFloat = splitSpacingVal
-      let leftWidth = left.sizeThatFits(.zero).width + leftInset * 2
-      let rightWidth = right.sizeThatFits(.zero).width + rightInset * 2
-      let total = leftWidth + rightWidth + spacing
-      
-      // Ensure minimum width for single items to maintain circular shape
-      // Following Apple's HIG: minimum 44pt touch target, with 8pt spacing
-      let minItemWidth: CGFloat = 44.0 // Apple's minimum touch target size
-      let adjustedRightWidth = max(rightWidth, minItemWidth * CGFloat(rightCount))
-      let adjustedLeftWidth = max(leftWidth, minItemWidth * CGFloat(count - rightCount))
-      let adjustedTotal = adjustedLeftWidth + adjustedRightWidth + spacing
-      
-      // If total exceeds container, fall back to proportional widths
-      if adjustedTotal > container.bounds.width {
-        let rightFraction = CGFloat(rightCount) / CGFloat(count)
-        NSLayoutConstraint.activate([
-          right.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -rightInset),
-          right.topAnchor.constraint(equalTo: container.topAnchor),
-          right.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-          right.widthAnchor.constraint(equalTo: container.widthAnchor, multiplier: rightFraction),
-          left.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: leftInset),
-          left.trailingAnchor.constraint(equalTo: right.leadingAnchor, constant: -spacing),
-          left.topAnchor.constraint(equalTo: container.topAnchor),
-          left.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
-      } else {
-        NSLayoutConstraint.activate([
-          // Right bar fixed width, pinned to trailing
-          right.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -rightInset),
-          right.topAnchor.constraint(equalTo: container.topAnchor),
-          right.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-          right.widthAnchor.constraint(equalToConstant: adjustedRightWidth),
-          // Left bar fixed width, pinned to leading
-          left.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: leftInset),
-          left.topAnchor.constraint(equalTo: container.topAnchor),
-          left.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-          left.widthAnchor.constraint(equalToConstant: adjustedLeftWidth),
-          // Spacing between
-          left.trailingAnchor.constraint(lessThanOrEqualTo: right.leadingAnchor, constant: -spacing),
-        ])
-      }
-      // Force layout update for background and text rendering on iOS < 16
-      // Re-assign items after layout to ensure labels render properly
-      // Capture selectedIndex for restoration after item re-assignment
+      // Activate split constraints only after layout (when container has width) to avoid unsatisfiable constraint warnings
       let capturedSelectedIndex = selectedIndex
       let capturedLeftEnd = leftEnd
       DispatchQueue.main.async { [weak self, weak left, weak right] in
         guard let self = self, let left = left, let right = right else { return }
+        self.activateSplitConstraintsIfNeeded(left: left, right: right, count: count, rightCount: rightCount, leftInset: leftInset, rightInset: rightInset)
         self.container.setNeedsLayout()
         self.container.layoutIfNeeded()
         left.setNeedsLayout()
@@ -769,49 +776,11 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
             if selectedIndex < leftEnd, let items = left.items { left.selectedItem = items[selectedIndex]; right.selectedItem = nil }
             else if let items = right.items { let idx = selectedIndex - leftEnd; if idx >= 0 && idx < items.count { right.selectedItem = items[idx]; left.selectedItem = nil } }
             self.container.addSubview(left); self.container.addSubview(right)
-            let spacing: CGFloat = splitSpacingVal
-            let leftWidth = left.sizeThatFits(.zero).width + leftInset * 2
-            let rightWidth = right.sizeThatFits(.zero).width + rightInset * 2
-            let total = leftWidth + rightWidth + spacing
-            
-            // Ensure minimum width for single items to maintain circular shape
-            let minItemWidth: CGFloat = 50.0 // Minimum width per item
-            let adjustedRightWidth = max(rightWidth, minItemWidth * CGFloat(rightCount))
-            let adjustedLeftWidth = max(leftWidth, minItemWidth * CGFloat(count - rightCount))
-            let adjustedTotal = adjustedLeftWidth + adjustedRightWidth + spacing
-            
-            if adjustedTotal > self.container.bounds.width {
-              let rightFraction = CGFloat(rightCount) / CGFloat(count)
-              NSLayoutConstraint.activate([
-                right.trailingAnchor.constraint(equalTo: self.container.trailingAnchor, constant: -rightInset),
-                right.topAnchor.constraint(equalTo: self.container.topAnchor),
-                right.bottomAnchor.constraint(equalTo: self.container.bottomAnchor),
-                right.widthAnchor.constraint(equalTo: self.container.widthAnchor, multiplier: rightFraction),
-                left.leadingAnchor.constraint(equalTo: self.container.leadingAnchor, constant: leftInset),
-                left.trailingAnchor.constraint(equalTo: right.leadingAnchor, constant: -spacing),
-                left.topAnchor.constraint(equalTo: self.container.topAnchor),
-                left.bottomAnchor.constraint(equalTo: self.container.bottomAnchor),
-              ])
-            } else {
-              NSLayoutConstraint.activate([
-                right.trailingAnchor.constraint(equalTo: self.container.trailingAnchor, constant: -rightInset),
-                right.topAnchor.constraint(equalTo: self.container.topAnchor),
-                right.bottomAnchor.constraint(equalTo: self.container.bottomAnchor),
-                right.widthAnchor.constraint(equalToConstant: adjustedRightWidth),
-                left.leadingAnchor.constraint(equalTo: self.container.leadingAnchor, constant: leftInset),
-                left.topAnchor.constraint(equalTo: self.container.topAnchor),
-                left.bottomAnchor.constraint(equalTo: self.container.bottomAnchor),
-                left.widthAnchor.constraint(equalToConstant: adjustedLeftWidth),
-                left.trailingAnchor.constraint(lessThanOrEqualTo: right.leadingAnchor, constant: -spacing),
-              ])
-            }
-            // Force layout update for background and text rendering on iOS < 16
-            // Re-assign items after layout to ensure labels render properly
-            // Capture selectedIndex for restoration after item re-assignment
             let capturedSelectedIndex = selectedIndex
             let capturedLeftEnd = leftEnd
             DispatchQueue.main.async { [weak self, weak left, weak right] in
               guard let self = self, let left = left, let right = right else { return }
+              self.activateSplitConstraintsIfNeeded(left: left, right: right, count: count, rightCount: rightCount, leftInset: leftInset, rightInset: rightInset)
               self.container.setNeedsLayout()
               self.container.layoutIfNeeded()
               left.setNeedsLayout()
