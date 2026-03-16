@@ -55,6 +55,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   Axis? _lastAxis;
   double? _lastSpacing;
   double? _lastSpacingForGlass;
+  Future<List<Map<String, dynamic>>>? _buttonsFuture;
 
   @override
   void didUpdateWidget(covariant CNGlassButtonGroup oldWidget) {
@@ -82,11 +83,12 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   Widget _buildNativeGroup(BuildContext context) {
     const viewType = 'CupertinoNativeGlassButtonGroup';
 
-    // Convert buttons to maps asynchronously if needed
+    _buttonsFuture ??= Future.wait(
+      widget.buttons.map((button) => _buttonToMapAsync(button, context)),
+    );
+
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: Future.wait(
-        widget.buttons.map((button) => _buttonToMapAsync(button, context)),
-      ),
+      future: _buttonsFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SizedBox.shrink();
