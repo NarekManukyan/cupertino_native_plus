@@ -4,7 +4,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/button_style.dart';
+import '../utils/platform_view_builder.dart';
 import '../style/sf_symbol.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
@@ -313,7 +315,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
     BuildContext context, {
     Map<String, dynamic>? customIconData,
   }) async {
-    const viewType = 'CupertinoNativePopupMenuButton';
+    const viewType = ViewTypes.cupertinoNativePopupMenuButton;
 
     // Capture all context-derived values before any async operations
     final capturedIsDark = _isDark;
@@ -521,27 +523,18 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       '$_isDark',
     );
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            key: viewKey,
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          )
-        : AppKitView(
-            key: viewKey,
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          );
+    final platformView = KeyedSubtree(
+      key: viewKey,
+      child: buildCupertinoPlatformView(
+        context,
+        viewType: viewType,
+        creationParams: creationParams,
+        onPlatformViewCreated: _onCreated,
+        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+          Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+        },
+      ),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -590,7 +583,10 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
   }
 
   void _onCreated(int id) {
-    final ch = MethodChannel('CupertinoNativePopupMenuButton_$id');
+    final ch = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativePopupMenuButton,
+      id,
+    );
     _channel = ch;
     ch.setMethodCallHandler(_onMethodCall);
     _lastTint = resolveColorToArgb(_effectiveTint, context);

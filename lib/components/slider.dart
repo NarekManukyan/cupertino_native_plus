@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import '../channel/params.dart';
+import '../channel/view_types.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/version_detector.dart';
 import '../utils/theme_helper.dart';
 
@@ -195,7 +197,7 @@ class _CNSliderState extends State<CNSlider> {
       );
     }
 
-    const viewType = 'CupertinoNativeSlider';
+    const viewType = ViewTypes.cupertinoNativeSlider;
     final creationParams = <String, dynamic>{
       'min': widget.min,
       'max': widget.max,
@@ -212,54 +214,32 @@ class _CNSliderState extends State<CNSlider> {
       if (widget.step != null) 'step': widget.step,
     };
 
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return ClipRect(
-        child: SizedBox(
-          height: widget.height,
-          width: double.infinity,
-          child: UiKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-            // Forward horizontal drags and taps to the native slider so it
-            // works correctly inside Flutter scroll views.
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              Factory<HorizontalDragGestureRecognizer>(
-                () => HorizontalDragGestureRecognizer(),
-              ),
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          ),
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
         ),
-      );
-    }
-
-    // macOS
+        Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+      },
+    );
     return ClipRect(
       child: SizedBox(
         height: widget.height,
         width: double.infinity,
-        // AppKitView is available on macOS to host NSView platform views.
-        child: AppKitView(
-          viewType: viewType,
-          creationParamsCodec: const StandardMessageCodec(),
-          creationParams: creationParams,
-          onPlatformViewCreated: _onPlatformViewCreated,
-          // Mirror iOS behavior: allow horizontal drag/tap gestures through.
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-            Factory<HorizontalDragGestureRecognizer>(
-              () => HorizontalDragGestureRecognizer(),
-            ),
-            Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-          },
-        ),
+        child: platformView,
       ),
     );
   }
 
   void _onPlatformViewCreated(int id) {
-    final channel = MethodChannel('CupertinoNativeSlider_$id');
+    final channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeSlider,
+      id,
+    );
     _channel = channel;
     _controller._attach(channel);
     channel.setMethodCallHandler(_onMethodCall);

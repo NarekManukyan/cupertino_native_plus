@@ -41,52 +41,9 @@ final class ImageUtils {
   
   // MARK: - Image Format Detection
   
-  /// Detects image format from file path or provided format string
-  /// - Parameters:
-  ///   - assetPath: Optional asset path to check extension
-  ///   - providedFormat: Optional format string that was explicitly provided
-  ///   - imageData: Optional image data to check magic bytes
-  /// - Returns: Format string ("svg", "png", "jpg", "jpeg") or nil if unknown
+  /// Detects image format from file path or provided format string. Uses shared ImageFormatDetection.
   static func detectImageFormat(assetPath: String?, providedFormat: String? = nil, imageData: Data? = nil) -> String? {
-    // First, use provided format if available
-    if let format = providedFormat?.lowercased() {
-      return format
-    }
-    
-    // Then, try to detect from file extension
-    if let path = assetPath {
-      let lowerPath = path.lowercased()
-      if lowerPath.hasSuffix(".svg") {
-        return "svg"
-      } else if lowerPath.hasSuffix(".png") {
-        return "png"
-      } else if lowerPath.hasSuffix(".jpg") || lowerPath.hasSuffix(".jpeg") {
-        return "jpg"
-      }
-    }
-    
-    // If no path or extension doesn't match, try magic bytes from data
-    if let data = imageData, data.count >= 4 {
-      let bytes = [UInt8](data.prefix(4))
-      
-      // PNG magic bytes: 89 50 4E 47
-      if bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 {
-        return "png"
-      }
-      
-      // JPEG magic bytes: FF D8 FF
-      if bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF {
-        return "jpg"
-      }
-      
-      // SVG magic bytes: Check for XML declaration or <svg tag
-      if let string = String(data: data.prefix(1024), encoding: .utf8),
-         (string.hasPrefix("<?xml") || string.trimmingCharacters(in: .whitespaces).hasPrefix("<svg")) {
-        return "svg"
-      }
-    }
-    
-    return nil
+    ImageFormatDetection.detect(assetPath: assetPath, providedFormat: providedFormat, imageData: imageData)
   }
   
   // MARK: - Image Loading

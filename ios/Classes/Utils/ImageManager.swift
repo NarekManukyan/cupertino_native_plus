@@ -126,9 +126,9 @@ final class ImageManager {
     }
 
     private func setupCache() {
-        cache.countLimit = 100
-        cache.totalCostLimit = 50 * 1024 * 1024
-        cache.name = "com.cupertino_native_better.ImageManager"
+        cache.countLimit = ImageManagerConfig.countLimit
+        cache.totalCostLimit = ImageManagerConfig.totalCostLimit
+        cache.name = ImageManagerConfig.cacheName
     }
 
     private func setupMemoryWarningObserver() {

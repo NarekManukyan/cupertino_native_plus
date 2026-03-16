@@ -14,7 +14,7 @@ class CupertinoIconNSView: NSView {
   private var gradientEnabled: Bool = false
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeIcon_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeIcon)_\(viewId)", binaryMessenger: messenger)
     self.imageView = NSImageView(frame: .zero)
 
     if let dict = args as? [String: Any] {
@@ -22,8 +22,8 @@ class CupertinoIconNSView: NSView {
       if let b = dict["isDark"] as? NSNumber { self.isDark = b.boolValue }
       if let style = dict["style"] as? [String: Any] {
         if let v = style["iconSize"] as? NSNumber { self.size = CGFloat(truncating: v) }
-        if let v = style["iconColor"] as? NSNumber { self.color = Self.colorFromARGB(v.intValue) }
-        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.palette = arr.map { Self.colorFromARGB($0.intValue) } }
+        if let v = style["iconColor"] as? NSNumber { self.color = ImageUtils.colorFromARGB(v.intValue) }
+        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.palette = arr.map { ImageUtils.colorFromARGB($0.intValue) } }
         if let mode = style["iconRenderingMode"] as? String { self.renderingMode = mode }
         if let g = style["iconGradientEnabled"] as? NSNumber { self.gradientEnabled = g.boolValue }
       }
@@ -65,8 +65,8 @@ class CupertinoIconNSView: NSView {
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if let v = args["iconSize"] as? NSNumber { self.size = CGFloat(truncating: v) }
-          if let v = args["iconColor"] as? NSNumber { self.color = Self.colorFromARGB(v.intValue) }
-          if let arr = args["iconPaletteColors"] as? [NSNumber] { self.palette = arr.map { Self.colorFromARGB($0.intValue) } }
+          if let v = args["iconColor"] as? NSNumber { self.color = ImageUtils.colorFromARGB(v.intValue) }
+          if let arr = args["iconPaletteColors"] as? [NSNumber] { self.palette = arr.map { ImageUtils.colorFromARGB($0.intValue) } }
           if let mode = args["iconRenderingMode"] as? String { self.renderingMode = mode }
           if let g = args["iconGradientEnabled"] as? NSNumber { self.gradientEnabled = g.boolValue }
           // Handle SF Symbol name in style update to prevent disappearing icons
@@ -151,12 +151,3 @@ private extension NSImage {
   }
 }
 
-private extension CupertinoIconNSView {
-  static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
-  }
-}

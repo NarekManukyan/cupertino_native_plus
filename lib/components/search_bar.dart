@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/glass_effect.dart';
+import '../utils/platform_view_builder.dart';
+import '../utils/theme_helper.dart';
 import '../style/sf_symbol.dart';
 import '../utils/version_detector.dart';
 import 'liquid_glass_container.dart';
@@ -247,7 +249,7 @@ class _CNSearchBarState extends State<CNSearchBar>
   }
 
   void _onPlatformViewCreated(int id) {
-    final ch = MethodChannel('CNSearchBar_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cnSearchBar, id);
     _channel = ch;
     _controller._attach(ch);
     ch.setMethodCallHandler(_onMethodCall);
@@ -352,7 +354,7 @@ class _CNSearchBarState extends State<CNSearchBar>
   }
 
   Widget _buildNativeSearchBar(BuildContext context) {
-    const viewType = 'CNSearchBar';
+    const viewType = ViewTypes.cnSearchBar;
     final creationParams = <String, dynamic>{
       'placeholder': widget.placeholder,
       'expandable': widget.expandable,
@@ -368,22 +370,15 @@ class _CNSearchBarState extends State<CNSearchBar>
       'autofocus': widget.autofocus,
       'searchIconName': widget.searchIcon?.name ?? 'magnifyingglass',
       'clearIconName': widget.clearIcon?.name ?? 'xmark.circle.fill',
-      'isDark': Theme.of(context).brightness == Brightness.dark,
+      'isDark': ThemeHelper.isDark(context),
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onPlatformViewCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onPlatformViewCreated,
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     return AnimatedBuilder(
       animation: _expandAnimation,

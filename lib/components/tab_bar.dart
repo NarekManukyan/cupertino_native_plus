@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../style/tab_bar_search_item.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/version_detector.dart';
@@ -489,7 +491,7 @@ class _CNTabBarState extends State<CNTabBar> {
       },
     };
 
-    return _buildNativeTabBarPlatformView(creationParams);
+    return _buildNativeTabBarPlatformView(context, creationParams);
   }
 
   Map<String, dynamic> _buildSearchStyleParams(BuildContext context) {
@@ -544,22 +546,16 @@ class _CNTabBarState extends State<CNTabBar> {
   }
 
   Future<Widget> _buildNativeTabBarPlatformView(
+    BuildContext context,
     Map<String, dynamic> creationParams,
   ) async {
-    final viewType = 'CupertinoNativeTabBar';
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          );
+    final viewType = ViewTypes.cupertinoNativeTabBar;
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onCreated,
+    );
 
     final h = widget.height ?? _intrinsicHeight ?? 50.0;
     if (!widget.split && widget.shrinkCentered) {
@@ -574,7 +570,7 @@ class _CNTabBarState extends State<CNTabBar> {
   }
 
   void _onCreated(int id) {
-    final ch = MethodChannel('CupertinoNativeTabBar_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cupertinoNativeTabBar, id);
     _channel = ch;
     ch.setMethodCallHandler(_onMethodCall);
     _lastIndex = widget.currentIndex;

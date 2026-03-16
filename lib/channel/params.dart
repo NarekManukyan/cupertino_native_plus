@@ -1,4 +1,16 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+
+/// Shared types and encoding for platform view creation params.
+///
+/// Common param keys sent to native (keep in sync with Swift ChannelConstants / view parsers):
+/// - **Style (ARGB ints):** `tint`, `thumbTint`, `trackTint`, `trackBackgroundTint`, `iconColor`, `backgroundColor`
+/// - **Layout:** `cornerRadius`, `effect`, `shape`, `interactive`, `isDark`
+/// - **Control state:** `value`, `min`, `max`, `enabled`, `step`, `selectedIndex`
+/// Use [encodeStyle] and [resolveColorToArgb] for style maps so keys stay consistent.
+
+/// Codec used for platform view creation params. Use with [UiKitView] / [AppKitView].
+const StandardMessageCodec creationParamsCodec = StandardMessageCodec();
 
 /// Converts a [Color] to ARGB int (0xAARRGGBB). Private helper.
 int? _argbFromColor(Color? color) {

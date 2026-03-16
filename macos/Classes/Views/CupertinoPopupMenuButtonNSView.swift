@@ -16,7 +16,7 @@ class CupertinoPopupMenuButtonNSView: NSView {
   private var defaultGradients: [NSNumber?] = []
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativePopupMenuButton_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativePopupMenuButton)_\(viewId)", binaryMessenger: messenger)
     self.button = NSButton(title: "", target: nil, action: nil)
     super.init(frame: .zero)
 
@@ -41,11 +41,11 @@ class CupertinoPopupMenuButtonNSView: NSView {
       if let t = dict["buttonTitle"] as? String { title = t }
       if let s = dict["buttonIconName"] as? String { iconName = s }
       if let s = dict["buttonIconSize"] as? NSNumber { iconSize = CGFloat(truncating: s) }
-      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = Self.colorFromARGB(c.intValue) }
+      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = ImageUtils.colorFromARGB(c.intValue) }
       if let r = dict["round"] as? NSNumber { makeRound = r.boolValue }
       if let bs = dict["buttonStyle"] as? String { buttonStyle = bs }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
-      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
+      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
       labels = (dict["labels"] as? [String]) ?? []
       symbols = (dict["sfSymbols"] as? [String]) ?? []
       dividers = (dict["isDivider"] as? [NSNumber]) ?? []
@@ -78,7 +78,7 @@ class CupertinoPopupMenuButtonNSView: NSView {
           }
         case "palette":
           if #available(macOS 12.0, *), !buttonIconPalette.isEmpty {
-            let cols = buttonIconPalette.map { Self.colorFromARGB($0.intValue) }
+            let cols = buttonIconPalette.map { ImageUtils.colorFromARGB($0.intValue) }
             let cfg = NSImage.SymbolConfiguration(paletteColors: cols)
             image = image.withSymbolConfiguration(cfg) ?? image
           }
@@ -164,7 +164,7 @@ class CupertinoPopupMenuButtonNSView: NSView {
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if #available(macOS 10.14, *), let n = args["tint"] as? NSNumber {
-            let color = Self.colorFromARGB(n.intValue)
+            let color = ImageUtils.colorFromARGB(n.intValue)
             if ["filled", "borderedProminent", "prominentGlass"].contains(buttonStyle) {
               self.button.bezelColor = color
               self.button.contentTintColor = .white
@@ -201,12 +201,12 @@ class CupertinoPopupMenuButtonNSView: NSView {
               switch mode {
               case "hierarchical":
                 if #available(macOS 12.0, *), let c = args["buttonIconColor"] as? NSNumber {
-                  let cfg = NSImage.SymbolConfiguration(hierarchicalColor: Self.colorFromARGB(c.intValue))
+                  let cfg = NSImage.SymbolConfiguration(hierarchicalColor: ImageUtils.colorFromARGB(c.intValue))
                   image = image.withSymbolConfiguration(cfg) ?? image
                 }
               case "palette":
                 if #available(macOS 12.0, *), let pal = args["buttonIconPaletteColors"] as? [NSNumber] {
-                  let cols = pal.map { Self.colorFromARGB($0.intValue) }
+                  let cols = pal.map { ImageUtils.colorFromARGB($0.intValue) }
                   let cfg = NSImage.SymbolConfiguration(paletteColors: cols)
                   image = image.withSymbolConfiguration(cfg) ?? image
                 }
@@ -219,7 +219,7 @@ class CupertinoPopupMenuButtonNSView: NSView {
                 break
               }
             } else if let c = args["buttonIconColor"] as? NSNumber {
-              image = image.tinted(with: Self.colorFromARGB(c.intValue))
+              image = image.tinted(with: ImageUtils.colorFromARGB(c.intValue))
             }
             self.button.image = image
             self.button.imagePosition = .imageOnly
@@ -281,13 +281,13 @@ class CupertinoPopupMenuButtonNSView: NSView {
             switch mode {
             case "hierarchical":
               if let colors = defaultColors, i < colors.count {
-                let c = Self.colorFromARGB(colors[i].intValue)
+                let c = ImageUtils.colorFromARGB(colors[i].intValue)
                 let cfg = NSImage.SymbolConfiguration(hierarchicalColor: c)
                 img = img.withSymbolConfiguration(cfg) ?? img
               }
             case "palette":
               if i < defaultPalettes.count, !defaultPalettes[i].isEmpty {
-                let cols = defaultPalettes[i].map { Self.colorFromARGB($0.intValue) }
+                let cols = defaultPalettes[i].map { ImageUtils.colorFromARGB($0.intValue) }
                 let cfg = NSImage.SymbolConfiguration(paletteColors: cols)
                 img = img.withSymbolConfiguration(cfg) ?? img
               }
@@ -296,14 +296,14 @@ class CupertinoPopupMenuButtonNSView: NSView {
               img = img.withSymbolConfiguration(cfg) ?? img
             case "monochrome":
               if let colors = defaultColors, i < colors.count {
-                let c = Self.colorFromARGB(colors[i].intValue)
+                let c = ImageUtils.colorFromARGB(colors[i].intValue)
                 img = img.tinted(with: c)
               }
             default:
               break
             }
           } else if #available(macOS 12.0, *), let colors = defaultColors, i < colors.count {
-            let c = Self.colorFromARGB(colors[i].intValue)
+            let c = ImageUtils.colorFromARGB(colors[i].intValue)
             let cfg = NSImage.SymbolConfiguration(hierarchicalColor: c)
             img = img.withSymbolConfiguration(cfg) ?? img
           }
@@ -318,13 +318,6 @@ class CupertinoPopupMenuButtonNSView: NSView {
     channel.invokeMethod("itemSelected", arguments: ["index": sender.tag])
   }
 
-  private static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
-  }
 }
 
 private extension NSImage {

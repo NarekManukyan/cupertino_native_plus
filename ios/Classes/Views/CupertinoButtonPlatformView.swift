@@ -11,10 +11,11 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private var currentButtonStyle: String = "automatic"
   private var usesSwiftUI: Bool = false
   private var makeRound: Bool = false
+  private var currentTint: UIColor?
   private var currentTintWhenGlassInverted: UIColor?
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeButton_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeButton)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.button = UIButton(type: .system)
 
@@ -61,13 +62,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let f = dict["buttonImageFormat"] as? String { imageFormat = f }
       if let s = dict["buttonIconName"] as? String { iconName = s }
       if let s = dict["buttonIconSize"] as? NSNumber { iconSize = CGFloat(truncating: s) }
-      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = Self.colorFromARGB(c.intValue) }
+      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = ImageUtils.colorFromARGB(c.intValue) }
       if let r = dict["round"] as? NSNumber {
         makeRound = r.boolValue
         self.makeRound = makeRound
       }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
-      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
+      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
       if let bs = dict["buttonStyle"] as? String { buttonStyle = bs }
       if let e = dict["enabled"] as? NSNumber { enabled = e.boolValue }
       if let m = dict["buttonIconRenderingMode"] as? String { iconMode = m }
@@ -85,10 +86,11 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let gueId = dict["glassEffectUnionId"] as? String { glassEffectUnionId = gueId }
       if let geId = dict["glassEffectId"] as? String { glassEffectId = geId }
       if let geInteractive = dict["glassEffectInteractive"] as? NSNumber { glassEffectInteractive = geInteractive.boolValue }
-      if let n = dict["tintWhenGlassInverted"] as? NSNumber { tintWhenGlassInverted = Self.colorFromARGB(n.intValue) }
+      if let n = dict["tintWhenGlassInverted"] as? NSNumber { tintWhenGlassInverted = ImageUtils.colorFromARGB(n.intValue) }
     }
 
     super.init()
+    self.currentTint = tint
     self.currentTintWhenGlassInverted = tintWhenGlassInverted
 
     container.backgroundColor = .clear
@@ -163,7 +165,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           }
         case "palette":
           if #available(iOS 15.0, *), !iconPalette.isEmpty {
-            let cols = iconPalette.map { Self.colorFromARGB($0.intValue) }
+            let cols = iconPalette.map { ImageUtils.colorFromARGB($0.intValue) }
             let cfg = UIImage.SymbolConfiguration(paletteColors: cols)
             image = image.applyingSymbolConfiguration(cfg) ?? image
           }
@@ -218,8 +220,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       self.button = uiButton
       
       uiButton.translatesAutoresizingMaskIntoConstraints = false
-      if let t = tint { uiButton.tintColor = t }
-      else if #available(iOS 13.0, *) { uiButton.tintColor = .label }
+      // For glass style with no tint (only tintWhenGlassInverted): leave tintColor unset so
+      // UIButton.Configuration.glass() can adapt icon/label when content behind glass changes.
+      if let t = tint {
+        uiButton.tintColor = t
+      } else if buttonStyle != "glass" || tintWhenGlassInverted == nil {
+        if #available(iOS 13.0, *) { uiButton.tintColor = .label }
+      }
 
       container.addSubview(uiButton)
       NSLayoutConstraint.activate([
@@ -300,16 +307,15 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if let n = args["tintWhenGlassInverted"] as? NSNumber {
-            self.currentTintWhenGlassInverted = Self.colorFromARGB(n.intValue)
+            self.currentTintWhenGlassInverted = ImageUtils.colorFromARGB(n.intValue)
+          }
+          if let n = args["tint"] as? NSNumber {
+            self.currentTint = ImageUtils.colorFromARGB(n.intValue)
           }
           if usesSwiftUI {
-            // SwiftUI button uses tintWhenGlassInverted from creation params; updates via setStyle not applied to SwiftUI path
             result(nil)
-          } else if let button = self.button {
-            if let n = args["tint"] as? NSNumber {
-              let tintColor = Self.colorFromARGB(n.intValue)
-              let isDark = self.container.traitCollection.userInterfaceStyle == .dark
-              button.tintColor = (isDark && self.currentTintWhenGlassInverted != nil) ? self.currentTintWhenGlassInverted! : tintColor
+          } else if self.button != nil {
+            if args["tint"] != nil || args["tintWhenGlassInverted"] != nil {
               self.applyButtonStyle(buttonStyle: self.currentButtonStyle, round: self.makeRound)
             }
             if let bs = args["buttonStyle"] as? String {
@@ -401,12 +407,12 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
               switch mode {
               case "hierarchical":
                 if #available(iOS 15.0, *), let c = args["buttonIconColor"] as? NSNumber {
-                  let cfg = UIImage.SymbolConfiguration(hierarchicalColor: Self.colorFromARGB(c.intValue))
+                  let cfg = UIImage.SymbolConfiguration(hierarchicalColor: ImageUtils.colorFromARGB(c.intValue))
                   image = img.applyingSymbolConfiguration(cfg) ?? img
                 }
               case "palette":
                 if #available(iOS 15.0, *), let pal = args["buttonIconPaletteColors"] as? [NSNumber] {
-                  let cols = pal.map { Self.colorFromARGB($0.intValue) }
+                  let cols = pal.map { ImageUtils.colorFromARGB($0.intValue) }
                   let cfg = UIImage.SymbolConfiguration(paletteColors: cols)
                   image = img.applyingSymbolConfiguration(cfg) ?? img
                 }
@@ -417,13 +423,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
                 }
               case "monochrome":
                 if let c = args["buttonIconColor"] as? NSNumber, #available(iOS 13.0, *) {
-                  image = img.withTintColor(Self.colorFromARGB(c.intValue), renderingMode: .alwaysOriginal)
+                  image = img.withTintColor(ImageUtils.colorFromARGB(c.intValue), renderingMode: .alwaysOriginal)
                 }
               default:
                 break
               }
             } else if let c = args["buttonIconColor"] as? NSNumber, let img = image, #available(iOS 13.0, *) {
-              image = img.withTintColor(Self.colorFromARGB(c.intValue), renderingMode: .alwaysOriginal)
+              image = img.withTintColor(ImageUtils.colorFromARGB(c.intValue), renderingMode: .alwaysOriginal)
             }
           }
           
@@ -643,9 +649,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 
   private func applyButtonStyle(buttonStyle: String, round: Bool) {
     guard let button = self.button, !usesSwiftUI else { return }
@@ -679,18 +682,35 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         config = .plain()
       }
       config.cornerStyle = round ? .capsule : .dynamic
-      // Apply theme tint to configuration in a platform-standard way
-      if let tint = button.tintColor {
+      // Apply theme tint to configuration in a platform-standard way.
+      // For glass with no explicit tint (only tintWhenGlassInverted): don't set baseForegroundColor
+      // so UIButton.Configuration.glass() can adapt icon/label when content behind glass changes.
+      let isDark = container.traitCollection.userInterfaceStyle == .dark
+      let effectiveTint: UIColor? = {
         switch buttonStyle {
         case "filled", "borderedProminent", "prominentGlass":
-          // Treat prominentGlass like filled: color the background and let system pick readable foreground
+          return button.tintColor
+        case "tinted", "bordered", "gray", "plain", "glass":
+          if buttonStyle == "glass", currentTint == nil, let inverted = currentTintWhenGlassInverted {
+            return isDark ? inverted : nil
+          }
+          return button.tintColor
+        default:
+          return nil
+        }
+      }()
+      if let tint = effectiveTint {
+        switch buttonStyle {
+        case "filled", "borderedProminent", "prominentGlass":
           config.baseBackgroundColor = tint
         case "tinted", "bordered", "gray", "plain", "glass":
-          // Foreground-only tint
           config.baseForegroundColor = tint
+          button.tintColor = tint
         default:
           break
         }
+      } else if buttonStyle == "glass" {
+        button.tintColor = nil
       }
       // Restore content after style swap
       config.title = currentTitle

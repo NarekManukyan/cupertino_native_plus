@@ -10,7 +10,7 @@ class CupertinoSliderPlatformView: NSObject, FlutterPlatformView {
   private var step: Double = 0 // 0 = no stepping
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeSlider_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSlider)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.slider = UISlider(frame: .zero)
     self.minValue = 0
@@ -33,10 +33,10 @@ class CupertinoSliderPlatformView: NSObject, FlutterPlatformView {
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
       if let v = dict["step"] as? NSNumber { step = v.doubleValue }
       if let style = dict["style"] as? [String: Any] {
-        if let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
-        if let n = style["thumbTint"] as? NSNumber { thumbTint = Self.colorFromARGB(n.intValue) }
-        if let n = style["trackTint"] as? NSNumber { trackTint = Self.colorFromARGB(n.intValue) }
-        if let n = style["trackBackgroundTint"] as? NSNumber { trackBgTint = Self.colorFromARGB(n.intValue) }
+        if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["thumbTint"] as? NSNumber { thumbTint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["trackTint"] as? NSNumber { trackTint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["trackBackgroundTint"] as? NSNumber { trackBgTint = ImageUtils.colorFromARGB(n.intValue) }
       }
     }
 
@@ -96,11 +96,11 @@ class CupertinoSliderPlatformView: NSObject, FlutterPlatformView {
         } else { result(FlutterError(code: "bad_args", message: "Missing enabled", details: nil)) }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
-          if let n = args["trackTint"] as? NSNumber { self.slider.minimumTrackTintColor = Self.colorFromARGB(n.intValue) }
-          if let n = args["trackBackgroundTint"] as? NSNumber { self.slider.maximumTrackTintColor = Self.colorFromARGB(n.intValue) }
-          if let n = args["thumbTint"] as? NSNumber { self.slider.thumbTintColor = Self.colorFromARGB(n.intValue) }
+          if let n = args["trackTint"] as? NSNumber { self.slider.minimumTrackTintColor = ImageUtils.colorFromARGB(n.intValue) }
+          if let n = args["trackBackgroundTint"] as? NSNumber { self.slider.maximumTrackTintColor = ImageUtils.colorFromARGB(n.intValue) }
+          if let n = args["thumbTint"] as? NSNumber { self.slider.thumbTintColor = ImageUtils.colorFromARGB(n.intValue) }
           if let n = args["tint"] as? NSNumber {
-            let c = Self.colorFromARGB(n.intValue)
+            let c = ImageUtils.colorFromARGB(n.intValue)
             if self.slider.minimumTrackTintColor == nil { self.slider.minimumTrackTintColor = c }
             if self.slider.thumbTintColor == nil { self.slider.thumbTintColor = c }
           }
@@ -140,7 +140,4 @@ class CupertinoSliderPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 }

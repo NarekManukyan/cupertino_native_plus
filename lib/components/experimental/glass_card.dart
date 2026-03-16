@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../channel/params.dart';
+import '../../channel/view_types.dart';
 import '../../style/glass_effect.dart';
 import '../../style/spotlight_mode.dart';
-import '../../channel/params.dart';
+import '../../utils/theme_helper.dart';
 import '../../utils/version_detector.dart';
 import '../liquid_glass_container.dart';
 
@@ -115,7 +117,7 @@ class _CNGlassCardState extends State<CNGlassCard>
   }
 
   void _onPlatformViewCreated(int id) {
-    final ch = MethodChannel('CNGlassCard_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cnGlassCard, id);
     _channel = ch;
     ch.setMethodCallHandler(_onMethodCall);
   }
@@ -243,7 +245,7 @@ class _CNGlassCardState extends State<CNGlassCard>
   }
 
   Widget _buildNativePlatformView(BuildContext context, Color spotlightColor) {
-    const viewType = 'CNGlassCardWithSpotlight';
+    const viewType = ViewTypes.cnGlassCardWithSpotlight;
     final creationParams = <String, dynamic>{
       'cornerRadius': widget.cornerRadius,
       'tint': resolveColorToArgb(widget.tint, context),
@@ -253,7 +255,7 @@ class _CNGlassCardState extends State<CNGlassCard>
       'spotlightColor': resolveColorToArgb(spotlightColor, context),
       'spotlightIntensity': widget.spotlightIntensity,
       'spotlightRadius': widget.spotlightRadius,
-      'isDark': Theme.of(context).brightness == Brightness.dark,
+      'isDark': ThemeHelper.isDark(context),
     };
 
     final platformView = defaultTargetPlatform == TargetPlatform.iOS

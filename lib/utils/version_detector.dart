@@ -62,43 +62,31 @@ class PlatformVersion {
     ensureInitialized();
   }
 
-  /// Manually gets iOS version by parsing Platform.operatingSystemVersion
-  /// Example: "Version 26.1 (Build 23B82)" -> 26
-  static int? _getIOSVersionManually() {
-    if (!Platform.isIOS) return null;
-
+  /// Gets the first number from [Platform.operatingSystemVersion].
+  /// Works with any format (e.g. "Version 26.1 (Build 23B82)" or "26.1").
+  static int? _parseMajorVersionFromPlatform() {
     try {
-      final versionString = Platform.operatingSystemVersion;
-      // Example: "Version 26.1 (Build 23B82)"
-      final match = RegExp(r'Version (\d+)\.').firstMatch(versionString);
+      final version = Platform.operatingSystemVersion;
+      final match = RegExp(r'(\d+)').firstMatch(version);
       if (match != null) {
-        final version = int.tryParse(match.group(1) ?? '');
-        return version;
+        return int.tryParse(match.group(1) ?? '0');
       }
     } catch (e) {
-      debugPrint('⚠️ [cupertino_native_plus] Failed to parse iOS version: $e');
+      debugPrint('⚠️ [cupertino_native_plus] Failed to parse OS version: $e');
     }
     return null;
   }
 
-  /// Manually gets macOS version by parsing Platform.operatingSystemVersion
+  /// Manually gets iOS version by parsing Platform.operatingSystemVersion.
+  static int? _getIOSVersionManually() {
+    if (!Platform.isIOS) return null;
+    return _parseMajorVersionFromPlatform();
+  }
+
+  /// Manually gets macOS version by parsing Platform.operatingSystemVersion.
   static int? _getMacOSVersionManually() {
     if (!Platform.isMacOS) return null;
-
-    try {
-      final versionString = Platform.operatingSystemVersion;
-      // Example: "Version 26.0 (Build 23A344)"
-      final match = RegExp(r'Version (\d+)\.').firstMatch(versionString);
-      if (match != null) {
-        final version = int.tryParse(match.group(1) ?? '');
-        return version;
-      }
-    } catch (e) {
-      debugPrint(
-        '⚠️ [cupertino_native_plus] Failed to parse macOS version: $e',
-      );
-    }
-    return null;
+    return _parseMajorVersionFromPlatform();
   }
 
   /// Gets the iOS major version, auto-initializing if needed.

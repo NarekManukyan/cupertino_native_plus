@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/button_style.dart';
+import '../utils/platform_view_builder.dart';
 import '../style/image_placement.dart';
 import '../style/sf_symbol.dart';
 import '../utils/icon_renderer.dart';
@@ -70,12 +72,15 @@ class CNButtonConfig {
   /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
   final bool glassEffectInteractive;
 
-  /// Tint for label and icon when the interface is in dark mode (UIKit path only).
+  /// Tint for label and icon when the glass or interface is dark.
   ///
-  /// For glass buttons, the system adapts foreground to the *content behind the glass*
-  /// automatically when [tint] is null (no API exposes "glass is inverted"). To get that
-  /// adaptation, leave both [tint] and [tintWhenGlassInverted] unset. When [tint] is set,
-  /// this value is used in dark interface mode on the UIKit single-button path.
+  /// - **Single glass buttons** (no [glassEffectUnionId] / [glassEffectId]) use UIKit
+  ///   `UIButton.Configuration.glass()`, which adapts icon and label when content behind the
+  ///   glass changes (like [CNTabBar]). Set this and leave [tint] unset for that behavior;
+  ///   omit [CNImageAsset.color] so the icon can adapt too.
+  /// - **Dark interface mode**: this color is used for icon and label (e.g. white for contrast).
+  /// - **Glass button groups** use SwiftUI; adaptation there relies on semantic styling when
+  ///   [tint] is unset (no public API for "glass just inverted").
   ///
   /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
   final Color? tintWhenGlassInverted;
@@ -308,7 +313,7 @@ class _CNButtonState extends State<CNButton> {
     Uint8List? customIconBytes,
     CNImageAsset? imageAsset,
   }) {
-    const viewType = 'CupertinoNativeButton';
+    const viewType = ViewTypes.cupertinoNativeButton;
 
     // Determine which source to use and build parameters accordingly
     String iconName = '';
@@ -430,26 +435,15 @@ class _CNButtonState extends State<CNButton> {
         ),
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              // Forward taps to native; let Flutter keep drags for scrolling.
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onCreated,
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+      },
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -537,7 +531,7 @@ class _CNButtonState extends State<CNButton> {
   }
 
   void _onCreated(int id) {
-    final ch = MethodChannel('CupertinoNativeButton_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cupertinoNativeButton, id);
     _channel = ch;
     ch.setMethodCallHandler(_onMethodCall);
     // Clear previous intrinsic dimensions when view is recreated
@@ -613,16 +607,18 @@ class _CNButtonState extends State<CNButton> {
         : null;
     if (_lastTint != tint && tint != null) {
       final style = <String, dynamic>{'tint': tint};
-      if (tintWhenInverted != null)
+      if (tintWhenInverted != null) {
         style['tintWhenGlassInverted'] = tintWhenInverted;
+      }
       await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
     }
     if (_lastTintWhenGlassInverted != tintWhenInverted) {
       final style = <String, dynamic>{};
       if (tint != null) style['tint'] = tint;
-      if (tintWhenInverted != null)
+      if (tintWhenInverted != null) {
         style['tintWhenGlassInverted'] = tintWhenInverted;
+      }
       if (style.isNotEmpty) await ch.invokeMethod('setStyle', style);
       _lastTintWhenGlassInverted = tintWhenInverted;
     }
@@ -877,8 +873,9 @@ class _CNButtonState extends State<CNButton> {
         : null;
     if (_lastTint != tint && tint != null) {
       final style = <String, dynamic>{'tint': tint};
-      if (tintWhenInverted != null)
+      if (tintWhenInverted != null) {
         style['tintWhenGlassInverted'] = tintWhenInverted;
+      }
       await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
     }

@@ -19,7 +19,7 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
   private var defaultIconGradientEnabled: Bool = false
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeSegmentedControl_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSegmentedControl)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.control = UISegmentedControl(items: [])
 
@@ -37,10 +37,10 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         self.perSymbolSizes = sizes.map { CGFloat(truncating: $0) }
       }
       if let colors = dict["sfSymbolColors"] as? [NSNumber] {
-        self.perSymbolColors = colors.map { Self.colorFromARGB($0.intValue) }
+        self.perSymbolColors = colors.map { ImageUtils.colorFromARGB($0.intValue) }
       }
       if let palettes = dict["sfSymbolPaletteColors"] as? [[NSNumber]] {
-        self.perSymbolPalettes = palettes.map { $0.map { Self.colorFromARGB($0.intValue) } }
+        self.perSymbolPalettes = palettes.map { $0.map { ImageUtils.colorFromARGB($0.intValue) } }
       }
       if let modes = dict["sfSymbolRenderingModes"] as? [String?] {
         self.perSymbolModes = modes
@@ -52,10 +52,10 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
       if let v = dict["enabled"] as? NSNumber { enabled = v.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
       if let style = dict["style"] as? [String: Any] {
-        if let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
-        if let n = style["iconColor"] as? NSNumber { self.defaultIconColor = Self.colorFromARGB(n.intValue) }
+        if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["iconColor"] as? NSNumber { self.defaultIconColor = ImageUtils.colorFromARGB(n.intValue) }
         if let s = style["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }
-        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.defaultIconPalette = arr.map { Self.colorFromARGB($0.intValue) } }
+        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.defaultIconPalette = arr.map { ImageUtils.colorFromARGB($0.intValue) } }
         if let mode = style["iconRenderingMode"] as? String { self.defaultIconRenderingMode = mode }
         if let g = style["iconGradientEnabled"] as? NSNumber { self.defaultIconGradientEnabled = g.boolValue }
       }
@@ -116,10 +116,10 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         if let args = call.arguments as? [String: Any] {
           UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
             if #available(iOS 13.0, *), let n = args["tint"] as? NSNumber {
-              self.control.selectedSegmentTintColor = Self.colorFromARGB(n.intValue)
+              self.control.selectedSegmentTintColor = ImageUtils.colorFromARGB(n.intValue)
             }
           }
-          if let n = args["iconColor"] as? NSNumber { self.defaultIconColor = Self.colorFromARGB(n.intValue) }
+          if let n = args["iconColor"] as? NSNumber { self.defaultIconColor = ImageUtils.colorFromARGB(n.intValue) }
           if let s = args["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }
           self.rebuildSegments()
           result(nil)
@@ -144,9 +144,6 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 
   private func rebuildSegments() {
     control.removeAllSegments()

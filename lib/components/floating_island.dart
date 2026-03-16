@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/glass_effect.dart';
+import '../utils/platform_view_builder.dart';
+import '../utils/theme_helper.dart';
 import '../utils/version_detector.dart';
 import 'liquid_glass_container.dart';
 
@@ -232,7 +235,7 @@ class _CNFloatingIslandState extends State<CNFloatingIsland>
   }
 
   void _onPlatformViewCreated(int id) {
-    final ch = MethodChannel('CNFloatingIsland_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cnFloatingIsland, id);
     _controller._attach(ch);
     ch.setMethodCallHandler(_onMethodCall);
   }
@@ -286,7 +289,7 @@ class _CNFloatingIslandState extends State<CNFloatingIsland>
   }
 
   Widget _buildNativeFloatingIsland(BuildContext context) {
-    const viewType = 'CNFloatingIsland';
+    const viewType = ViewTypes.cnFloatingIsland;
     final creationParams = <String, dynamic>{
       'isExpanded': _isExpanded,
       'position': widget.position.name,
@@ -298,22 +301,15 @@ class _CNFloatingIslandState extends State<CNFloatingIsland>
       'tint': resolveColorToArgb(widget.tint, context),
       'springDamping': widget.springDamping,
       'springResponse': widget.springResponse,
-      'isDark': Theme.of(context).brightness == Brightness.dark,
+      'isDark': ThemeHelper.isDark(context),
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onPlatformViewCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onPlatformViewCreated,
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     return _buildPositionedContainer(
       child: Stack(

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/glass_effect.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/theme_helper.dart';
 import '../utils/version_detector.dart';
 
@@ -70,7 +72,7 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer> {
   }
 
   Widget _buildNativeContainer(BuildContext context) {
-    const viewType = 'CupertinoNativeLiquidGlassContainer';
+    const viewType = ViewTypes.cupertinoNativeLiquidGlassContainer;
 
     // Convert config to creation params
     final creationParams = <String, dynamic>{
@@ -84,19 +86,12 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer> {
       'isDark': ThemeHelper.isDark(context),
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            onPlatformViewCreated: _onCreated,
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onCreated,
+    );
 
     // Use a Stack where the child determines the size
     // The platform view fills the child's bounds exactly
@@ -122,7 +117,10 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer> {
   }
 
   void _onCreated(int id) {
-    _channel = MethodChannel('CupertinoNativeLiquidGlassContainer_$id');
+    _channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeLiquidGlassContainer,
+      id,
+    );
     _channel!.setMethodCallHandler((call) async {
       // Handle any method calls from native side if needed
       return null;

@@ -22,13 +22,27 @@ struct GlassButtonSwiftUI: View {
   var namespace: Namespace.ID
   let config: GlassButtonConfig
   
-  /// Only set an explicit foreground when the user provided a tint. When nil, we do not set
-  /// .foregroundStyle so the glass effect's built-in foreground effects apply — the system then
-  /// adapts label/icon color based on content behind the glass (not interface dark/light).
-  /// tintWhenGlassInverted cannot be honored for content-based inversion because Apple does not
-  /// expose a "glass appearance" API; for adaptation, leave both tint and tintWhenGlassInverted unset.
-  private var explicitLabelStyle: Color? { tint }
-  private var explicitIconStyle: Color? { iconColor ?? tint }
+  @Environment(\.colorScheme) private var colorScheme
+  
+  /// When nil: use semantic .primary so the glass effect can adapt icon/label when content
+  /// behind the glass changes. tintWhenGlassInverted is used when interface is dark (we have
+  /// no API for "glass just inverted"); when it's set and tint is nil we use .primary in light
+  /// mode so the system can adapt.
+  private var effectiveLabelStyle: Color? {
+    if colorScheme == .dark, let inverted = tintWhenGlassInverted { return inverted }
+    if let t = tint { return t }
+    return nil
+  }
+  
+  private var effectiveIconStyle: Color? {
+    if colorScheme == .dark, let inverted = tintWhenGlassInverted { return inverted }
+    if let t = tint { return t }
+    // When tintWhenGlassInverted is set and no tint: use .primary so glass can adapt;
+    // don't use iconColor so we don't block adaptation (e.g. imageAsset.color).
+    if tintWhenGlassInverted != nil { return nil }
+    if let c = iconColor { return c }
+    return nil
+  }
 
   var body: some View {
     Button(action: onPressed) {
@@ -39,14 +53,29 @@ struct GlassButtonSwiftUI: View {
             .scaledToFit()
             .frame(width: iconSize, height: iconSize)
         } else if let iconName = iconName {
-          Image(systemName: iconName)
-            .font(.system(size: iconSize))
-            .applyForegroundStyle(explicitIconStyle)
+          Group {
+            if let style = effectiveIconStyle {
+              Image(systemName: iconName)
+                .font(.system(size: iconSize))
+                .foregroundStyle(style)
+            } else {
+              Image(systemName: iconName)
+                .font(.system(size: iconSize))
+                .foregroundStyle(.primary)
+            }
+          }
         }
         
         if let title = title {
-          Text(title)
-            .applyForegroundStyle(explicitLabelStyle)
+          Group {
+            if let style = effectiveLabelStyle {
+              Text(title)
+                .foregroundStyle(style)
+            } else {
+              Text(title)
+                .foregroundStyle(.primary)
+            }
+          }
         }
       }
       .padding(config.padding)
@@ -57,6 +86,8 @@ struct GlassButtonSwiftUI: View {
       .animation(.easeInOut(duration: 0.25), value: iconSize)
       .animation(.easeInOut(duration: 0.25), value: iconColor)
       .animation(.easeInOut(duration: 0.25), value: tint)
+      .animation(.easeInOut(duration: 0.25), value: tintWhenGlassInverted)
+      .animation(.easeInOut(duration: 0.25), value: colorScheme)
       .animation(.easeInOut(duration: 0.25), value: style)
       .animation(.easeInOut(duration: 0.25), value: config.spacing)
       .animation(.easeInOut(duration: 0.25), value: config.padding)
@@ -93,18 +124,9 @@ struct GlassButtonSwiftUI: View {
   }
 }
 
-// Apply foregroundStyle only when a color is provided; otherwise leave foreground to the glass effect.
+// Helper to apply glass effect modifiers conditionally
 @available(iOS 26.0, *)
 extension View {
-  @ViewBuilder
-  func applyForegroundStyle(_ color: Color?) -> some View {
-    if let color = color {
-      self.foregroundStyle(color)
-    } else {
-      self
-    }
-  }
-
   @ViewBuilder
   func applyGlassEffectModifiers(unionId: String?, id: String?, namespace: Namespace.ID) -> some View {
     if let unionId = unionId {

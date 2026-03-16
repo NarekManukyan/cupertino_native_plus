@@ -14,7 +14,7 @@ class CupertinoSegmentedControlNSView: NSView {
   private var defaultIconGradientEnabled: Bool = false
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeSegmentedControl_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSegmentedControl)_\(viewId)", binaryMessenger: messenger)
     self.control = NSSegmentedControl(labels: [], trackingMode: .selectOne, target: nil, action: nil)
 
     var labels: [String] = []
@@ -144,11 +144,4 @@ class CupertinoSegmentedControlNSView: NSView {
     channel.invokeMethod("valueChanged", arguments: ["index": sender.selectedSegment])
   }
 
-  private static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
-  }
 }

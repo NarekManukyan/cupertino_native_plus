@@ -30,7 +30,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var splitSpacingVal: CGFloat = 12 // Apple's recommended spacing for visual separation
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeTabBar_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeTabBar)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
 
     var labels: [String] = []
@@ -86,8 +86,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
       if let style = dict["style"] as? [String: Any] {
-        if let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
-        if let n = style["backgroundColor"] as? NSNumber { bg = Self.colorFromARGB(n.intValue) }
+        if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["backgroundColor"] as? NSNumber { bg = ImageUtils.colorFromARGB(n.intValue) }
       }
       if let s = dict["split"] as? NSNumber { split = s.boolValue }
       if let rc = dict["rightCount"] as? NSNumber { rightCount = rc.intValue }
@@ -684,13 +684,13 @@ channel.setMethodCallHandler { [weak self] call, result in
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if let n = args["tint"] as? NSNumber {
-            let c = Self.colorFromARGB(n.intValue)
+            let c = ImageUtils.colorFromARGB(n.intValue)
             if let bar = self.tabBar { bar.tintColor = c }
             if let left = self.tabBarLeft { left.tintColor = c }
             if let right = self.tabBarRight { right.tintColor = c }
           }
           if let n = args["backgroundColor"] as? NSNumber {
-            let c = Self.colorFromARGB(n.intValue)
+            let c = ImageUtils.colorFromARGB(n.intValue)
             if let bar = self.tabBar { bar.barTintColor = c }
             if let left = self.tabBarLeft { left.barTintColor = c }
             if let right = self.tabBarRight { right.barTintColor = c }
@@ -859,10 +859,6 @@ channel.setMethodCallHandler { [weak self] call, result in
 
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
-
   private static func loadFlutterAsset(_ assetPath: String) -> UIImage? {
     return ImageUtils.loadFlutterAsset(assetPath)
   }

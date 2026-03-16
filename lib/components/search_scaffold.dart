@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../style/tab_bar_search_item.dart';
 import '../utils/version_detector.dart';
 import '../utils/theme_helper.dart';
@@ -226,10 +228,10 @@ class _CNSearchScaffoldState extends State<CNSearchScaffold> {
       children: [
         // Native UITabBarController fills the screen
         Positioned.fill(
-          child: UiKitView(
-            viewType: 'CNSearchScaffold',
+          child: buildCupertinoPlatformView(
+            context,
+            viewType: ViewTypes.cnSearchScaffold,
             creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
             onPlatformViewCreated: _onCreated,
           ),
         ),
@@ -254,7 +256,7 @@ class _CNSearchScaffoldState extends State<CNSearchScaffold> {
   }
 
   void _onCreated(int id) {
-    final ch = MethodChannel('CNSearchScaffold_$id');
+    final ch = ViewTypes.methodChannelFor(ViewTypes.cnSearchScaffold, id);
     _channel = ch;
     ch.setMethodCallHandler(_onMethodCall);
     _lastIndex = widget.currentIndex;

@@ -35,7 +35,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
   private var btnIconPalette: [UIColor] = []
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativePopupMenuButton_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativePopupMenuButton)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.button = UIButton(type: .system)
 
@@ -72,10 +72,10 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
       if let f = dict["buttonImageFormat"] as? String { btnImageFormat = f }
       if let s = dict["buttonIconName"] as? String { iconName = s }
       if let s = dict["buttonIconSize"] as? NSNumber { iconSize = CGFloat(truncating: s) }
-      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = Self.colorFromARGB(c.intValue) }
+      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = ImageUtils.colorFromARGB(c.intValue) }
       if let r = dict["round"] as? NSNumber { makeRound = r.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
-      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
+      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
       if let bs = dict["buttonStyle"] as? String { buttonStyle = bs }
       labels = (dict["labels"] as? [String]) ?? []
       symbols = (dict["sfSymbols"] as? [String]) ?? []
@@ -140,7 +140,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
     self.btnIconSize = iconSize
     self.btnIconColor = iconColor
     self.btnIconMode = buttonIconMode
-    if !buttonIconPalette.isEmpty { self.btnIconPalette = buttonIconPalette.map { Self.colorFromARGB($0.intValue) } }
+    if !buttonIconPalette.isEmpty { self.btnIconPalette = buttonIconPalette.map { ImageUtils.colorFromARGB($0.intValue) } }
     // Apply content initially
     setButtonContent(title: title, image: makeButtonIconImage(), iconOnly: (title == nil))
     if #available(iOS 15.0, *), var cfg = button.configuration {
@@ -211,7 +211,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if let n = args["tint"] as? NSNumber {
-            self.button.tintColor = Self.colorFromARGB(n.intValue)
+            self.button.tintColor = ImageUtils.colorFromARGB(n.intValue)
             self.applyButtonStyle(buttonStyle: self.currentButtonStyle, round: self.isRoundButton)
             // If no explicit icon color/mode is set, color the symbol with tint
             if #available(iOS 15.0, *), self.btnIconColor == nil, self.btnIconMode == nil, let tint = self.button.tintColor, var cfg = self.button.configuration {
@@ -230,9 +230,9 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
           // Update cached props
           if let name = args["buttonIconName"] as? String { self.btnIconName = name }
           if let s = args["buttonIconSize"] as? NSNumber { self.btnIconSize = CGFloat(truncating: s) }
-          if let c = args["buttonIconColor"] as? NSNumber { self.btnIconColor = Self.colorFromARGB(c.intValue) }
+          if let c = args["buttonIconColor"] as? NSNumber { self.btnIconColor = ImageUtils.colorFromARGB(c.intValue) }
           if let m = args["buttonIconRenderingMode"] as? String { self.btnIconMode = m }
-          if let pal = args["buttonIconPaletteColors"] as? [NSNumber] { self.btnIconPalette = pal.map { Self.colorFromARGB($0.intValue) } }
+          if let pal = args["buttonIconPaletteColors"] as? [NSNumber] { self.btnIconPalette = pal.map { ImageUtils.colorFromARGB($0.intValue) } }
           self.setButtonContent(title: nil, image: self.makeButtonIconImage(), iconOnly: true)
           if #available(iOS 15.0, *), var cfg = self.button.configuration {
             if let symCfg = self.makeButtonSymbolConfiguration() {
@@ -386,7 +386,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
           if i < self.customIconColors.count, 
              let colorNum = self.customIconColors[i] as? NSNumber,
              !(self.customIconColors[i] is NSNull) {
-            let tintColor = Self.colorFromARGB(colorNum.intValue)
+            let tintColor = ImageUtils.colorFromARGB(colorNum.intValue)
             image = image?.withTintColor(tintColor, renderingMode: .alwaysOriginal)
           }
         }
@@ -406,7 +406,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
           case "hierarchical":
             if #available(iOS 15.0, *), let colors = defaultColors, i < colors.count,
                let colorNum = colors[i] as? NSNumber {
-              let c = Self.colorFromARGB(colorNum.intValue)
+              let c = ImageUtils.colorFromARGB(colorNum.intValue)
               if let img = image {
                 let cfg = UIImage.SymbolConfiguration(hierarchicalColor: c)
                 image = img.applyingSymbolConfiguration(cfg)
@@ -414,7 +414,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
             }
           case "palette":
             if #available(iOS 15.0, *), i < self.itemPalettes.count, !self.itemPalettes[i].isEmpty {
-              let cols = self.itemPalettes[i].map { Self.colorFromARGB($0.intValue) }
+              let cols = self.itemPalettes[i].map { ImageUtils.colorFromARGB($0.intValue) }
               if let img = image {
                 let cfg = UIImage.SymbolConfiguration(paletteColors: cols)
                 image = img.applyingSymbolConfiguration(cfg)
@@ -431,7 +431,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
             // Explicit monochrome: use direct tint color if provided
             if let colors = defaultColors, i < colors.count,
                let colorNum = colors[i] as? NSNumber {
-              let c = Self.colorFromARGB(colorNum.intValue)
+              let c = ImageUtils.colorFromARGB(colorNum.intValue)
               if let img = image, #available(iOS 13.0, *) {
                 image = img.withTintColor(c, renderingMode: .alwaysOriginal)
               }
@@ -441,7 +441,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
           }
         } else if let colors = defaultColors, i < colors.count,
                   let colorNum = colors[i] as? NSNumber {
-          let c = Self.colorFromARGB(colorNum.intValue)
+          let c = ImageUtils.colorFromARGB(colorNum.intValue)
           if let img = image, #available(iOS 13.0, *) {
             image = img.withTintColor(c, renderingMode: .alwaysOriginal)
           }
@@ -484,7 +484,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
         if i < self.customIconColors.count,
            let colorNum = self.customIconColors[i] as? NSNumber,
            !(self.customIconColors[i] is NSNull) {
-          let tintColor = Self.colorFromARGB(colorNum.intValue)
+          let tintColor = ImageUtils.colorFromARGB(colorNum.intValue)
           img = img?.withTintColor(tintColor, renderingMode: .alwaysOriginal)
         }
       } else if i < symbols.count, !symbols[i].isEmpty {
@@ -514,10 +514,6 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
-
   @available(iOS 13.0, *)
   private func makeButtonIconImage() -> UIImage? {
     // Priority: imageAsset > customIconBytes > SF Symbol

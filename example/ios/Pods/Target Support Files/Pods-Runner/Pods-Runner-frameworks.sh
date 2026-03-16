@@ -178,20 +178,17 @@ code_sign_if_enabled() {
 if [[ "$CONFIGURATION" == "Debug" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/CocoaLumberjack/CocoaLumberjack.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/SVGKit/SVGKit.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_better/cupertino_native_better.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/integration_test/integration_test.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_plus/cupertino_native_plus.framework"
 fi
 if [[ "$CONFIGURATION" == "Profile" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/CocoaLumberjack/CocoaLumberjack.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/SVGKit/SVGKit.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_better/cupertino_native_better.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/integration_test/integration_test.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_plus/cupertino_native_plus.framework"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   install_framework "${BUILT_PRODUCTS_DIR}/CocoaLumberjack/CocoaLumberjack.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/SVGKit/SVGKit.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_better/cupertino_native_better.framework"
-  install_framework "${BUILT_PRODUCTS_DIR}/integration_test/integration_test.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/cupertino_native_plus/cupertino_native_plus.framework"
 fi
 if [ "${COCOAPODS_PARALLEL_CODE_SIGN}" == "true" ]; then
   wait

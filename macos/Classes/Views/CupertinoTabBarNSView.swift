@@ -21,7 +21,7 @@ class CupertinoTabBarNSView: NSView {
   private var currentBackground: NSColor? = nil
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeTabBar_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeTabBar)_\(viewId)", binaryMessenger: messenger)
     self.control = NSSegmentedControl(labels: [], trackingMode: .selectOne, target: nil, action: nil)
 
     var labels: [String] = []
@@ -69,8 +69,8 @@ class CupertinoTabBarNSView: NSView {
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
       if let style = dict["style"] as? [String: Any] {
-        if let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
-        if let n = style["backgroundColor"] as? NSNumber { bg = Self.colorFromARGB(n.intValue) }
+        if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["backgroundColor"] as? NSNumber { bg = ImageUtils.colorFromARGB(n.intValue) }
       }
     }
 
@@ -135,9 +135,9 @@ class CupertinoTabBarNSView: NSView {
         } else { result(FlutterError(code: "bad_args", message: "Missing index", details: nil)) }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
-          if let n = args["tint"] as? NSNumber { self.currentTint = Self.colorFromARGB(n.intValue) }
+          if let n = args["tint"] as? NSNumber { self.currentTint = ImageUtils.colorFromARGB(n.intValue) }
           if let n = args["backgroundColor"] as? NSNumber {
-            let c = Self.colorFromARGB(n.intValue)
+            let c = ImageUtils.colorFromARGB(n.intValue)
             self.currentBackground = c
             self.wantsLayer = true
             self.layer?.backgroundColor = c.cgColor
@@ -274,14 +274,6 @@ class CupertinoTabBarNSView: NSView {
         control.setImage(image, forSegment: i)
       }
     }
-  }
-
-  private static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
   }
 
   @objc private func onChanged(_ sender: NSSegmentedControl) {

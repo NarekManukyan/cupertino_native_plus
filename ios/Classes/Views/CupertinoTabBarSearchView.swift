@@ -24,7 +24,7 @@ class CupertinoTabBarSearchPlatformView: NSObject, FlutterPlatformView, UITabBar
     private var searchItemIndex: Int = -1
 
     init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-        self.channel = FlutterMethodChannel(name: "CupertinoNativeTabBar_\(viewId)", binaryMessenger: messenger)
+        self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeTabBar)_\(viewId)", binaryMessenger: messenger)
         self.container = UIView(frame: frame)
 
         super.init()

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import 'package:cupertino_native_plus/cupertino_native.dart';
-=======
-import 'package:cupertino_native_plus/cupertino_native_plus.dart';
->>>>>>> fork/main
 import 'package:flutter/cupertino.dart';
 import 'demos/slider.dart';
 import 'demos/switch.dart';
@@ -13,20 +9,11 @@ import 'demos/popup_menu_button.dart';
 import 'demos/button.dart';
 import 'demos/overlay_test.dart';
 import 'demos/app_bar.dart';
-<<<<<<< HEAD
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Initialize platform version detection early
-  await PlatformVersion.initialize();
-=======
 import 'demos/issues_test.dart';
 import 'demos/native_tab_bar_demo.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // No longer need to call PlatformVersion.initialize() - it auto-initializes!
->>>>>>> fork/main
   runApp(const MyApp());
 }
 
@@ -222,8 +209,6 @@ class HomePage extends StatelessWidget {
             header: Text('Navigation'),
             children: [
               CupertinoListTile(
-<<<<<<< HEAD
-=======
                 title: Text('Native Tab Bar (iOS 26)'),
                 leading: CNIcon(
                   symbol: CNSymbol('dock.rectangle', color: accentColor),
@@ -231,12 +216,13 @@ class HomePage extends StatelessWidget {
                 trailing: CupertinoListTileChevron(),
                 onTap: () {
                   Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const NativeTabBarDemoPage()),
+                    CupertinoPageRoute(
+                      builder: (_) => const NativeTabBarDemoPage(),
+                    ),
                   );
                 },
               ),
               CupertinoListTile(
->>>>>>> fork/main
                 title: Text('Tab Bar'),
                 leading: CNIcon(
                   symbol: CNSymbol('square.grid.2x2', color: accentColor),
@@ -280,8 +266,6 @@ class HomePage extends StatelessWidget {
                   );
                 },
               ),
-<<<<<<< HEAD
-=======
               CupertinoListTile(
                 title: Text('Issues Test'),
                 leading: CNIcon(
@@ -297,7 +281,6 @@ class HomePage extends StatelessWidget {
                   );
                 },
               ),
->>>>>>> fork/main
             ],
           ),
         ],

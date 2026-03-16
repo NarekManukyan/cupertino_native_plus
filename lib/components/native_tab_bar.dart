@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
 import '../utils/version_detector.dart';
 
@@ -40,7 +41,9 @@ import '../utils/version_detector.dart';
 /// }
 /// ```
 class CNTabBarNative {
-  static const MethodChannel _channel = MethodChannel('cn_native_tab_bar');
+  static const MethodChannel _channel = MethodChannel(
+    ViewTypes.cnNativeTabBarChannel,
+  );
 
   static bool _isEnabled = false;
   static void Function(int index)? _onTabSelected;

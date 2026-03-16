@@ -1,4 +1,3 @@
 ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CocoaLumberjack.framework
 ${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SVGKit.framework
-${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/cupertino_native_better.framework
-${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/integration_test.framework
+${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/cupertino_native_plus.framework

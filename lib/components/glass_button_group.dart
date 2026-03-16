@@ -6,7 +6,9 @@ import '../utils/version_detector.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/button_data.dart';
+import '../utils/platform_view_builder.dart';
 import '../style/image_placement.dart';
 import 'button.dart';
 
@@ -106,14 +108,36 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   Axis? _lastAxis;
   double? _lastSpacing;
   double? _lastSpacingForGlass;
+  bool? _lastIsDark;
 
   /// Whether we're using widget mode (backward compatibility).
   bool get _usingWidgets => widget._buttonWidgets != null;
 
+  bool get _isDark => ThemeHelper.isDark(context);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncBrightnessIfNeeded();
+  }
+
   @override
   void didUpdateWidget(covariant CNGlassButtonGroup oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _syncBrightnessIfNeeded();
     _syncButtonsToNativeIfNeeded();
+  }
+
+  Future<void> _syncBrightnessIfNeeded() async {
+    final ch = _channel;
+    if (ch == null) return;
+    final isDark = _isDark;
+    if (_lastIsDark != isDark) {
+      try {
+        await ch.invokeMethod('setBrightness', {'isDark': isDark});
+        _lastIsDark = isDark;
+      } catch (_) {}
+    }
   }
 
   @override
@@ -132,7 +156,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   }
 
   Widget _buildNativeGroup(BuildContext context) {
-    const viewType = 'CupertinoNativeGlassButtonGroup';
+    const viewType = ViewTypes.cupertinoNativeGlassButtonGroup;
 
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _usingWidgets
@@ -159,19 +183,12 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
           'isDark': ThemeHelper.isDark(context),
         };
 
-        final platformView = defaultTargetPlatform == TargetPlatform.iOS
-            ? UiKitView(
-                viewType: viewType,
-                creationParams: creationParams,
-                creationParamsCodec: const StandardMessageCodec(),
-                onPlatformViewCreated: _onCreated,
-              )
-            : AppKitView(
-                viewType: viewType,
-                creationParams: creationParams,
-                creationParamsCodec: const StandardMessageCodec(),
-                onPlatformViewCreated: _onCreated,
-              );
+        final platformView = buildCupertinoPlatformView(
+          context,
+          viewType: viewType,
+          creationParams: creationParams,
+          onPlatformViewCreated: _onCreated,
+        );
 
         if (widget.axis == Axis.horizontal) {
           final buttonHeight = _getEffectiveMinHeight();
@@ -225,7 +242,10 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   }
 
   void _onCreated(int id) {
-    final channel = MethodChannel('CupertinoNativeGlassButtonGroup_$id');
+    final channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeGlassButtonGroup,
+      id,
+    );
     _channel = channel;
     channel.setMethodCallHandler((call) async {
       if (call.method == 'buttonPressed') {
@@ -248,6 +268,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     _lastAxis = widget.axis;
     _lastSpacing = widget.spacing;
     _lastSpacingForGlass = widget.spacingForGlass;
+    _lastIsDark = _isDark;
   }
 
   Future<void> _syncButtonsToNativeIfNeeded() async {

@@ -7,7 +7,7 @@ class CupertinoSwitchPlatformView: NSObject, FlutterPlatformView {
   private let hostingController: UIHostingController<CupertinoSwitchView>
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    let channel = FlutterMethodChannel(name: "CupertinoNativeSwitch_\(viewId)", binaryMessenger: messenger)
+    let channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSwitch)_\(viewId)", binaryMessenger: messenger)
     self.channel = channel
 
     var initialValue: Bool = false
@@ -19,7 +19,7 @@ class CupertinoSwitchPlatformView: NSObject, FlutterPlatformView {
       if let v = dict["enabled"] as? NSNumber { enabled = v.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
       if let style = dict["style"] as? [String: Any], let tintNum = style["tint"] as? NSNumber {
-        initialTint = Self.colorFromARGB(tintNum.intValue)
+        initialTint = ImageUtils.colorFromARGB(tintNum.intValue)
       }
     }
 
@@ -53,7 +53,7 @@ class CupertinoSwitchPlatformView: NSObject, FlutterPlatformView {
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
           if let tintNum = args["tint"] as? NSNumber {
-            let ui = Self.colorFromARGB(tintNum.intValue)
+            let ui = ImageUtils.colorFromARGB(tintNum.intValue)
             model.tintColor = Color(ui)
           }
           result(nil)
@@ -76,7 +76,4 @@ class CupertinoSwitchPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 }

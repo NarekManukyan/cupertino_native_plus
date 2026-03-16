@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
 import '../utils/version_detector.dart';
@@ -155,7 +156,7 @@ class _CNIconState extends State<CNIcon> {
     Uint8List? customIconBytes,
     CNImageAsset? imageAsset,
   }) {
-    const viewType = 'CupertinoNativeIcon';
+    const viewType = ViewTypes.cupertinoNativeIcon;
 
     // Determine which source to use and build parameters accordingly
     String name = '';
@@ -217,19 +218,12 @@ class _CNIconState extends State<CNIcon> {
       },
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     // Ensure the platform view always has finite constraints
     final fallbackSize =
@@ -242,7 +236,7 @@ class _CNIconState extends State<CNIcon> {
   }
 
   void _onPlatformViewCreated(int id) {
-    _channel = MethodChannel('CupertinoNativeIcon_$id')
+    _channel = ViewTypes.methodChannelFor(ViewTypes.cupertinoNativeIcon, id)
       ..setMethodCallHandler(_onMethodCall);
     _cacheCurrentProps();
     _syncBrightnessIfNeeded();

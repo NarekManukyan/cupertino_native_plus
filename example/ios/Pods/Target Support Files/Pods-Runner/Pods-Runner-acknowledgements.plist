@@ -80,18 +80,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 </string>
 			<key>Title</key>
-			<string>cupertino_native_better</string>
-			<key>Type</key>
-			<string>PSGroupSpecifier</string>
-		</dict>
-		<dict>
-			<key>FooterText</key>
-			<string>Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
-</string>
-			<key>License</key>
-			<string>BSD</string>
-			<key>Title</key>
-			<string>integration_test</string>
+			<string>cupertino_native_plus</string>
 			<key>Type</key>
 			<string>PSGroupSpecifier</string>
 		</dict>

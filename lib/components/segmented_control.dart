@@ -3,7 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/version_detector.dart';
 import '../utils/theme_helper.dart';
 
@@ -129,7 +131,7 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
       );
     }
 
-    const viewType = 'CupertinoNativeSegmentedControl';
+    const viewType = ViewTypes.cupertinoNativeSegmentedControl;
     final creationParams = <String, dynamic>{
       'labels': widget.labels,
       'selectedIndex': widget.selectedIndex,
@@ -175,22 +177,12 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
             .toList(),
     };
 
-    Widget platformView;
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      platformView = UiKitView(
-        viewType: viewType,
-        creationParamsCodec: const StandardMessageCodec(),
-        creationParams: creationParams,
-        onPlatformViewCreated: _onPlatformViewCreated,
-      );
-    } else {
-      platformView = AppKitView(
-        viewType: viewType,
-        creationParamsCodec: const StandardMessageCodec(),
-        creationParams: creationParams,
-        onPlatformViewCreated: _onPlatformViewCreated,
-      );
-    }
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     if (widget.shrinkWrap) {
       final width = _intrinsicWidth;
@@ -211,7 +203,10 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
   }
 
   void _onPlatformViewCreated(int id) {
-    final channel = MethodChannel('CupertinoNativeSegmentedControl_$id');
+    final channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeSegmentedControl,
+      id,
+    );
     _channel = channel;
     channel.setMethodCallHandler(_onMethodCall);
     _cacheCurrentProps();

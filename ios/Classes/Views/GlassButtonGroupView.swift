@@ -132,7 +132,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     var isDark: Bool = false
     
     // Set up method channel for button callbacks and updates
-    let channel = FlutterMethodChannel(name: "CupertinoNativeGlassButtonGroup_\(viewId)", binaryMessenger: messenger)
+    let channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeGlassButtonGroup)_\(viewId)", binaryMessenger: messenger)
     self.channel = channel
     
     // Create view model
@@ -149,9 +149,9 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
           let iconName = buttonDict["iconName"] as? String
           let iconSize = (buttonDict["iconSize"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 20.0
           let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
-          let iconColor = iconColorARGB.map { Color(uiColor: Self.colorFromARGB($0)) }
-          let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
-          let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
+          let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
+          let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
+          let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
           let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
           let style = buttonDict["style"] as? String ?? "glass"
           let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -214,7 +214,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
           // Create callback for this button
           let buttonIndex = index
           let buttonCallback: () -> Void = {
-            channel.invokeMethod("buttonPressed", arguments: ["index": buttonIndex], result: nil)
+            channel.invokeMethod("buttonPressed", arguments: ["index": buttonIndex], result: nil as FlutterResult?)
           }
           buttonCallbacks[buttonIndex] = buttonCallback
           
@@ -319,12 +319,12 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     container.addObserver(self, forKeyPath: "bounds", options: [.new, .old], context: nil)
     
     // Set up method channel handler for updates
-    channel.setMethodCallHandler { [weak self] call, result in
+    channel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       guard let self = self else {
         result(FlutterMethodNotImplemented)
         return
       }
-      
+
       switch call.method {
       case "buttonPressed":
         // This is handled by button callbacks, but we can also handle it here if needed
@@ -346,6 +346,15 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
         } else {
           result(FlutterError(code: "bad_args", message: "Missing buttons", details: nil))
         }
+      case "setBrightness":
+        if let args = call.arguments as? [String: Any], let isDark = (args["isDark"] as? NSNumber)?.boolValue {
+          if #available(iOS 13.0, *) {
+            self.hostingController.overrideUserInterfaceStyle = isDark ? .dark : .light
+          }
+          result(nil)
+        } else {
+          result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil))
+        }
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -359,9 +368,9 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     let iconName = buttonDict["iconName"] as? String
     let iconSize = (buttonDict["iconSize"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 20.0
     let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
-    let iconColor = iconColorARGB.map { Color(uiColor: Self.colorFromARGB($0)) }
-    let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
-    let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
+    let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
+    let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
+    let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
     let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
     let style = buttonDict["style"] as? String ?? "glass"
     let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -443,7 +452,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     )
     
     let buttonCallback = buttonCallbacks[index] ?? { [weak self] in
-      self?.channel.invokeMethod("buttonPressed", arguments: ["index": index], result: nil)
+      self?.channel.invokeMethod("buttonPressed", arguments: ["index": index], result: nil as FlutterResult?)
     }
     
     let buttonData = GlassButtonData(
@@ -475,9 +484,9 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       let iconName = buttonDict["iconName"] as? String
       let iconSize = (buttonDict["iconSize"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 20.0
       let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
-      let iconColor = iconColorARGB.map { Color(uiColor: Self.colorFromARGB($0)) }
-      let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
-      let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: Self.colorFromARGB($0.intValue)) }
+      let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
+      let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
+      let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
       let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
       let style = buttonDict["style"] as? String ?? "glass"
       let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -531,7 +540,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       
       let buttonIndex = index
       let buttonCallback: () -> Void = {
-        self.channel.invokeMethod("buttonPressed", arguments: ["index": buttonIndex], result: nil)
+        self.channel.invokeMethod("buttonPressed", arguments: ["index": buttonIndex], result: nil as FlutterResult?)
       }
       buttonCallbacks[buttonIndex] = buttonCallback
       
@@ -617,9 +626,5 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     container.removeObserver(self, forKeyPath: "bounds")
   }
   
-  // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 }
 
