@@ -725,6 +725,17 @@ void main() {
       expect(item.badge, '5');
     });
 
+    test('creates item with dot badge', () {
+      const item = CNTabBarItem(
+        label: 'Alerts',
+        icon: CNSymbol('bell'),
+        badge: CNTabBarItem.badgeDot,
+      );
+
+      expect(item.badge, CNTabBarItem.badgeDot);
+      expect(item.badge, '');
+    });
+
     test('creates item with active icon', () {
       const icon = CNSymbol('house');
       const activeIcon = CNSymbol('house.fill');

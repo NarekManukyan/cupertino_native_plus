@@ -12,7 +12,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private var usesSwiftUI: Bool = false
   private var makeRound: Bool = false
   private var currentTint: UIColor?
-  private var currentTintWhenGlassInverted: UIColor?
+  // currentTintWhenGlassInverted removed; only currentTint is used now.
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeButton)_\(viewId)", binaryMessenger: messenger)
@@ -25,6 +25,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     var assetPath: String? = nil
     var imageData: Data? = nil
     var imageFormat: String? = nil
+    var xcassetName: String? = nil
     var iconSize: CGFloat? = nil
     var iconColor: UIColor? = nil
     var makeRound: Bool = false
@@ -48,13 +49,14 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     var glassEffectUnionId: String? = nil
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
-    var tintWhenGlassInverted: UIColor? = nil
+    // tintWhenGlassInverted removed
 
     if let dict = args as? [String: Any] {
       if let t = dict["buttonTitle"] as? String { title = t }
       if let data = dict["buttonCustomIconBytes"] as? FlutterStandardTypedData {
         customIconBytes = data.data
       }
+      if let name = dict["buttonXcassetName"] as? String { xcassetName = name }
       if let ap = dict["buttonAssetPath"] as? String { assetPath = ap }
       if let data = dict["buttonImageData"] as? FlutterStandardTypedData {
         imageData = data.data
@@ -86,12 +88,16 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let gueId = dict["glassEffectUnionId"] as? String { glassEffectUnionId = gueId }
       if let geId = dict["glassEffectId"] as? String { glassEffectId = geId }
       if let geInteractive = dict["glassEffectInteractive"] as? NSNumber { glassEffectInteractive = geInteractive.boolValue }
-      if let n = dict["tintWhenGlassInverted"] as? NSNumber { tintWhenGlassInverted = ImageUtils.colorFromARGB(n.intValue) }
     }
+
+    NSLog("CupertinoButton init: xcassetName=%@ assetPath=%@ iconName=%@ iconColor=%@",
+          xcassetName ?? "nil",
+          assetPath ?? "nil",
+          iconName ?? "nil",
+          iconColor?.description ?? "nil")
 
     super.init()
     self.currentTint = tint
-    self.currentTintWhenGlassInverted = tintWhenGlassInverted
 
     container.backgroundColor = .clear
     container.clipsToBounds = false
@@ -99,10 +105,18 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
 
     // Create final image first (needed for both SwiftUI and UIKit paths)
     var finalImage: UIImage? = nil
-    // Priority: imageAsset > customIconBytes > SF Symbol
+    // Priority: xcasset > imageAsset > customIconBytes > SF Symbol
     
-    // Handle imageAsset (highest priority)
-    if let path = assetPath, !path.isEmpty {
+    // Handle xcasset (highest priority). Always load from the app's main bundle.
+    if let name = xcassetName, !name.isEmpty {
+      finalImage = UIImage(named: name, in: Bundle.main, compatibleWith: nil)
+      if finalImage == nil {
+        NSLog("CupertinoButton init: UIImage(named: %@) returned nil", name)
+      }
+    }
+    
+    // Handle imageAsset (next priority)
+    if finalImage == nil, let path = assetPath, !path.isEmpty {
       let detectedFormat = ImageUtils.detectImageFormat(assetPath: path, providedFormat: imageFormat)
       let iconColorARGB: Int? = iconColor != nil ? ImageUtils.colorToARGB(iconColor!) : nil
       
@@ -127,7 +141,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           finalImage = ImageUtils.scaleImage(finalImage!, to: targetSize, scale: iconScale)
         }
       }
-    } else if let data = imageData {
+    } else if finalImage == nil, let data = imageData {
       let format = imageFormat
       let iconColorARGB: Int? = iconColor != nil ? ImageUtils.colorToARGB(iconColor!) : nil
       
@@ -186,6 +200,16 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       }
       finalImage = image
     }
+
+    if finalImage == nil {
+      NSLog("CupertinoButton init: finalImage is nil (xcassetName=%@ assetPath=%@ iconName=%@)",
+            xcassetName ?? "nil",
+            assetPath ?? "nil",
+            iconName ?? "nil")
+    } else {
+      let sizeString = NSCoder.string(for: finalImage!.size)
+      NSLog("CupertinoButton init: finalImage.size=%@", sizeString)
+    }
     
     // Check if we should use SwiftUI for full glass effect support
     if #available(iOS 26.0, *), (glassEffectUnionId != nil || glassEffectId != nil) {
@@ -197,7 +221,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         iconSize: iconSize ?? 20,
         iconColor: iconColor,
         tint: tint,
-        tintWhenGlassInverted: tintWhenGlassInverted,
         isRound: makeRound,
         style: buttonStyle,
         enabled: enabled,
@@ -220,11 +243,9 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       self.button = uiButton
       
       uiButton.translatesAutoresizingMaskIntoConstraints = false
-      // For glass style with no tint (only tintWhenGlassInverted): leave tintColor unset so
-      // UIButton.Configuration.glass() can adapt icon/label when content behind glass changes.
       if let t = tint {
         uiButton.tintColor = t
-      } else if buttonStyle != "glass" || tintWhenGlassInverted == nil {
+      } else if buttonStyle != "glass" {
         if #available(iOS 13.0, *) { uiButton.tintColor = .label }
       }
 
@@ -306,16 +327,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
-          if let n = args["tintWhenGlassInverted"] as? NSNumber {
-            self.currentTintWhenGlassInverted = ImageUtils.colorFromARGB(n.intValue)
-          }
           if let n = args["tint"] as? NSNumber {
             self.currentTint = ImageUtils.colorFromARGB(n.intValue)
           }
           if usesSwiftUI {
             result(nil)
           } else if self.button != nil {
-            if args["tint"] != nil || args["tintWhenGlassInverted"] != nil {
+            if args["tint"] != nil {
               self.applyButtonStyle(buttonStyle: self.currentButtonStyle, round: self.makeRound)
             }
             if let bs = args["buttonStyle"] as? String {
@@ -349,12 +367,15 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         } else { result(FlutterError(code: "bad_args", message: "Missing title", details: nil)) }
       case "setButtonIcon":
         if let args = call.arguments as? [String: Any] {
+          NSLog("CupertinoButton setButtonIcon args=%@", String(describing: args))
           var image: UIImage? = nil
           let size = CGSize(width: args["buttonIconSize"] as? CGFloat ?? 20, height: args["buttonIconSize"] as? CGFloat ?? 20)
           
-          // Priority: imageAsset > customIconBytes > SF Symbol
-          // Handle imageAsset properties first
-          if let assetPath = args["buttonAssetPath"] as? String, !assetPath.isEmpty {
+          // Priority: xcasset > imageAsset > customIconBytes > SF Symbol
+          // Handle xcasset first
+          if let xcassetName = args["buttonXcassetName"] as? String, !xcassetName.isEmpty {
+            image = UIImage(named: xcassetName, in: Bundle.main, compatibleWith: nil)
+          } else if let assetPath = args["buttonAssetPath"] as? String, !assetPath.isEmpty {
             let format = args["buttonImageFormat"] as? String
             let iconColorARGB = (args["buttonIconColor"] as? NSNumber)?.intValue
             
@@ -431,6 +452,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
             } else if let c = args["buttonIconColor"] as? NSNumber, let img = image, #available(iOS 13.0, *) {
               image = img.withTintColor(ImageUtils.colorFromARGB(c.intValue), renderingMode: .alwaysOriginal)
             }
+          }
+          
+          if image == nil {
+            NSLog("CupertinoButton setButtonIcon: image is nil, xcasset=%@ assetPath=%@ iconName=%@",
+                  (args["buttonXcassetName"] as? String) ?? "nil",
+                  (args["buttonAssetPath"] as? String) ?? "nil",
+                  (args["buttonIconName"] as? String) ?? "nil")
           }
           
           self.setButtonContent(title: nil, image: image, iconOnly: true, imagePlacement: nil, imagePadding: nil, horizontalPadding: nil)
@@ -520,7 +548,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     iconSize: CGFloat,
     iconColor: UIColor?,
     tint: UIColor?,
-    tintWhenGlassInverted: UIColor?,
     isRound: Bool,
     style: String,
     enabled: Bool,
@@ -560,7 +587,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       let iconSize: CGFloat
       let iconColor: Color?
       let tint: Color?
-      let tintWhenGlassInverted: Color?
       let isRound: Bool
       let style: String
       let isEnabled: Bool
@@ -578,7 +604,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           iconSize: iconSize,
           iconColor: iconColor,
           tint: tint,
-          tintWhenGlassInverted: tintWhenGlassInverted,
           isRound: isRound,
           style: style,
           isEnabled: isEnabled,
@@ -599,7 +624,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       iconSize: iconSize,
       iconColor: iconColor != nil ? Color(iconColor!) : nil,
       tint: tint != nil ? Color(tint!) : nil,
-      tintWhenGlassInverted: tintWhenGlassInverted != nil ? Color(tintWhenGlassInverted!) : nil,
       isRound: isRound,
       style: style,
       isEnabled: enabled,
@@ -682,18 +706,11 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         config = .plain()
       }
       config.cornerStyle = round ? .capsule : .dynamic
-      // Apply theme tint to configuration in a platform-standard way.
-      // For glass with no explicit tint (only tintWhenGlassInverted): don't set baseForegroundColor
-      // so UIButton.Configuration.glass() can adapt icon/label when content behind glass changes.
-      let isDark = container.traitCollection.userInterfaceStyle == .dark
       let effectiveTint: UIColor? = {
         switch buttonStyle {
         case "filled", "borderedProminent", "prominentGlass":
           return button.tintColor
         case "tinted", "bordered", "gray", "plain", "glass":
-          if buttonStyle == "glass", currentTint == nil, let inverted = currentTintWhenGlassInverted {
-            return isDark ? inverted : nil
-          }
           return button.tintColor
         default:
           return nil

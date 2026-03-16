@@ -11,7 +11,6 @@ struct GlassButtonSwiftUI: View {
   let iconSize: CGFloat
   let iconColor: Color?
   let tint: Color?
-  let tintWhenGlassInverted: Color?
   let isRound: Bool
   let style: String
   let isEnabled: Bool
@@ -25,21 +24,14 @@ struct GlassButtonSwiftUI: View {
   @Environment(\.colorScheme) private var colorScheme
   
   /// When nil: use semantic .primary so the glass effect can adapt icon/label when content
-  /// behind the glass changes. tintWhenGlassInverted is used when interface is dark (we have
-  /// no API for "glass just inverted"); when it's set and tint is nil we use .primary in light
-  /// mode so the system can adapt.
+  /// behind the glass changes.
   private var effectiveLabelStyle: Color? {
-    if colorScheme == .dark, let inverted = tintWhenGlassInverted { return inverted }
     if let t = tint { return t }
     return nil
   }
   
   private var effectiveIconStyle: Color? {
-    if colorScheme == .dark, let inverted = tintWhenGlassInverted { return inverted }
     if let t = tint { return t }
-    // When tintWhenGlassInverted is set and no tint: use .primary so glass can adapt;
-    // don't use iconColor so we don't block adaptation (e.g. imageAsset.color).
-    if tintWhenGlassInverted != nil { return nil }
     if let c = iconColor { return c }
     return nil
   }
@@ -86,7 +78,6 @@ struct GlassButtonSwiftUI: View {
       .animation(.easeInOut(duration: 0.25), value: iconSize)
       .animation(.easeInOut(duration: 0.25), value: iconColor)
       .animation(.easeInOut(duration: 0.25), value: tint)
-      .animation(.easeInOut(duration: 0.25), value: tintWhenGlassInverted)
       .animation(.easeInOut(duration: 0.25), value: colorScheme)
       .animation(.easeInOut(duration: 0.25), value: style)
       .animation(.easeInOut(duration: 0.25), value: config.spacing)

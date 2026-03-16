@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 
 /// Rendering modes for SF Symbols.
@@ -44,39 +42,79 @@ class CNSymbol {
   });
 }
 
-/// Describes a custom image asset to render natively.
-class CNImageAsset {
-  /// Flutter asset path (e.g., 'assets/icons/my_icon.svg').
-  final String assetPath;
+/// Unified image source used by cupertino_native_plus widgets.
+///
+/// This abstracts over all supported image inputs:
+/// - Native SF Symbols (`CNSymbol`)
+/// - Flutter `IconData` rendered to an image
+/// - Xcode asset catalog images (by name)
+///
+/// Other image variants are intentionally not modeled here to keep the public
+/// API focused and predictable.
+sealed class CNImageSource {
+  const CNImageSource();
 
-  /// Raw image data (PNG, SVG, etc. bytes).
-  /// If provided, this takes precedence over [assetPath].
-  final Uint8List? imageData;
+  /// SF Symbol-based image.
+  const factory CNImageSource.symbol(CNSymbol symbol) = _CNSymbolImageSource;
 
-  /// Image format hint for [imageData] ('png', 'svg', 'jpg', etc.).
-  /// Used by native code to determine how to process the data.
-  final String? imageFormat;
+  /// Image rendered from a Flutter [IconData].
+  const factory CNImageSource.iconData(
+    IconData iconData, {
+    double? size,
+    Color? color,
+  }) = _CNIconDataImageSource;
 
-  /// Desired point size for the image.
-  final double size;
+  /// Image from an Xcode asset catalog.
+  ///
+  /// [name] is the asset name passed to `UIImage(named:)` / `NSImage(named:)`.
+  const factory CNImageSource.xcasset(
+    String name, {
+    double? size,
+    Color? color,
+    CNSymbolRenderingMode? mode,
+    bool? gradient,
+    List<Color>? paletteColors,
+  }) = _CNXcassetImageSource;
 
-  /// Preferred image color (for monochrome rendering).
+  /// Common effective size helper used by widgets when only a single size
+  /// value is needed.
+  double? effectiveSize() {
+    return switch (this) {
+      _CNSymbolImageSource s => s.symbol.size,
+      _CNIconDataImageSource i => i.size,
+      _CNXcassetImageSource x => x.size,
+    };
+  }
+}
+
+class _CNSymbolImageSource extends CNImageSource {
+  const _CNSymbolImageSource(this.symbol);
+
+  final CNSymbol symbol;
+}
+
+class _CNIconDataImageSource extends CNImageSource {
+  const _CNIconDataImageSource(this.iconData, {this.size, this.color});
+
+  final IconData iconData;
+  final double? size;
   final Color? color;
+}
 
-  /// Optional rendering mode.
-  final CNSymbolRenderingMode? mode;
-
-  /// Whether to enable gradient effects when available.
-  final bool? gradient;
-
-  /// Creates an image asset description for native rendering.
-  const CNImageAsset(
-    this.assetPath, {
-    this.imageData,
-    this.imageFormat,
-    this.size = 24.0,
+class _CNXcassetImageSource extends CNImageSource {
+  const _CNXcassetImageSource(
+    this.name, {
+    this.size,
     this.color,
     this.mode,
     this.gradient,
+    this.paletteColors,
   });
+
+  final String name;
+  final double? size;
+  final Color? color;
+  final CNSymbolRenderingMode? mode;
+  final bool? gradient;
+  final List<Color>? paletteColors;
 }

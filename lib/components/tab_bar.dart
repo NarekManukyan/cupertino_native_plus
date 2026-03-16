@@ -37,10 +37,14 @@ class CNTabBarItem {
   /// If not provided, [icon] is used for both states.
   final CNSymbol? activeIcon;
 
-  /// Optional badge text to display on the tab bar item.
-  /// On iOS, this displays as a red badge with the text.
-  /// On macOS, badges are not supported by NSSegmentedControl.
+  /// Optional badge to display on the tab bar item.
+  /// Use [null] for no badge, [CNTabBarItem.badgeDot] (empty string) for a
+  /// dot-only indicator, or a non-empty string for badge text (e.g. a count).
+  /// On iOS, this displays as a red badge; on macOS, badges are not supported.
   final String? badge;
+
+  /// Value for [badge] that shows a dot with no number or text.
+  static const String badgeDot = '';
 
   /// Optional custom icon for unselected state.
   /// Use icons from CupertinoIcons, Icons, or any custom IconData.
@@ -203,10 +207,15 @@ class _CNTabBarState extends State<CNTabBar> {
   List<String>? _lastLabels;
   List<String>? _lastSymbols;
   List<String>? _lastActiveSymbols;
-  List<String>? _lastBadges;
+  List<String?>? _lastBadges;
   bool? _lastSplit;
   int? _lastRightCount;
   double? _lastSplitSpacing;
+
+  /// Cached future that resolves to creation params. Reused across rebuilds to
+  /// avoid jank. When resolved, we build the platform view in build() so
+  /// _intrinsicHeight is used once the native view reports it.
+  Future<Map<String, dynamic>?>? _nativeTabBarFuture;
 
   // Search state
   bool _isSearchActive = false;
@@ -227,6 +236,7 @@ class _CNTabBarState extends State<CNTabBar> {
     if (_hasSearch) {
       _searchFocusNode = FocusNode();
     }
+    _nativeTabBarFuture = _createNativeTabBarFuture();
   }
 
   @override
@@ -241,7 +251,34 @@ class _CNTabBarState extends State<CNTabBar> {
     if (_hasSearch && _searchFocusNode == null) {
       _searchFocusNode = FocusNode();
     }
+    if (_shouldRecreateNativeTabBar(oldWidget)) {
+      setState(() {
+        _nativeTabBarFuture = _createNativeTabBarFuture();
+      });
+    }
     _syncPropsToNativeIfNeeded();
+  }
+
+  /// True when items or config that affect native creation params have changed.
+  bool _shouldRecreateNativeTabBar(CNTabBar oldWidget) {
+    if (widget.items.length != oldWidget.items.length) return true;
+    if (widget.items != oldWidget.items) return true;
+    if (widget.searchItem != oldWidget.searchItem) return true;
+    if (widget.split != oldWidget.split) return true;
+    if (widget.rightCount != oldWidget.rightCount) return true;
+    if (widget.splitSpacing != oldWidget.splitSpacing) return true;
+    if (widget.iconSize != oldWidget.iconSize) return true;
+    if (widget.height != oldWidget.height) return true;
+    return false;
+  }
+
+  Future<Map<String, dynamic>?> _createNativeTabBarFuture() async {
+    final iconBytes = await _renderCustomIcons();
+    if (!mounted) return null;
+    return _computeCreationParams(
+      customIconBytes: iconBytes[0],
+      activeCustomIconBytes: iconBytes[1],
+    );
   }
 
   @override
@@ -294,35 +331,14 @@ class _CNTabBarState extends State<CNTabBar> {
       return _buildFlutterFallback(context);
     }
 
-    // Render custom IconData to bytes
-    return FutureBuilder<List<List<Uint8List?>>>(
-      future: _renderCustomIcons(),
+    // Resolve to creation params; build widget each time so _intrinsicHeight is used after native reports it.
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _nativeTabBarFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          // Show placeholder while rendering
+        if (!snapshot.hasData || snapshot.data == null) {
           return SizedBox(height: widget.height ?? 50, width: double.infinity);
         }
-
-        final iconBytes = snapshot.data!;
-        final customIconBytes = iconBytes[0];
-        final activeCustomIconBytes = iconBytes[1];
-
-        return FutureBuilder<Widget>(
-          future: _buildNativeTabBar(
-            context,
-            customIconBytes: customIconBytes,
-            activeCustomIconBytes: activeCustomIconBytes,
-          ),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return SizedBox(height: widget.height);
-            }
-            // Keep native tab bar visible at all times
-            // Search UI should be handled in app content area, not as tab bar overlay
-            // This matches adaptive_platform_ui behavior
-            return snapshot.data!;
-          },
-        );
+        return _buildNativeTabBarPlatformView(context, snapshot.data!);
       },
     );
   }
@@ -363,8 +379,7 @@ class _CNTabBarState extends State<CNTabBar> {
     return [customIconBytes, activeCustomIconBytes];
   }
 
-  Future<Widget> _buildNativeTabBar(
-    BuildContext context, {
+  Future<Map<String, dynamic>?> _computeCreationParams({
     required List<Uint8List?> customIconBytes,
     required List<Uint8List?> activeCustomIconBytes,
   }) async {
@@ -386,25 +401,28 @@ class _CNTabBarState extends State<CNTabBar> {
     final activeSymbols = widget.items
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
-    final badges = widget.items.map((e) => e.badge ?? '').toList();
+    final badges = widget.items.map((e) => e.badge).toList();
 
-    // Extract imageAsset data and resolve asset paths based on device pixel ratio
+    // Extract imageAsset data. For xcasset-backed images, we skip resolving
+    // Flutter asset paths and rely solely on [xcassetName].
     final imageAssetPaths = await Future.wait(
-      widget.items.map(
-        (e) async => e.imageAsset != null
-            ? await resolveAssetPathForPixelRatio(e.imageAsset!.assetPath)
-            : '',
-      ),
+      widget.items.map((e) async {
+        final asset = e.imageAsset;
+        if (asset == null) return '';
+        if ((asset.xcassetName ?? '').isNotEmpty) return '';
+        return await resolveAssetPathForPixelRatio(asset.assetPath);
+      }),
     );
     final activeImageAssetPaths = await Future.wait(
-      widget.items.map(
-        (e) async => e.activeImageAsset != null
-            ? await resolveAssetPathForPixelRatio(e.activeImageAsset!.assetPath)
-            : '',
-      ),
+      widget.items.map((e) async {
+        final asset = e.activeImageAsset;
+        if (asset == null) return '';
+        if ((asset.xcassetName ?? '').isNotEmpty) return '';
+        return await resolveAssetPathForPixelRatio(asset.assetPath);
+      }),
     );
 
-    if (!mounted) return const SizedBox();
+    if (!mounted) return null;
 
     final sizes = widget.items
         .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
@@ -421,6 +439,12 @@ class _CNTabBarState extends State<CNTabBar> {
         .toList();
     final activeImageAssetData = widget.items
         .map((e) => e.activeImageAsset?.imageData)
+        .toList();
+    final imageAssetXcassetNames = widget.items
+        .map((e) => e.imageAsset?.xcassetName ?? '')
+        .toList();
+    final activeImageAssetXcassetNames = widget.items
+        .map((e) => e.activeImageAsset?.xcassetName ?? '')
         .toList();
     // Auto-detect format if not provided (use resolved paths)
     final imageAssetFormats = await Future.wait(
@@ -444,7 +468,7 @@ class _CNTabBarState extends State<CNTabBar> {
       }),
     );
 
-    if (!mounted) return const SizedBox();
+    if (!mounted) return null;
 
     final creationParams = <String, dynamic>{
       'labels': labels,
@@ -457,6 +481,8 @@ class _CNTabBarState extends State<CNTabBar> {
       'activeImageAssetPaths': activeImageAssetPaths,
       'imageAssetData': imageAssetData,
       'activeImageAssetData': activeImageAssetData,
+      'imageAssetXcassetNames': imageAssetXcassetNames,
+      'activeImageAssetXcassetNames': activeImageAssetXcassetNames,
       'imageAssetFormats': imageAssetFormats,
       'activeImageAssetFormats': activeImageAssetFormats,
       'iconScale': capturedDevicePixelRatio, // Pass the scale!
@@ -491,7 +517,7 @@ class _CNTabBarState extends State<CNTabBar> {
       },
     };
 
-    return _buildNativeTabBarPlatformView(context, creationParams);
+    return creationParams;
   }
 
   Map<String, dynamic> _buildSearchStyleParams(BuildContext context) {
@@ -545,13 +571,15 @@ class _CNTabBarState extends State<CNTabBar> {
     };
   }
 
-  Future<Widget> _buildNativeTabBarPlatformView(
+  Widget _buildNativeTabBarPlatformView(
     BuildContext context,
     Map<String, dynamic> creationParams,
-  ) async {
-    final viewType = ViewTypes.cupertinoNativeTabBar;
+  ) {
+    const viewType = ViewTypes.cupertinoNativeTabBar;
+    // Stable key so Flutter reuses the platform view and avoids jank on rebuilds.
     final platformView = buildCupertinoPlatformView(
       context,
+      key: const ValueKey<String>('CupertinoNativeTabBar'),
       viewType: viewType,
       creationParams: creationParams,
       onPlatformViewCreated: _onCreated,
@@ -665,10 +693,10 @@ class _CNTabBarState extends State<CNTabBar> {
       final activeSymbols = widget.items
           .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
           .toList();
-      final badges = widget.items.map((e) => e.badge ?? '').toList();
+      final badges = widget.items.map((e) => e.badge).toList();
 
       // Fast path: if ONLY badges changed, use lightweight setBadges method
-      final badgesChanged = _lastBadges?.join('|') != badges.join('|');
+      final badgesChanged = !listEquals(_lastBadges, badges);
       final labelsChanged = _lastLabels?.join('|') != labels.join('|');
       final symbolsChanged = _lastSymbols?.join('|') != symbols.join('|');
       final activeSymbolsChanged =
@@ -802,7 +830,7 @@ class _CNTabBarState extends State<CNTabBar> {
     _lastActiveSymbols = widget.items
         .map((e) => e.activeIcon?.name ?? e.icon?.name ?? '')
         .toList();
-    _lastBadges = widget.items.map((e) => e.badge ?? '').toList();
+    _lastBadges = widget.items.map((e) => e.badge).toList();
     // Note: Custom icon bytes are cached in _syncPropsToNativeIfNeeded when rendered
   }
 

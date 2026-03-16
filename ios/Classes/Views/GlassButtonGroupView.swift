@@ -36,7 +36,6 @@ struct GlassButtonGroupSwiftUI: View {
               iconSize: button.iconSize,
               iconColor: button.iconColor,
               tint: button.tint,
-              tintWhenGlassInverted: button.tintWhenGlassInverted,
               isRound: button.isRound,
               style: button.style,
               isEnabled: button.isEnabled,
@@ -60,7 +59,6 @@ struct GlassButtonGroupSwiftUI: View {
               iconSize: button.iconSize,
               iconColor: button.iconColor,
               tint: button.tint,
-              tintWhenGlassInverted: button.tintWhenGlassInverted,
               isRound: button.isRound,
               style: button.style,
               isEnabled: button.isEnabled,
@@ -90,7 +88,6 @@ struct GlassButtonData: Identifiable {
   let iconSize: CGFloat
   let iconColor: Color?
   let tint: Color?
-  let tintWhenGlassInverted: Color?
   let isRound: Bool
   let style: String
   let isEnabled: Bool
@@ -151,7 +148,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
           let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
           let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
           let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
-          let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
           let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
           let style = buttonDict["style"] as? String ?? "glass"
           let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -252,7 +248,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
             iconSize: iconSize,
             iconColor: iconColor,
             tint: tint,
-            tintWhenGlassInverted: tintWhenGlassInverted,
             isRound: isRound,
             style: style,
             isEnabled: isEnabled,
@@ -370,7 +365,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
     let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
     let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
-    let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
     let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
     let style = buttonDict["style"] as? String ?? "glass"
     let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -462,7 +456,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       iconSize: iconSize,
       iconColor: iconColor,
       tint: tint,
-      tintWhenGlassInverted: tintWhenGlassInverted,
       isRound: isRound,
       style: style,
       isEnabled: isEnabled,
@@ -486,7 +479,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       let iconColorARGB = (buttonDict["iconColor"] as? NSNumber)?.intValue
       let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
       let tint = (buttonDict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
-      let tintWhenGlassInverted = (buttonDict["tintWhenGlassInverted"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
       let isEnabled = (buttonDict["enabled"] as? NSNumber)?.boolValue ?? true
       let style = buttonDict["style"] as? String ?? "glass"
       let glassEffectUnionId = buttonDict["glassEffectUnionId"] as? String
@@ -575,7 +567,6 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
         iconSize: iconSize,
         iconColor: iconColor,
         tint: tint,
-        tintWhenGlassInverted: tintWhenGlassInverted,
         isRound: isRound,
         style: style,
         isEnabled: isEnabled,

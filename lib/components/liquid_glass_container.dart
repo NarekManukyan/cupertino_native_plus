@@ -86,8 +86,10 @@ class _LiquidGlassContainerState extends State<LiquidGlassContainer> {
       'isDark': ThemeHelper.isDark(context),
     };
 
+    // Stable key so Flutter reuses the platform view across rebuilds (reduces jank).
     final platformView = buildCupertinoPlatformView(
       context,
+      key: ValueKey(widget.config.hashCode),
       viewType: viewType,
       creationParams: creationParams,
       onPlatformViewCreated: _onCreated,

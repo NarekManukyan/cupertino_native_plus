@@ -72,19 +72,6 @@ class CNButtonConfig {
   /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
   final bool glassEffectInteractive;
 
-  /// Tint for label and icon when the glass or interface is dark.
-  ///
-  /// - **Single glass buttons** (no [glassEffectUnionId] / [glassEffectId]) use UIKit
-  ///   `UIButton.Configuration.glass()`, which adapts icon and label when content behind the
-  ///   glass changes (like [CNTabBar]). Set this and leave [tint] unset for that behavior;
-  ///   omit [CNImageAsset.color] so the icon can adapt too.
-  /// - **Dark interface mode**: this color is used for icon and label (e.g. white for contrast).
-  /// - **Glass button groups** use SwiftUI; adaptation there relies on semantic styling when
-  ///   [tint] is unset (no public API for "glass just inverted").
-  ///
-  /// Only applies on iOS 26+ and macOS 26+ when using glass styles.
-  final Color? tintWhenGlassInverted;
-
   /// Maximum number of lines for button text.
   ///
   /// Defaults to 1 to prevent text wrapping. Set to null for unlimited lines.
@@ -104,7 +91,6 @@ class CNButtonConfig {
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
-    this.tintWhenGlassInverted,
     this.maxLines = 1,
   });
 }
@@ -194,7 +180,6 @@ class _CNButtonState extends State<CNButton> {
   MethodChannel? _channel;
   bool? _lastIsDark;
   int? _lastTint;
-  int? _lastTintWhenGlassInverted;
   String? _lastTitle;
   String? _lastIconName;
   double? _lastIconSize;
@@ -259,6 +244,12 @@ class _CNButtonState extends State<CNButton> {
 
     // Handle image asset (highest priority)
     if (widget.imageAsset != null) {
+      // For xcasset-backed images, there is no Flutter asset path to resolve.
+      // Pass the CNImageAsset through directly so xcassetName is preserved.
+      if ((widget.imageAsset!.xcassetName ?? '').isNotEmpty) {
+        return _buildNativeButton(context, imageAsset: widget.imageAsset);
+      }
+
       return FutureBuilder<String>(
         future: resolveAssetPathForPixelRatio(widget.imageAsset!.assetPath),
         builder: (context, snapshot) {
@@ -320,6 +311,7 @@ class _CNButtonState extends State<CNButton> {
     Uint8List? imageData;
     String? imageFormat;
     String? assetPath;
+    String? xcassetName;
     double iconSize = 20.0;
     Color? iconColor;
     CNSymbolRenderingMode? iconMode;
@@ -330,6 +322,7 @@ class _CNButtonState extends State<CNButton> {
       // Image asset takes precedence
       // Asset path is already resolved by FutureBuilder
       assetPath = imageAsset.assetPath;
+      xcassetName = imageAsset.xcassetName;
       imageData = imageAsset.imageData;
       // Auto-detect format if not provided
       imageFormat =
@@ -383,6 +376,7 @@ class _CNButtonState extends State<CNButton> {
       if (widget.label != null) 'buttonTitle': widget.label,
       if (customIconBytes != null) 'buttonCustomIconBytes': customIconBytes,
       if (imageAsset != null) ...{
+        if ((xcassetName ?? '').isNotEmpty) 'buttonXcassetName': xcassetName,
         if (assetPath != null) 'buttonAssetPath': assetPath,
         if (imageData != null) 'buttonImageData': imageData,
         if (imageFormat != null) 'buttonImageFormat': imageFormat,
@@ -428,11 +422,6 @@ class _CNButtonState extends State<CNButton> {
       if (widget.config.glassEffectId != null)
         'glassEffectId': widget.config.glassEffectId,
       'glassEffectInteractive': widget.config.glassEffectInteractive,
-      if (widget.config.tintWhenGlassInverted != null)
-        'tintWhenGlassInverted': resolveColorToArgb(
-          widget.config.tintWhenGlassInverted!,
-          context,
-        ),
     };
 
     final platformView = buildCupertinoPlatformView(
@@ -538,9 +527,6 @@ class _CNButtonState extends State<CNButton> {
     _intrinsicWidth = null;
     _intrinsicHeight = null;
     _lastTint = resolveColorToArgb(_effectiveTint, context);
-    _lastTintWhenGlassInverted = widget.config.tintWhenGlassInverted != null
-        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
-        : null;
     _lastIsDark = _isDark;
     _lastTitle = widget.label;
     _lastIconName = widget.icon?.name;
@@ -550,7 +536,15 @@ class _CNButtonState extends State<CNButton> {
     _lastImagePlacement = widget.config.imagePlacement;
     _lastImagePadding = widget.config.imagePadding;
     _lastPadding = widget.config.padding;
-    _lastImageAssetPath = widget.imageAsset?.assetPath;
+    // For xcasset-backed images, force an initial sync by not priming
+    // _lastImageAssetPath. This ensures the first _syncPropsToNativeIfNeeded
+    // sends buttonXcassetName and icon config without requiring an external
+    // setState/hot reload.
+    if ((widget.imageAsset?.xcassetName ?? '').isNotEmpty) {
+      _lastImageAssetPath = null;
+    } else {
+      _lastImageAssetPath = widget.imageAsset?.assetPath;
+    }
     _lastImageAssetData = widget.imageAsset?.imageData;
     _lastCustomIcon = widget.customIcon;
     // Request intrinsic size after this frame so native can run layout first.
@@ -602,25 +596,10 @@ class _CNButtonState extends State<CNButton> {
       context,
     );
 
-    final tintWhenInverted = widget.config.tintWhenGlassInverted != null
-        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
-        : null;
     if (_lastTint != tint && tint != null) {
       final style = <String, dynamic>{'tint': tint};
-      if (tintWhenInverted != null) {
-        style['tintWhenGlassInverted'] = tintWhenInverted;
-      }
       await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
-    }
-    if (_lastTintWhenGlassInverted != tintWhenInverted) {
-      final style = <String, dynamic>{};
-      if (tint != null) style['tint'] = tint;
-      if (tintWhenInverted != null) {
-        style['tintWhenGlassInverted'] = tintWhenInverted;
-      }
-      if (style.isNotEmpty) await ch.invokeMethod('setStyle', style);
-      _lastTintWhenGlassInverted = tintWhenInverted;
     }
     if (_lastStyle != widget.config.style) {
       await ch.invokeMethod('setStyle', {
@@ -704,7 +683,11 @@ class _CNButtonState extends State<CNButton> {
           );
           if (!mounted) return;
 
-          updates['buttonAssetPath'] = resolvedAssetPath;
+          if ((widget.imageAsset!.xcassetName ?? '').isNotEmpty) {
+            updates['buttonXcassetName'] = widget.imageAsset!.xcassetName;
+          } else {
+            updates['buttonAssetPath'] = resolvedAssetPath;
+          }
           updates['buttonImageData'] = widget.imageAsset!.imageData;
           // Auto-detect format if not provided (use resolved path)
           updates['buttonImageFormat'] =
@@ -752,17 +735,20 @@ class _CNButtonState extends State<CNButton> {
                   widget.imageAsset!.gradient;
             }
             // Always include asset path when updating other properties
-            final resolvedAssetPath = await resolveAssetPathForPixelRatio(
-              widget.imageAsset!.assetPath,
-            );
-            if (!mounted) return;
-
-            updates['buttonAssetPath'] = resolvedAssetPath;
+            if ((widget.imageAsset!.xcassetName ?? '').isNotEmpty) {
+              updates['buttonXcassetName'] = widget.imageAsset!.xcassetName;
+            } else {
+              final resolvedAssetPath = await resolveAssetPathForPixelRatio(
+                widget.imageAsset!.assetPath,
+              );
+              if (!mounted) return;
+              updates['buttonAssetPath'] = resolvedAssetPath;
+            }
             updates['buttonImageData'] = widget.imageAsset!.imageData;
             updates['buttonImageFormat'] =
                 widget.imageAsset!.imageFormat ??
                 detectImageFormat(
-                  resolvedAssetPath,
+                  widget.imageAsset!.assetPath,
                   widget.imageAsset!.imageData,
                 );
           }
@@ -868,25 +854,10 @@ class _CNButtonState extends State<CNButton> {
       _lastIsDark = isDark;
     }
     // Also propagate theme-driven tint changes and inverted tint
-    final tintWhenInverted = widget.config.tintWhenGlassInverted != null
-        ? resolveColorToArgb(widget.config.tintWhenGlassInverted!, context)
-        : null;
     if (_lastTint != tint && tint != null) {
       final style = <String, dynamic>{'tint': tint};
-      if (tintWhenInverted != null) {
-        style['tintWhenGlassInverted'] = tintWhenInverted;
-      }
       await ch.invokeMethod('setStyle', style);
       _lastTint = tint;
-    }
-    if (_lastTintWhenGlassInverted != tintWhenInverted &&
-        tintWhenInverted != null) {
-      final style = <String, dynamic>{
-        'tintWhenGlassInverted': tintWhenInverted,
-      };
-      if (tint != null) style['tint'] = tint;
-      await ch.invokeMethod('setStyle', style);
-      _lastTintWhenGlassInverted = tintWhenInverted;
     }
   }
 

@@ -15,7 +15,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var currentLabels: [String] = []
   private var currentSymbols: [String] = []
   private var currentActiveSymbols: [String] = []
-  private var currentBadges: [String] = []
+  private var currentBadges: [String?] = []
   private var currentCustomIconBytes: [Data?] = []
   private var currentActiveCustomIconBytes: [Data?] = []
   private var currentImageAssetPaths: [String] = []
@@ -29,6 +29,15 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var rightInsetVal: CGFloat = 0
   private var splitSpacingVal: CGFloat = 12 // Apple's recommended spacing for visual separation
 
+  /// Parses badges from method channel: null = no badge, "" = dot only, non-empty = badge text.
+  private static func parseBadges(_ any: Any?) -> [String?] {
+    guard let arr = any as? [Any] else { return [] }
+    return arr.map { item in
+      if item is NSNull { return nil }
+      return item as? String
+    }
+  }
+
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeTabBar)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
@@ -36,7 +45,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     var labels: [String] = []
     var symbols: [String] = []
     var activeSymbols: [String] = []
-    var badges: [String] = []
+    var badges: [String?] = []
     var customIconBytes: [Data?] = []
     var activeCustomIconBytes: [Data?] = []
     var imageAssetPaths: [String] = []
@@ -45,6 +54,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     var activeImageAssetData: [Data?] = []
     var imageAssetFormats: [String] = []
     var activeImageAssetFormats: [String] = []
+    var imageAssetXcassetNames: [String] = []
+    var activeImageAssetXcassetNames: [String] = []
     var iconScale: CGFloat = UIScreen.main.scale
     var sizes: [NSNumber] = [] // ignored; use system metrics
     var colors: [NSNumber] = [] // ignored; use tintColor
@@ -61,7 +72,7 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       labels = (dict["labels"] as? [String]) ?? []
       symbols = (dict["sfSymbols"] as? [String]) ?? []
       activeSymbols = (dict["activeSfSymbols"] as? [String]) ?? []
-      badges = (dict["badges"] as? [String]) ?? []
+      badges = Self.parseBadges(dict["badges"])
       if let bytesArray = dict["customIconBytes"] as? [FlutterStandardTypedData?] {
         customIconBytes = bytesArray.map { $0?.data }
       }
@@ -78,6 +89,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       }
       imageAssetFormats = (dict["imageAssetFormats"] as? [String]) ?? []
       activeImageAssetFormats = (dict["activeImageAssetFormats"] as? [String]) ?? []
+      imageAssetXcassetNames = (dict["imageAssetXcassetNames"] as? [String]) ?? []
+      activeImageAssetXcassetNames = (dict["activeImageAssetXcassetNames"] as? [String]) ?? []
       if let scale = dict["iconScale"] as? NSNumber {
         iconScale = CGFloat(truncating: scale)
       }
@@ -95,7 +108,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       // content insets controlled by Flutter padding; keep zero here
     }
 
-    // Preload SVG assets dynamically based on what's actually being used
+    // Preload SVG assets dynamically based on what's actually being used for
+    // Flutter asset paths; xcasset-based images are loaded via UIImage(named:).
     let allAssetPaths = Set(imageAssetPaths + activeImageAssetPaths).filter { !$0.isEmpty }
     if !allAssetPaths.isEmpty {
       SVGImageLoader.shared.preloadAssetsFromPaths(Array(allAssetPaths))
@@ -124,11 +138,19 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       for i in range {
         var image: UIImage? = nil
         var selectedImage: UIImage? = nil
+        let xcassetName = (i < imageAssetXcassetNames.count) ? imageAssetXcassetNames[i] : ""
+        let activeXcassetName = (i < activeImageAssetXcassetNames.count) ? activeImageAssetXcassetNames[i] : ""
         
-        // Priority: imageAsset > customIconBytes > SF Symbol
+        // Priority: xcasset > imageAsset > customIconBytes > SF Symbol
         // Unselected image
-        if i < imageAssetData.count, let data = imageAssetData[i] {
-          image = Self.createImageFromData(data, format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil, scale: iconScale)
+        if !xcassetName.isEmpty {
+          image = UIImage(named: xcassetName, in: Bundle.main, compatibleWith: nil)
+        } else if i < imageAssetData.count, let data = imageAssetData[i] {
+          image = Self.createImageFromData(
+            data,
+            format: (i < imageAssetFormats.count) ? imageAssetFormats[i] : nil,
+            scale: iconScale
+          )
         } else if i < imageAssetPaths.count && !imageAssetPaths[i].isEmpty {
           image = Self.loadFlutterAsset(imageAssetPaths[i])
         } else if i < customIconBytes.count, let data = customIconBytes[i] {
@@ -138,8 +160,14 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
         }
         
         // Selected image: Use active versions if available
-        if i < activeImageAssetData.count, let data = activeImageAssetData[i] {
-          selectedImage = Self.createImageFromData(data, format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil, scale: iconScale)
+        if !activeXcassetName.isEmpty {
+          selectedImage = UIImage(named: activeXcassetName, in: Bundle.main, compatibleWith: nil)
+        } else if i < activeImageAssetData.count, let data = activeImageAssetData[i] {
+          selectedImage = Self.createImageFromData(
+            data,
+            format: (i < activeImageAssetFormats.count) ? activeImageAssetFormats[i] : nil,
+            scale: iconScale
+          )
         } else if i < activeImageAssetPaths.count && !activeImageAssetPaths[i].isEmpty {
           selectedImage = Self.loadFlutterAsset(activeImageAssetPaths[i])
         } else if i < activeCustomIconBytes.count, let data = activeCustomIconBytes[i] {
@@ -152,8 +180,10 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
         
         let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
         let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-        if i < badges.count && !badges[i].isEmpty {
-          item.badgeValue = badges[i]
+        if i < badges.count, let b = badges[i] {
+          item.badgeValue = b
+        } else {
+          item.badgeValue = nil
         }
         items.append(item)
       }
@@ -345,7 +375,7 @@ channel.setMethodCallHandler { [weak self] call, result in
           let labels = (args["labels"] as? [String]) ?? []
           let symbols = (args["sfSymbols"] as? [String]) ?? []
           let activeSymbols = (args["activeSfSymbols"] as? [String]) ?? []
-          let badges = (args["badges"] as? [String]) ?? []
+          let badges = Self.parseBadges(args["badges"])
           var customIconBytes: [Data?] = []
           var activeCustomIconBytes: [Data?] = []
           var imageAssetPaths: [String] = []
@@ -419,8 +449,10 @@ channel.setMethodCallHandler { [weak self] call, result in
               
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
+              if i < badges.count, let b = badges[i] {
+                item.badgeValue = b
+              } else {
+                item.badgeValue = nil
               }
               items.append(item)
             }
@@ -513,8 +545,10 @@ channel.setMethodCallHandler { [weak self] call, result in
               
               let title = (i < labels.count && !labels[i].isEmpty) ? labels[i] : nil
               let item = UITabBarItem(title: title, image: image, selectedImage: selectedImage)
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
+              if i < badges.count, let b = badges[i] {
+                item.badgeValue = b
+              } else {
+                item.badgeValue = nil
               }
               items.append(item)
             }
@@ -704,13 +738,14 @@ channel.setMethodCallHandler { [weak self] call, result in
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
       case "setBadges":
         // Lightweight badge-only update without rebuilding items
-        if let args = call.arguments as? [String: Any], let badges = args["badges"] as? [String] {
+        if let args = call.arguments as? [String: Any] {
+          let badges = Self.parseBadges(args["badges"])
           self.currentBadges = badges
           // Update single bar
           if let bar = self.tabBar, let items = bar.items {
             for (i, item) in items.enumerated() {
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
+              if i < badges.count, let b = badges[i] {
+                item.badgeValue = b
               } else {
                 item.badgeValue = nil
               }
@@ -721,16 +756,16 @@ channel.setMethodCallHandler { [weak self] call, result in
              let right = self.tabBarRight, let rightItems = right.items {
             let leftEnd = leftItems.count
             for (i, item) in leftItems.enumerated() {
-              if i < badges.count && !badges[i].isEmpty {
-                item.badgeValue = badges[i]
+              if i < badges.count, let b = badges[i] {
+                item.badgeValue = b
               } else {
                 item.badgeValue = nil
               }
             }
             for (i, item) in rightItems.enumerated() {
               let badgeIndex = leftEnd + i
-              if badgeIndex < badges.count && !badges[badgeIndex].isEmpty {
-                item.badgeValue = badges[badgeIndex]
+              if badgeIndex < badges.count, let b = badges[badgeIndex] {
+                item.badgeValue = b
               } else {
                 item.badgeValue = nil
               }
