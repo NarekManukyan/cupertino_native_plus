@@ -17,17 +17,19 @@ class ThemeHelper {
     try {
       final cupertinoTheme = CupertinoTheme.of(context);
       final brightness = cupertinoTheme.brightness;
-      return brightness ?? Brightness.light;
+      // Don't fall back to Brightness.light here — if brightness is null the
+      // CupertinoTheme hasn't been explicitly set, so cascade to the actual
+      // system/material brightness instead.
+      if (brightness != null) return brightness;
     } catch (_) {
-      // CupertinoApp not in tree, try Material theme
-      try {
-        final materialTheme = Theme.of(context);
-        return materialTheme.brightness;
-      } catch (_) {
-        // No theme found, use system brightness
-        return MediaQuery.of(context).platformBrightness;
-      }
+      // CupertinoApp not in tree, fall through to Material / system checks.
     }
+    // Try Material theme next
+    try {
+      return Theme.of(context).brightness;
+    } catch (_) {}
+    // Final fallback: real system brightness
+    return MediaQuery.of(context).platformBrightness;
   }
 
   /// Gets the primary/accent color from the theme.

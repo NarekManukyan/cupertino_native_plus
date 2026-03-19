@@ -531,6 +531,9 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (imageFormat != null) 'imageFormat': imageFormat,
       if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
         'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
+      if (button.imageAsset?.xcassetName != null &&
+          button.imageAsset!.xcassetName!.isNotEmpty)
+        'xcassetName': button.imageAsset!.xcassetName,
       'enabled': button.enabled,
       if (tintArgb != null) 'tint': tintArgb,
       if ((button.config.tintWhenGlassInverted ??
@@ -619,6 +622,9 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (imageFormat != null) 'imageFormat': imageFormat,
       if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
         'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
+      if (button.imageAsset?.xcassetName != null &&
+          button.imageAsset!.xcassetName!.isNotEmpty)
+        'xcassetName': button.imageAsset!.xcassetName,
       'enabled': button.enabled,
       if (tintArgb != null) 'tint': tintArgb,
       'minHeight': button.config.minHeight ?? 44.0,
@@ -663,6 +669,7 @@ class _ButtonSnapshot {
   final int? imageAssetDataLength;
   final double? imageAssetSize;
   final int? imageAssetColor;
+  final String? imageAssetXcassetName;
   final int? customIconHash;
   final String style;
   final bool enabled;
@@ -677,6 +684,7 @@ class _ButtonSnapshot {
     this.imageAssetDataLength,
     this.imageAssetSize,
     this.imageAssetColor,
+    this.imageAssetXcassetName,
     this.customIconHash,
     required this.style,
     required this.enabled,
@@ -693,6 +701,7 @@ class _ButtonSnapshot {
       imageAssetDataLength: button.imageAsset?.imageData?.length,
       imageAssetSize: button.imageAsset?.size,
       imageAssetColor: button.imageAsset?.color?.toARGB32(),
+      imageAssetXcassetName: button.imageAsset?.xcassetName,
       customIconHash: button.customIcon?.hashCode,
       style: button.config.style.name,
       enabled: button.enabled,
@@ -710,6 +719,7 @@ class _ButtonSnapshot {
       imageAssetDataLength: button.imageAsset?.imageData?.length,
       imageAssetSize: button.imageAsset?.size,
       imageAssetColor: button.imageAsset?.color?.toARGB32(),
+      imageAssetXcassetName: button.imageAsset?.xcassetName,
       customIconHash: button.customIcon?.hashCode,
       style: button.config.style.name,
       enabled: button.enabled,
@@ -726,6 +736,7 @@ class _ButtonSnapshot {
         imageAssetDataLength == other.imageAssetDataLength &&
         imageAssetSize == other.imageAssetSize &&
         imageAssetColor == other.imageAssetColor &&
+        imageAssetXcassetName == other.imageAssetXcassetName &&
         customIconHash == other.customIconHash &&
         style == other.style &&
         enabled == other.enabled &&

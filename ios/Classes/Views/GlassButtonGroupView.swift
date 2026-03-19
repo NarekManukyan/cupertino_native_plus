@@ -156,9 +156,14 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
           
           // Load image from asset path, bytes, or icon bytes
           var iconImage: UIImage? = nil
-          
+
+          // Try xcasset first (highest priority)
+          if let xcassetName = buttonDict["xcassetName"] as? String, !xcassetName.isEmpty {
+            iconImage = UIImage(named: xcassetName, in: Bundle.main, compatibleWith: nil)
+          }
+
           // Try asset path first
-          if let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
+          if iconImage == nil, let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
             let format = buttonDict["imageFormat"] as? String
             let size = CGSize(width: iconSize, height: iconSize)
             
@@ -373,12 +378,17 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
     
     // Load image from asset path, bytes, or icon bytes
     var iconImage: UIImage? = nil
-    
-    // Try asset path first
-    if let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
+
+    // Try xcasset first (highest priority)
+    if let xcassetName = buttonDict["xcassetName"] as? String, !xcassetName.isEmpty {
+      iconImage = UIImage(named: xcassetName, in: Bundle.main, compatibleWith: nil)
+    }
+
+    // Try asset path
+    if iconImage == nil, let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
       let format = buttonDict["imageFormat"] as? String
       let size = CGSize(width: iconSize, height: iconSize)
-      
+
       if let argb = iconColorARGB, #available(iOS 13.0, *) {
         iconImage = ImageUtils.loadAndTintImage(
           from: assetPath,
@@ -390,7 +400,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       } else {
         iconImage = ImageUtils.loadFlutterAsset(assetPath, size: size, format: format, scale: UIScreen.main.scale)
       }
-      
+
       if iconImage != nil, iconColorARGB == nil, iconImage!.size != size {
         iconImage = ImageUtils.scaleImage(iconImage!, to: size, scale: UIScreen.main.scale)
       }
@@ -486,11 +496,16 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       let glassEffectInteractive = (buttonDict["glassEffectInteractive"] as? NSNumber)?.boolValue ?? false
       
       var iconImage: UIImage? = nil
-      
-      if let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
+
+      // Try xcasset first (highest priority)
+      if let xcassetName = buttonDict["xcassetName"] as? String, !xcassetName.isEmpty {
+        iconImage = UIImage(named: xcassetName, in: Bundle.main, compatibleWith: nil)
+      }
+
+      if iconImage == nil, let assetPath = buttonDict["assetPath"] as? String, !assetPath.isEmpty {
         let format = buttonDict["imageFormat"] as? String
         let size = CGSize(width: iconSize, height: iconSize)
-        
+
         if let argb = iconColorARGB, #available(iOS 13.0, *) {
           iconImage = ImageUtils.loadAndTintImage(
             from: assetPath,
@@ -502,12 +517,12 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
         } else {
           iconImage = ImageUtils.loadFlutterAsset(assetPath, size: size, format: format, scale: UIScreen.main.scale)
         }
-        
+
         if iconImage != nil, iconColorARGB == nil, iconImage!.size != size {
           iconImage = ImageUtils.scaleImage(iconImage!, to: size, scale: UIScreen.main.scale)
         }
       }
-      
+
       if iconImage == nil, let imageBytes = buttonDict["imageBytes"] as? FlutterStandardTypedData {
         let format = buttonDict["imageFormat"] as? String
         let size = CGSize(width: iconSize, height: iconSize)
