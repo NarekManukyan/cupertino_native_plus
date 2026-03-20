@@ -1,8 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// SwiftUI button view with full Liquid Glass support using glassEffect() modifier.
-/// This provides full blending and morphing capabilities when used in groups.
+/// Individual glass button using iOS 26 glassEffect() modifier.
 @available(iOS 26.0, *)
 struct GlassButtonSwiftUI: View {
   let title: String?
@@ -11,7 +10,6 @@ struct GlassButtonSwiftUI: View {
   let iconSize: CGFloat
   let iconColor: Color?
   let tint: Color?
-  let isRound: Bool
   let style: String
   let isEnabled: Bool
   let onPressed: () -> Void
@@ -20,144 +18,148 @@ struct GlassButtonSwiftUI: View {
   let glassEffectInteractive: Bool
   var namespace: Namespace.ID
   let config: GlassButtonConfig
-  
+  /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
+  let imagePlacement: String
+  /// Glass material: "clear" | "regular".
+  let glassMaterial: String
+
   @Environment(\.colorScheme) private var colorScheme
-  
-  /// When nil: use semantic .primary so the glass effect can adapt icon/label when content
-  /// behind the glass changes.
-  private var effectiveLabelStyle: Color? {
-    if let t = tint { return t }
-    return nil
-  }
-  
-  private var effectiveIconStyle: Color? {
-    if let t = tint { return t }
-    if let c = iconColor { return c }
-    return nil
-  }
+
+  /// Tint takes priority over explicit iconColor; nil falls back to semantic .primary.
+  private var effectiveIconStyle: Color? { iconColor ?? tint }
+  private var effectiveLabelStyle: Color? { tint }
 
   var body: some View {
+    // Compute shape once and reuse for both contentShape and glassEffect.
+    let shape = buttonShape
     Button(action: onPressed) {
-      HStack(spacing: config.spacing) {
-        if let icon = iconImage {
-          Image(uiImage: icon)
-            .resizable()
-            .scaledToFit()
-            .frame(width: iconSize, height: iconSize)
-        } else if let iconName = iconName {
-          Group {
-            if let style = effectiveIconStyle {
-              Image(systemName: iconName)
-                .font(.system(size: iconSize))
-                .foregroundStyle(style)
-            } else {
-              Image(systemName: iconName)
-                .font(.system(size: iconSize))
-                .foregroundStyle(.primary)
-            }
-          }
-        }
-        
-        if let title = title {
-          Group {
-            if let style = effectiveLabelStyle {
-              Text(title)
-                .foregroundStyle(style)
-            } else {
-              Text(title)
-                .foregroundStyle(.primary)
-            }
-          }
-        }
-      }
-      .padding(config.padding)
-      .frame(minHeight: config.minHeight)
-      .contentShape(shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .glassEffect(glassEffectForStyle(style, interactive: glassEffectInteractive), in: shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .applyGlassEffectModifiers(unionId: glassEffectUnionId, id: glassEffectId, namespace: namespace)
-      .animation(.easeInOut(duration: 0.25), value: iconSize)
-      .animation(.easeInOut(duration: 0.25), value: iconColor)
-      .animation(.easeInOut(duration: 0.25), value: tint)
-      .animation(.easeInOut(duration: 0.25), value: colorScheme)
-      .animation(.easeInOut(duration: 0.25), value: style)
-      .animation(.easeInOut(duration: 0.25), value: config.spacing)
-      .animation(.easeInOut(duration: 0.25), value: config.padding)
-      .animation(.easeInOut(duration: 0.25), value: config.minHeight)
-      .animation(.easeInOut(duration: 0.25), value: config.borderRadius)
+      labelContent
+        .padding(config.padding)
+        .frame(minWidth: frameMinWidth, maxWidth: frameMaxWidth, minHeight: config.minHeight)
+        .contentShape(shape)
+        .glassEffect(glassEffectValue, in: shape)
+        .applyGlassEffectModifiers(
+          unionId: glassEffectUnionId,
+          id: glassEffectId,
+          namespace: namespace
+        )
+        .animation(.easeInOut(duration: 0.25), value: animState)
     }
     .disabled(!isEnabled)
     .buttonStyle(NoHighlightButtonStyle())
   }
-  
-  private func glassEffectForStyle(_ style: String, interactive: Bool) -> Glass {
-    // Always use .regular for now - prominent glass API may be available in future
-    var glass = Glass.regular
-    
-    // Make glass interactive if requested
-    if interactive {
-      glass = glass.interactive()
-    }
-    
-    return glass
+
+  // MARK: - Frame helpers
+
+  private var frameMinWidth: CGFloat? { config.width }
+  private var frameMaxWidth: CGFloat? {
+    if let w = config.width { return w }
+    return config.expandWidth ? .infinity : nil
   }
-  
-  private func shapeForStyle(_ isRound: Bool, borderRadius: CGFloat?) -> some Shape {
-    // If borderRadius is provided, use it
-    if let radius = borderRadius {
+
+  // MARK: - Label content
+
+  @ViewBuilder
+  private var labelContent: some View {
+    if let title, hasIcon {
+      switch imagePlacement {
+      case "trailing":
+        HStack(spacing: config.spacing) {
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          iconView
+        }
+      case "top":
+        VStack(spacing: config.spacing) {
+          iconView
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+        }
+      case "bottom":
+        VStack(spacing: config.spacing) {
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          iconView
+        }
+      default: // "leading"
+        HStack(spacing: config.spacing) {
+          iconView
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+        }
+      }
+    } else if hasIcon {
+      iconView
+    } else if let text = title {
+      Text(text)
+        .foregroundStyle(effectiveLabelStyle ?? .primary)
+    }
+  }
+
+  @ViewBuilder
+  private var iconView: some View {
+    if let img = iconImage {
+      Image(uiImage: img)
+        .renderingMode(effectiveIconStyle != nil ? .template : .original)
+        .resizable()
+        .foregroundStyle(effectiveIconStyle ?? .primary)
+        .frame(width: iconSize, height: iconSize)
+    } else if let name = iconName {
+      Image(systemName: name)
+        .renderingMode(.template)
+        .resizable()
+        .foregroundStyle(effectiveIconStyle ?? .primary)
+        .frame(width: iconSize, height: iconSize)
+    }
+  }
+
+  private var hasIcon: Bool { iconImage != nil || iconName != nil }
+
+  // MARK: - Helpers
+
+  private var buttonShape: AnyShape {
+    if let radius = config.borderRadius {
       return AnyShape(RoundedRectangle(cornerRadius: radius))
     }
-    // If no borderRadius provided, use capsule for round buttons
-    if isRound {
-      return AnyShape(Capsule())
-    }
-    // For non-round buttons without radius, also use capsule (as per user requirement)
     return AnyShape(Capsule())
   }
-}
 
-// Helper to apply glass effect modifiers conditionally
-@available(iOS 26.0, *)
-extension View {
-  @ViewBuilder
-  func applyGlassEffectModifiers(unionId: String?, id: String?, namespace: Namespace.ID) -> some View {
-    if let unionId = unionId {
-      if let id = id {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-          .glassEffectID(id, in: namespace)
-      } else {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-      }
-    } else if let id = id {
-      self
-        .glassEffectID(id, in: namespace)
-    } else {
-      self
-    }
+  private var glassEffectValue: Glass {
+    var glass: Glass = glassMaterial == "regular" ? Glass.regular : Glass.clear
+    if glassEffectInteractive { glass = glass.interactive() }
+    return glass
+  }
+
+  // MARK: - Animation state
+
+  /// Equatable struct capturing every property that triggers an animation.
+  /// Using a typed struct instead of a String avoids relying on Color.description,
+  /// which has no stable format guarantee.
+  private struct AnimState: Equatable {
+    let iconSize: CGFloat
+    let iconColor: Color?
+    let tint: Color?
+    let colorScheme: ColorScheme
+    let style: String
+    let imagePlacement: String
+    let spacing: CGFloat
+    let minHeight: CGFloat
+    let borderRadius: CGFloat?
+    let width: CGFloat?
+    let expandWidth: Bool
+    let glassMaterial: String
+  }
+
+  private var animState: AnimState {
+    AnimState(
+      iconSize: iconSize,
+      iconColor: iconColor,
+      tint: tint,
+      colorScheme: colorScheme,
+      style: style,
+      imagePlacement: imagePlacement,
+      spacing: config.spacing,
+      minHeight: config.minHeight,
+      borderRadius: config.borderRadius,
+      width: config.width,
+      expandWidth: config.expandWidth,
+      glassMaterial: glassMaterial
+    )
   }
 }
-
-// Custom button style that removes all highlights and press effects
-@available(iOS 26.0, *)
-struct NoHighlightButtonStyle: ButtonStyle {
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      // No opacity or scale changes - let the glass effect handle visual feedback
-  }
-}
-
-// Type erasure for Shape
-@available(iOS 26.0, *)
-struct AnyShape: Shape {
-  private let _path: (CGRect) -> Path
-  
-  init<S: Shape>(_ shape: S) {
-    _path = shape.path(in:)
-  }
-  
-  func path(in rect: CGRect) -> Path {
-    return _path(rect)
-  }
-}
-

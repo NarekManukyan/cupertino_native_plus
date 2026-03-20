@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'button_style.dart';
+import 'glass_effect.dart';
 import 'sf_symbol.dart';
 import 'image_placement.dart';
 
@@ -137,6 +138,7 @@ class CNButtonDataConfig {
     this.minHeight,
     this.imagePadding,
     this.imagePlacement,
+    this.glassMaterial = CNButtonGlassMaterial.regular,
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
@@ -164,6 +166,9 @@ class CNButtonDataConfig {
   /// Position of the image relative to the label.
   final CNImagePlacement? imagePlacement;
 
+  /// Glass material for the button effect on iOS 26+.
+  final CNButtonGlassMaterial glassMaterial;
+
   /// Glass effect union ID for effect blending.
   final String? glassEffectUnionId;
 
@@ -185,6 +190,7 @@ class CNButtonDataConfig {
     double? minHeight,
     double? imagePadding,
     CNImagePlacement? imagePlacement,
+    CNButtonGlassMaterial? glassMaterial,
     String? glassEffectUnionId,
     String? glassEffectId,
     bool? glassEffectInteractive,
@@ -198,6 +204,7 @@ class CNButtonDataConfig {
       minHeight: minHeight ?? this.minHeight,
       imagePadding: imagePadding ?? this.imagePadding,
       imagePlacement: imagePlacement ?? this.imagePlacement,
+      glassMaterial: glassMaterial ?? this.glassMaterial,
       glassEffectUnionId: glassEffectUnionId ?? this.glassEffectUnionId,
       glassEffectId: glassEffectId ?? this.glassEffectId,
       glassEffectInteractive:

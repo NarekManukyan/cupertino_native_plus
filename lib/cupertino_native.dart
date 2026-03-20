@@ -19,6 +19,7 @@ export 'components/search_bar.dart';
 export 'components/search_scaffold.dart';
 export 'components/toast.dart';
 export 'components/floating_island.dart';
+export 'components/liquid_text.dart';
 export 'components/experimental/glass_card.dart';
 
 // Styles

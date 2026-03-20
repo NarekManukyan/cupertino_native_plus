@@ -24,6 +24,7 @@ enum ChannelConstants {
   static let viewIdCNGlassCard = "CNGlassCard"
   static let viewIdCNSearchBar = "CNSearchBar"
   static let viewIdCNSearchScaffold = "CNSearchScaffold"
+  static let viewIdCNLiquidText = "CNLiquidText"
 
   // MARK: - Method names
 

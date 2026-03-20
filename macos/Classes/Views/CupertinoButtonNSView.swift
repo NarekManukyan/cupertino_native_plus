@@ -29,6 +29,8 @@ class CupertinoButtonNSView: NSView {
     var glassEffectUnionId: String? = nil
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
+    var imagePlacement: String = "leading"
+    var glassMaterial: String = "clear"
     var borderRadius: CGFloat? = nil
     var paddingTop: CGFloat? = nil
     var paddingBottom: CGFloat? = nil
@@ -66,6 +68,8 @@ class CupertinoButtonNSView: NSView {
       if let pv = dict["paddingVertical"] as? NSNumber { paddingVertical = CGFloat(truncating: pv) }
       if let mh = dict["minHeight"] as? NSNumber { minHeight = CGFloat(truncating: mh) }
       if let ip = dict["imagePadding"] as? NSNumber { imagePadding = CGFloat(truncating: ip) }
+      if let imp = dict["imagePlacement"] as? String { imagePlacement = imp }
+      if let gm = dict["glassMaterial"] as? String { glassMaterial = gm }
     }
 
     wantsLayer = true
@@ -88,12 +92,13 @@ class CupertinoButtonNSView: NSView {
         iconSize: iconSize ?? 20,
         iconColor: iconColor != nil ? Color(nsColor: iconColor!) : nil,
         tint: tint != nil ? Color(nsColor: tint!) : nil,
-        isRound: makeRound,
         style: buttonStyle,
         enabled: enabled,
         glassEffectUnionId: glassEffectUnionId,
         glassEffectId: glassEffectId,
         glassEffectInteractive: glassEffectInteractive,
+        imagePlacement: imagePlacement,
+        glassMaterial: glassMaterial,
         borderRadius: borderRadius,
         paddingTop: paddingTop,
         paddingBottom: paddingBottom,
@@ -426,12 +431,13 @@ class CupertinoButtonNSView: NSView {
     iconSize: CGFloat,
     iconColor: Color?,
     tint: Color?,
-    isRound: Bool,
     style: String,
     enabled: Bool,
     glassEffectUnionId: String?,
     glassEffectId: String?,
     glassEffectInteractive: Bool,
+    imagePlacement: String,
+    glassMaterial: String,
     borderRadius: CGFloat?,
     paddingTop: CGFloat?,
     paddingBottom: CGFloat?,
@@ -458,14 +464,13 @@ class CupertinoButtonNSView: NSView {
     // Create a wrapper view that provides a namespace for the button
     struct ButtonWrapperView: View {
       @Namespace private var namespace
-      
+
       let title: String?
       let iconName: String?
       let iconImage: NSImage?
       let iconSize: CGFloat
       let iconColor: Color?
       let tint: Color?
-      let isRound: Bool
       let style: String
       let isEnabled: Bool
       let onPressed: () -> Void
@@ -473,7 +478,9 @@ class CupertinoButtonNSView: NSView {
       let glassEffectId: String?
       let glassEffectInteractive: Bool
       let config: GlassButtonConfig
-      
+      let imagePlacement: String
+      let glassMaterial: String
+
       var body: some View {
         GlassButtonSwiftUI(
           title: title,
@@ -482,7 +489,6 @@ class CupertinoButtonNSView: NSView {
           iconSize: iconSize,
           iconColor: iconColor,
           tint: tint,
-          isRound: isRound,
           style: style,
           isEnabled: isEnabled,
           onPressed: onPressed,
@@ -490,11 +496,13 @@ class CupertinoButtonNSView: NSView {
           glassEffectId: glassEffectId,
           glassEffectInteractive: glassEffectInteractive,
           namespace: namespace,
-          config: config
+          config: config,
+          imagePlacement: imagePlacement,
+          glassMaterial: glassMaterial
         )
       }
     }
-    
+
     let swiftUIButton = ButtonWrapperView(
       title: title,
       iconName: iconName,
@@ -502,7 +510,6 @@ class CupertinoButtonNSView: NSView {
       iconSize: iconSize,
       iconColor: iconColor,
       tint: tint,
-      isRound: isRound,
       style: style,
       isEnabled: enabled,
       onPressed: { [weak self] in
@@ -511,7 +518,9 @@ class CupertinoButtonNSView: NSView {
       glassEffectUnionId: glassEffectUnionId,
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
-      config: config
+      config: config,
+      imagePlacement: imagePlacement,
+      glassMaterial: glassMaterial
     )
     
     let hostingController = NSHostingController(rootView: AnyView(swiftUIButton))

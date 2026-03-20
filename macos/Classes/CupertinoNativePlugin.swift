@@ -30,6 +30,9 @@ public class CupertinoNativePlugin: NSObject, FlutterPlugin {
 
     let liquidGlassContainerFactory = LiquidGlassContainerFactory(messenger: registrar.messenger)
     registrar.register(liquidGlassContainerFactory, withId: ChannelConstants.viewIdCupertinoNativeLiquidGlassContainer)
+
+    let liquidTextFactory = LiquidTextFactory(messenger: registrar.messenger)
+    registrar.register(liquidTextFactory, withId: ChannelConstants.viewIdCNLiquidText)
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

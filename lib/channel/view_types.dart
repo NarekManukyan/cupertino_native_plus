@@ -53,6 +53,9 @@ abstract final class ViewTypes {
   /// View type for [CNSearchScaffold].
   static const String cnSearchScaffold = 'CNSearchScaffold';
 
+  /// View type for [CNLiquidText].
+  static const String cnLiquidText = 'CNLiquidText';
+
   /// Method channel name for the native tab bar (single channel, not per-view).
   static const String cnNativeTabBarChannel = 'cn_native_tab_bar';
 

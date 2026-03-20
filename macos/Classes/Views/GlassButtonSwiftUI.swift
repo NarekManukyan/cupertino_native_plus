@@ -1,8 +1,7 @@
 import SwiftUI
 import AppKit
 
-/// SwiftUI button view with full Liquid Glass support using glassEffect() modifier.
-/// This provides full blending and morphing capabilities when used in groups.
+/// Individual glass button using macOS 26 glassEffect() modifier.
 @available(macOS 26.0, *)
 struct GlassButtonSwiftUI: View {
   let title: String?
@@ -11,85 +10,171 @@ struct GlassButtonSwiftUI: View {
   let iconSize: CGFloat
   let iconColor: Color?
   let tint: Color?
-  let isRound: Bool
   let style: String
   let isEnabled: Bool
   let onPressed: () -> Void
   let glassEffectUnionId: String?
   let glassEffectId: String?
   let glassEffectInteractive: Bool
-  @Namespace private var namespace
+  var namespace: Namespace.ID
   let config: GlassButtonConfig
-  
+  /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
+  let imagePlacement: String
+  /// Glass material: "clear" | "regular".
+  let glassMaterial: String
+
+  @Environment(\.colorScheme) private var colorScheme
+
+  /// Tint takes priority over explicit iconColor; nil falls back to semantic .primary.
+  private var effectiveIconStyle: Color? { iconColor ?? tint }
+  private var effectiveLabelStyle: Color? { tint }
+
   var body: some View {
+    let shape = buttonShape
     Button(action: onPressed) {
-      HStack(spacing: config.spacing) {
-        if let icon = iconImage {
-          Image(nsImage: icon)
-            .resizable()
-            .scaledToFit()
-            .frame(width: iconSize, height: iconSize)
-        } else if let iconName = iconName {
-          Image(systemName: iconName)
-            .font(.system(size: iconSize))
-            .foregroundColor(iconColor)
-        }
-        
-        if let title = title {
-          Text(title)
-            .foregroundColor(tint)
-        }
-      }
-      .padding(config.padding)
-      .frame(minHeight: config.minHeight)
-      .contentShape(shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .glassEffect(glassEffectForStyle(style, interactive: glassEffectInteractive), in: shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .applyGlassEffectModifiers(unionId: glassEffectUnionId, id: glassEffectId, namespace: namespace)
+      labelContent
+        .padding(config.padding)
+        .frame(minWidth: frameMinWidth, maxWidth: frameMaxWidth, minHeight: config.minHeight)
+        .contentShape(shape)
+        .glassEffect(glassEffectValue, in: shape)
+        .applyGlassEffectModifiers(
+          unionId: glassEffectUnionId,
+          id: glassEffectId,
+          namespace: namespace
+        )
+        .animation(.easeInOut(duration: 0.25), value: animState)
     }
     .disabled(!isEnabled)
     .buttonStyle(NoHighlightButtonStyle())
   }
-  
-  private func glassEffectForStyle(_ style: String, interactive: Bool) -> Glass {
-    // Always use .regular for now - prominent glass API may be available in future
-    var glass = Glass.regular
-    
-    // Make glass interactive if requested
-    if interactive {
-      glass = glass.interactive()
-    }
-    
-    return glass
+
+  // MARK: - Frame helpers
+
+  private var frameMinWidth: CGFloat? { config.width }
+  private var frameMaxWidth: CGFloat? {
+    if let w = config.width { return w }
+    return config.expandWidth ? .infinity : nil
   }
-  
-  private func shapeForStyle(_ isRound: Bool, borderRadius: CGFloat?) -> some Shape {
-    // If borderRadius is provided, use it
-    if let radius = borderRadius {
+
+  // MARK: - Label content
+
+  @ViewBuilder
+  private var labelContent: some View {
+    if let title, hasIcon {
+      switch imagePlacement {
+      case "trailing":
+        HStack(spacing: config.spacing) {
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          iconView
+        }
+      case "top":
+        VStack(spacing: config.spacing) {
+          iconView
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+        }
+      case "bottom":
+        VStack(spacing: config.spacing) {
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          iconView
+        }
+      default: // "leading"
+        HStack(spacing: config.spacing) {
+          iconView
+          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+        }
+      }
+    } else if hasIcon {
+      iconView
+    } else if let text = title {
+      Text(text)
+        .foregroundStyle(effectiveLabelStyle ?? .primary)
+    }
+  }
+
+  @ViewBuilder
+  private var iconView: some View {
+    if let img = iconImage {
+      Image(nsImage: img)
+        .renderingMode(effectiveIconStyle != nil ? .template : .original)
+        .resizable()
+        .scaledToFit()
+        .foregroundStyle(effectiveIconStyle ?? .primary)
+        .frame(width: iconSize, height: iconSize)
+    } else if let name = iconName {
+      Image(systemName: name)
+        .renderingMode(.template)
+        .resizable()
+        .scaledToFit()
+        .foregroundStyle(effectiveIconStyle ?? .primary)
+        .frame(width: iconSize, height: iconSize)
+    }
+  }
+
+  private var hasIcon: Bool { iconImage != nil || iconName != nil }
+
+  // MARK: - Helpers
+
+  private var buttonShape: AnyShape {
+    if let radius = config.borderRadius {
       return AnyShape(RoundedRectangle(cornerRadius: radius))
     }
-    // If no borderRadius provided, use capsule for round buttons
-    if isRound {
-      return AnyShape(Capsule())
-    }
-    // For non-round buttons without radius, also use capsule (as per user requirement)
     return AnyShape(Capsule())
+  }
+
+  private var glassEffectValue: Glass {
+    var glass: Glass = glassMaterial == "regular" ? Glass.regular : Glass.clear
+    if glassEffectInteractive { glass = glass.interactive() }
+    return glass
+  }
+
+  // MARK: - Animation state
+
+  private struct AnimState: Equatable {
+    let iconSize: CGFloat
+    let iconColor: Color?
+    let tint: Color?
+    let colorScheme: ColorScheme
+    let style: String
+    let imagePlacement: String
+    let spacing: CGFloat
+    let minHeight: CGFloat
+    let borderRadius: CGFloat?
+    let width: CGFloat?
+    let expandWidth: Bool
+    let glassMaterial: String
+  }
+
+  private var animState: AnimState {
+    AnimState(
+      iconSize: iconSize,
+      iconColor: iconColor,
+      tint: tint,
+      colorScheme: colorScheme,
+      style: style,
+      imagePlacement: imagePlacement,
+      spacing: config.spacing,
+      minHeight: config.minHeight,
+      borderRadius: config.borderRadius,
+      width: config.width,
+      expandWidth: config.expandWidth,
+      glassMaterial: glassMaterial
+    )
   }
 }
 
-// Helper to apply glass effect modifiers conditionally
+// MARK: - Glass effect modifier helpers
+
 @available(macOS 26.0, *)
 extension View {
   @ViewBuilder
   func applyGlassEffectModifiers(unionId: String?, id: String?, namespace: Namespace.ID) -> some View {
-    if let unionId = unionId {
-      if let id = id {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-          .glassEffectID(id, in: namespace)
-      } else {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-      }
+    if let unionId = unionId, let id = id {
+      self
+        .glassEffectUnion(id: unionId, namespace: namespace)
+        .glassEffectID(id, in: namespace)
+    } else if let unionId = unionId {
+      self
+        .glassEffectUnion(id: unionId, namespace: namespace)
     } else if let id = id {
       self
         .glassEffectID(id, in: namespace)
@@ -99,26 +184,26 @@ extension View {
   }
 }
 
-// Custom button style that removes all highlights and press effects
+// MARK: - NoHighlightButtonStyle
+
 @available(macOS 26.0, *)
 struct NoHighlightButtonStyle: ButtonStyle {
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
-      // No opacity or scale changes - let the glass effect handle visual feedback
   }
 }
 
-// Type erasure for Shape
+// MARK: - AnyShape
+
 @available(macOS 26.0, *)
 struct AnyShape: Shape {
   private let _path: (CGRect) -> Path
-  
+
   init<S: Shape>(_ shape: S) {
     _path = shape.path(in:)
   }
-  
+
   func path(in rect: CGRect) -> Path {
     return _path(rect)
   }
 }
-

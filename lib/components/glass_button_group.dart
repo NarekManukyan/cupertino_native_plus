@@ -572,6 +572,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
       if (button.config.imagePadding != null)
         'imagePadding': button.config.imagePadding,
+      'glassMaterial': button.config.glassMaterial.name,
     };
   }
 
@@ -655,6 +656,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
       if (button.config.imagePadding != null)
         'imagePadding': button.config.imagePadding,
+      'glassMaterial': button.config.glassMaterial.name,
     };
   }
 }
@@ -674,6 +676,7 @@ class _ButtonSnapshot {
   final String style;
   final bool enabled;
   final int? tint;
+  final String glassMaterial;
 
   _ButtonSnapshot({
     this.label,
@@ -689,6 +692,7 @@ class _ButtonSnapshot {
     required this.style,
     required this.enabled,
     this.tint,
+    this.glassMaterial = 'regular',
   });
 
   factory _ButtonSnapshot.fromButtonWidget(CNButton button) {
@@ -706,6 +710,7 @@ class _ButtonSnapshot {
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
+      glassMaterial: button.config.glassMaterial.name,
     );
   }
 
@@ -724,6 +729,7 @@ class _ButtonSnapshot {
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
+      glassMaterial: button.config.glassMaterial.name,
     );
   }
 
@@ -740,6 +746,7 @@ class _ButtonSnapshot {
         customIconHash == other.customIconHash &&
         style == other.style &&
         enabled == other.enabled &&
-        tint == other.tint;
+        tint == other.tint &&
+        glassMaterial == other.glassMaterial;
   }
 }

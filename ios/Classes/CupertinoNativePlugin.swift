@@ -46,6 +46,9 @@ public class CupertinoNativePlugin: NSObject, FlutterPlugin {
 
     let searchScaffoldFactory = CNSearchScaffoldViewFactory(messenger: registrar.messenger())
     registrar.register(searchScaffoldFactory, withId: ChannelConstants.viewIdCNSearchScaffold)
+
+    let liquidTextFactory = LiquidTextFactory(messenger: registrar.messenger())
+    registrar.register(liquidTextFactory, withId: ChannelConstants.viewIdCNLiquidText)
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {

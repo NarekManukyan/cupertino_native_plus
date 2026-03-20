@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import '../channel/params.dart';
 import '../channel/view_types.dart';
 import '../style/button_style.dart';
+import '../style/glass_effect.dart';
 import '../utils/platform_view_builder.dart';
 import '../style/image_placement.dart';
 import '../style/sf_symbol.dart';
@@ -45,6 +46,12 @@ class CNButtonConfig extends Equatable {
 
   /// If true, sizes the control to its intrinsic width.
   final bool shrinkWrap;
+
+  /// Glass material for the button effect on iOS 26+.
+  ///
+  /// Controls whether the button uses [CNButtonGlassMaterial.clear] (default,
+  /// subtle) or [CNButtonGlassMaterial.regular] (more opaque standard glass).
+  final CNButtonGlassMaterial glassMaterial;
 
   /// Optional ID for glass effect union.
   ///
@@ -89,6 +96,7 @@ class CNButtonConfig extends Equatable {
     this.style = CNButtonStyle.glass,
     this.width,
     this.shrinkWrap = false,
+    this.glassMaterial = CNButtonGlassMaterial.regular,
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
@@ -105,6 +113,7 @@ class CNButtonConfig extends Equatable {
     style,
     width,
     shrinkWrap,
+    glassMaterial,
     glassEffectUnionId,
     glassEffectId,
     glassEffectInteractive,
@@ -215,8 +224,7 @@ class _CNButtonState extends State<CNButton> {
 
   bool get _isDark => ThemeHelper.isDark(context);
 
-  Color? get _effectiveTint =>
-      widget.tint ?? ThemeHelper.getPrimaryColor(context);
+  Color? get _effectiveTint => widget.tint;
 
   @override
   void dispose() {
@@ -434,6 +442,14 @@ class _CNButtonState extends State<CNButton> {
       if (widget.config.borderRadius != null)
         'borderRadius': widget.config.borderRadius,
       if (widget.config.minHeight != null) 'minHeight': widget.config.minHeight,
+      if (widget.config.width != null) 'buttonWidth': widget.config.width,
+      // expandWidth is true only for text/mixed buttons (not icon-only) without explicit width
+      // and when shrinkWrap is not requested. Icon-only buttons always use a fixed/calculated size.
+      'buttonExpandWidth':
+          !(widget.isIcon && widget.label == null) &&
+          !widget.config.shrinkWrap &&
+          widget.config.width == null,
+      'glassMaterial': widget.config.glassMaterial.name,
       if (widget.config.glassEffectUnionId != null)
         'glassEffectUnionId': widget.config.glassEffectUnionId,
       if (widget.config.glassEffectId != null)
