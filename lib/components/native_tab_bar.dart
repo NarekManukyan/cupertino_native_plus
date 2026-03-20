@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -231,7 +232,7 @@ class CNTabBarNative {
 ///   sfSymbol: CNSymbol('house.fill'),
 /// )
 /// ```
-class CNTab {
+class CNTab extends Equatable {
   /// The title of the tab (shown below icon)
   final String title;
 
@@ -260,4 +261,13 @@ class CNTab {
     this.isSearchTab = false,
     this.badgeCount,
   });
+
+  @override
+  List<Object?> get props => [
+    title,
+    sfSymbol,
+    activeSfSymbol,
+    isSearchTab,
+    badgeCount,
+  ];
 }

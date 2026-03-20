@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'sf_symbol.dart';
 
@@ -26,7 +27,7 @@ import 'sf_symbol.dart';
 /// )
 /// ```
 @immutable
-class CNTabBarSearchItem {
+class CNTabBarSearchItem extends Equatable {
   /// Creates a search tab configuration.
   const CNTabBarSearchItem({
     this.icon,
@@ -87,33 +88,21 @@ class CNTabBarSearchItem {
   final CNTabBarSearchStyle style;
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is CNTabBarSearchItem &&
-        other.icon == icon &&
-        other.activeIcon == activeIcon &&
-        other.label == label &&
-        other.placeholder == placeholder &&
-        other.automaticallyActivatesSearch == automaticallyActivatesSearch &&
-        other.style == style;
-  }
-
-  @override
-  int get hashCode => Object.hash(
+  List<Object?> get props => [
     icon,
     activeIcon,
     label,
     placeholder,
     automaticallyActivatesSearch,
     style,
-  );
+  ];
 }
 
 /// Visual styling options for the search tab in [CNTabBar].
 ///
 /// Use this to customize colors, sizes, padding, and animations.
 @immutable
-class CNTabBarSearchStyle {
+class CNTabBarSearchStyle extends Equatable {
   /// Creates search tab styling configuration.
   const CNTabBarSearchStyle({
     this.iconSize,
@@ -205,29 +194,7 @@ class CNTabBarSearchStyle {
   final CNSymbol? collapsedTabIcon;
 
   @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is CNTabBarSearchStyle &&
-        other.iconSize == iconSize &&
-        other.iconColor == iconColor &&
-        other.activeIconColor == activeIconColor &&
-        other.searchBarBackgroundColor == searchBarBackgroundColor &&
-        other.searchBarTextColor == searchBarTextColor &&
-        other.searchBarPlaceholderColor == searchBarPlaceholderColor &&
-        other.clearButtonColor == clearButtonColor &&
-        other.buttonSize == buttonSize &&
-        other.searchBarHeight == searchBarHeight &&
-        other.searchBarBorderRadius == searchBarBorderRadius &&
-        other.searchBarPadding == searchBarPadding &&
-        other.contentPadding == contentPadding &&
-        other.spacing == spacing &&
-        other.animationDuration == animationDuration &&
-        other.showClearButton == showClearButton &&
-        other.collapsedTabIcon == collapsedTabIcon;
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
+  List<Object?> get props => [
     iconSize,
     iconColor,
     activeIconColor,
@@ -244,7 +211,7 @@ class CNTabBarSearchStyle {
     animationDuration,
     showClearButton,
     collapsedTabIcon,
-  ]);
+  ];
 }
 
 /// Controller for programmatically managing the search tab state.

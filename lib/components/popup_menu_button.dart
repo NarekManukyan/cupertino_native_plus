@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -14,7 +15,7 @@ import '../utils/version_detector.dart';
 import 'icon.dart';
 
 /// Base type for entries in a [CNPopupMenuButton] menu.
-abstract class CNPopupMenuEntry {
+abstract class CNPopupMenuEntry extends Equatable {
   /// Const constructor for subclasses.
   const CNPopupMenuEntry();
 }
@@ -52,12 +53,25 @@ class CNPopupMenuItem extends CNPopupMenuEntry {
 
   /// Whether the item can be selected.
   final bool enabled;
+
+  @override
+  List<Object?> get props => [
+    label,
+    icon,
+    customIcon,
+    imageAsset,
+    iconColor,
+    enabled,
+  ];
 }
 
 /// A visual divider between popup menu items.
 class CNPopupMenuDivider extends CNPopupMenuEntry {
   /// Creates a visual divider between items.
   const CNPopupMenuDivider();
+
+  @override
+  List<Object?> get props => const [];
 }
 
 // Reusable style enum for buttons across widgets (popup menu, future CNButton, ...)

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +14,7 @@ import '../utils/theme_helper.dart';
 import 'icon.dart';
 
 /// Immutable data describing a single tab bar item.
-class CNTabBarItem {
+class CNTabBarItem extends Equatable {
   /// Creates a tab bar item description.
   const CNTabBarItem({
     this.label,
@@ -77,6 +78,19 @@ class CNTabBarItem {
   /// Optional image asset for selected state.
   /// If not provided, [imageAsset] is used for both states.
   final CNImageAsset? activeImageAsset;
+
+  @override
+  List<Object?> get props => [
+    label,
+    icon,
+    activeIcon,
+    badge,
+    badgeColor,
+    customIcon,
+    activeCustomIcon,
+    imageAsset,
+    activeImageAsset,
+  ];
 }
 
 /// A Cupertino-native tab bar. Uses native UITabBar/NSTabView style visuals.

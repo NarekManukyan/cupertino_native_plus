@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 
 /// Rendering modes for SF Symbols.
@@ -18,7 +19,7 @@ enum CNSymbolRenderingMode {
 }
 
 /// Describes an SF Symbol to render natively.
-class CNSymbol {
+class CNSymbol extends Equatable {
   /// The SF Symbol name, e.g. `chevron.down`.
   final String name;
 
@@ -42,10 +43,13 @@ class CNSymbol {
     this.mode,
     this.gradient,
   });
+
+  @override
+  List<Object?> get props => [name, size, color, paletteColors, mode, gradient];
 }
 
 /// Describes a custom image asset to render natively.
-class CNImageAsset {
+class CNImageAsset extends Equatable {
   /// Flutter asset path (e.g., 'assets/icons/my_icon.svg').
   final String assetPath;
 
@@ -86,6 +90,18 @@ class CNImageAsset {
     this.gradient,
     this.xcassetName,
   });
+
+  @override
+  List<Object?> get props => [
+    assetPath,
+    imageData,
+    imageFormat,
+    size,
+    color,
+    mode,
+    gradient,
+    xcassetName,
+  ];
 
   /// Convenience constructor for xcasset-backed images.
   ///

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +13,7 @@ import '../utils/theme_helper.dart';
 import 'tab_bar.dart';
 
 /// A search scaffold item configuration.
-class CNSearchScaffoldItem {
+class CNSearchScaffoldItem extends Equatable {
   /// Creates a search scaffold item.
   const CNSearchScaffoldItem({
     this.label,
@@ -34,6 +35,9 @@ class CNSearchScaffoldItem {
   /// Only one tab should be marked as search.
   /// This tab will trigger the iOS 26 liquid glass search morphing.
   final bool isSearchTab;
+
+  @override
+  List<Object?> get props => [label, icon, activeIcon, isSearchTab];
 }
 
 /// A full-screen scaffold with native iOS 26 tab bar and search support.

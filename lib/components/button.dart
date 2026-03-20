@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -18,7 +19,7 @@ import '../utils/version_detector.dart';
 import 'icon.dart';
 
 /// Configuration for CNButton with default values.
-class CNButtonConfig {
+class CNButtonConfig extends Equatable {
   /// Padding for button content.
   /// If null, uses default EdgeInsets(top: 8.0, leading: 12.0, bottom: 8.0, trailing: 12.0).
   final EdgeInsets? padding;
@@ -93,6 +94,22 @@ class CNButtonConfig {
     this.glassEffectInteractive = true,
     this.maxLines = 1,
   });
+
+  @override
+  List<Object?> get props => [
+    padding,
+    borderRadius,
+    minHeight,
+    imagePadding,
+    imagePlacement,
+    style,
+    width,
+    shrinkWrap,
+    glassEffectUnionId,
+    glassEffectId,
+    glassEffectInteractive,
+    maxLines,
+  ];
 }
 
 /// A Cupertino-native push button.

@@ -14,6 +14,28 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private var currentTint: UIColor?
   // currentTintWhenGlassInverted removed; only currentTint is used now.
 
+  // Stored params for SwiftUI button reconstruction on tint change
+  private var swiftUITitle: String?
+  private var swiftUIIconName: String?
+  private var swiftUIIconImage: UIImage?
+  private var swiftUIIconSize: CGFloat = 20
+  private var swiftUIIconColor: UIColor?
+  private var swiftUIIsRound: Bool = false
+  private var swiftUIStyle: String = "automatic"
+  private var swiftUIGlassEffectUnionId: String?
+  private var swiftUIGlassEffectId: String?
+  private var swiftUIGlassEffectInteractive: Bool = false
+  // GlassButtonConfig params stored individually to avoid @available restriction on stored properties
+  private var swiftUIBorderRadius: CGFloat?
+  private var swiftUIPaddingTop: CGFloat?
+  private var swiftUIPaddingBottom: CGFloat?
+  private var swiftUIPaddingLeft: CGFloat?
+  private var swiftUIPaddingRight: CGFloat?
+  private var swiftUIPaddingHorizontal: CGFloat?
+  private var swiftUIPaddingVertical: CGFloat?
+  private var swiftUIMinHeight: CGFloat = 44.0
+  private var swiftUISpacing: CGFloat = 8.0
+
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeButton)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
@@ -331,9 +353,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
             self.currentTint = ImageUtils.colorFromARGB(n.intValue)
           }
           if usesSwiftUI {
-            result(nil)
+            if #available(iOS 26.0, *) {
+              self.rebuildSwiftUIView()
+            }
           } else if self.button != nil {
             if args["tint"] != nil {
+              // Update button.tintColor so applyButtonStyle reads the new value
+              if let t = self.currentTint { self.button?.tintColor = t }
               self.applyButtonStyle(buttonStyle: self.currentButtonStyle, round: self.makeRound)
             }
             if let bs = args["buttonStyle"] as? String {
@@ -564,6 +590,27 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     minHeight: CGFloat?,
     spacing: CGFloat?
   ) {
+    // Store params for later reconstruction on tint/state changes
+    self.swiftUITitle = title
+    self.swiftUIIconName = iconName
+    self.swiftUIIconImage = iconImage
+    self.swiftUIIconSize = iconSize
+    self.swiftUIIconColor = iconColor
+    self.swiftUIIsRound = isRound
+    self.swiftUIStyle = style
+    self.swiftUIGlassEffectUnionId = glassEffectUnionId
+    self.swiftUIGlassEffectId = glassEffectId
+    self.swiftUIGlassEffectInteractive = glassEffectInteractive
+    self.swiftUIBorderRadius = borderRadius
+    self.swiftUIPaddingTop = paddingTop
+    self.swiftUIPaddingBottom = paddingBottom
+    self.swiftUIPaddingLeft = paddingLeft
+    self.swiftUIPaddingRight = paddingRight
+    self.swiftUIPaddingHorizontal = paddingHorizontal
+    self.swiftUIPaddingVertical = paddingVertical
+    self.swiftUIMinHeight = minHeight ?? 44.0
+    self.swiftUISpacing = spacing ?? 8.0
+
     // Create GlassButtonConfig with provided values or defaults
     let config = GlassButtonConfig(
       borderRadius: borderRadius,
@@ -673,6 +720,80 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
+
+  @available(iOS 26.0, *)
+  private func rebuildSwiftUIView() {
+    guard let hostingController = self.hostingController else { return }
+    let config = GlassButtonConfig(
+      borderRadius: self.swiftUIBorderRadius,
+      top: self.swiftUIPaddingTop,
+      bottom: self.swiftUIPaddingBottom,
+      left: self.swiftUIPaddingLeft,
+      right: self.swiftUIPaddingRight,
+      horizontal: self.swiftUIPaddingHorizontal,
+      vertical: self.swiftUIPaddingVertical,
+      minHeight: self.swiftUIMinHeight,
+      spacing: self.swiftUISpacing
+    )
+    let tintColor = self.currentTint
+    let title = self.swiftUITitle
+    let iconName = self.swiftUIIconName
+    let iconImage = self.swiftUIIconImage
+    let iconSize = self.swiftUIIconSize
+    let iconColor = self.swiftUIIconColor
+    let isRound = self.swiftUIIsRound
+    let style = self.swiftUIStyle
+    let isEnabled = self.isEnabled
+    let glassEffectUnionId = self.swiftUIGlassEffectUnionId
+    let glassEffectId = self.swiftUIGlassEffectId
+    let glassEffectInteractive = self.swiftUIGlassEffectInteractive
+
+    struct ButtonWrapperView: View {
+      @Namespace private var namespace
+      let title: String?
+      let iconName: String?
+      let iconImage: UIImage?
+      let iconSize: CGFloat
+      let iconColor: Color?
+      let tint: Color?
+      let isRound: Bool
+      let style: String
+      let isEnabled: Bool
+      let onPressed: () -> Void
+      let glassEffectUnionId: String?
+      let glassEffectId: String?
+      let glassEffectInteractive: Bool
+      let config: GlassButtonConfig
+      var body: some View {
+        GlassButtonSwiftUI(
+          title: title, iconName: iconName, iconImage: iconImage,
+          iconSize: iconSize, iconColor: iconColor, tint: tint,
+          isRound: isRound, style: style, isEnabled: isEnabled,
+          onPressed: onPressed, glassEffectUnionId: glassEffectUnionId,
+          glassEffectId: glassEffectId, glassEffectInteractive: glassEffectInteractive,
+          namespace: namespace, config: config
+        )
+      }
+    }
+
+    let view = ButtonWrapperView(
+      title: title,
+      iconName: iconName,
+      iconImage: iconImage,
+      iconSize: iconSize,
+      iconColor: iconColor != nil ? Color(iconColor!) : nil,
+      tint: tintColor != nil ? Color(tintColor!) : nil,
+      isRound: isRound,
+      style: style,
+      isEnabled: isEnabled,
+      onPressed: { [weak self] in self?.onPressed(nil) },
+      glassEffectUnionId: glassEffectUnionId,
+      glassEffectId: glassEffectId,
+      glassEffectInteractive: glassEffectInteractive,
+      config: config
+    )
+    hostingController.rootView = AnyView(view)
+  }
 
   private func applyButtonStyle(buttonStyle: String, round: Bool) {
     guard let button = self.button, !usesSwiftUI else { return }
