@@ -38,11 +38,8 @@ struct GlassButtonGroupSwiftUI: View {
     ForEach(viewModel.buttons) { button in
       GlassButtonSwiftUI(
         title: button.title,
-        iconName: button.iconName,
-        iconImage: button.iconImage,
-        iconSize: button.iconSize,
-        iconColor: button.iconColor,
-        tint: button.tint,
+        iconConfig: button.iconConfig,
+        theme: button.theme,
         style: button.style,
         isEnabled: button.isEnabled,
         onPressed: button.onPressed,
@@ -51,8 +48,7 @@ struct GlassButtonGroupSwiftUI: View {
         glassEffectInteractive: button.glassEffectInteractive,
         namespace: namespace,
         config: button.config,
-        imagePlacement: button.imagePlacement,
-        glassMaterial: button.glassMaterial
+        imagePlacement: button.imagePlacement
       )
     }
   }
@@ -64,11 +60,8 @@ struct GlassButtonGroupSwiftUI: View {
 struct GlassButtonData: Identifiable {
   let id = UUID()
   let title: String?
-  let iconName: String?
-  let iconImage: UIImage?
-  let iconSize: CGFloat
-  let iconColor: Color?
-  let tint: Color?
+  let iconConfig: IconConfig?
+  let theme: CNButtonTheme
   let style: String
   let isEnabled: Bool
   let onPressed: () -> Void
@@ -77,7 +70,6 @@ struct GlassButtonData: Identifiable {
   let glassEffectInteractive: Bool
   let config: GlassButtonConfig
   let imagePlacement: String
-  let glassMaterial: String
 }
 
 // MARK: - Platform View
@@ -232,85 +224,49 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
 
   // MARK: - Parsing helpers
 
-  /// Loads a button icon image following the priority: xcasset → assetPath → imageBytes → iconBytes.
-  private static func loadButtonImage(
-    from dict: [String: Any],
-    iconSize: CGFloat,
-    iconColorARGB: Int?
-  ) -> UIImage? {
-    let size = CGSize(width: iconSize, height: iconSize)
-
-    if let name = dict["xcassetName"] as? String, !name.isEmpty {
-      return UIImage(named: name, in: Bundle.main, compatibleWith: nil)
-    }
-
-    if let assetPath = dict["assetPath"] as? String, !assetPath.isEmpty {
-      let format = dict["imageFormat"] as? String
-      if let argb = iconColorARGB {
-        return ImageUtils.loadAndTintImage(
-          from: assetPath, iconSize: iconSize, iconColor: argb,
-          providedFormat: format, scale: UIScreen.main.scale
-        )
+  /// Pre-converts any `FlutterStandardTypedData` values to `Data` in the dict
+  /// so that `IconConfig.from(dict:)` and `CNImageAsset.from(dict:)` can read them.
+  private static func preprocessDict(_ dict: [String: Any]) -> [String: Any] {
+    var out = dict
+    for (key, value) in dict {
+      if let typedData = value as? FlutterStandardTypedData {
+        out[key] = typedData.data
       }
-      let image = ImageUtils.loadFlutterAsset(assetPath, size: size, format: format, scale: UIScreen.main.scale)
-      if let image, image.size != size {
-        return ImageUtils.scaleImage(image, to: size, scale: UIScreen.main.scale)
-      }
-      return image
     }
-
-    if let imageBytes = dict["imageBytes"] as? FlutterStandardTypedData {
-      let format = dict["imageFormat"] as? String
-      if let argb = iconColorARGB {
-        return ImageUtils.createAndTintImage(
-          from: imageBytes.data, iconSize: iconSize, iconColor: argb,
-          providedFormat: format, scale: UIScreen.main.scale
-        )
-      }
-      return ImageUtils.createImageFromData(imageBytes.data, format: format, size: size, scale: UIScreen.main.scale)
-    }
-
-    if let iconBytes = dict["iconBytes"] as? FlutterStandardTypedData {
-      return ImageUtils.createImageFromData(iconBytes.data, format: "png", size: size, scale: UIScreen.main.scale)
-    }
-
-    return nil
+    return out
   }
 
-  /// Parses a button dictionary into a `GlassButtonData`, including image loading and callback setup.
+  /// Parses a button dictionary into a `GlassButtonData`.
   private static func parseButtonData(
     from dict: [String: Any],
     index: Int,
     channel: FlutterMethodChannel
   ) -> GlassButtonData {
-    let title = dict["label"] as? String
-    let iconName = dict["iconName"] as? String
-    let iconSize = (dict["iconSize"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 20.0
-    let iconColorARGB = (dict["iconColor"] as? NSNumber)?.intValue
-    let iconColor = iconColorARGB.map { Color(uiColor: ImageUtils.colorFromARGB($0)) }
-    let tint = (dict["tint"] as? NSNumber).map { Color(uiColor: ImageUtils.colorFromARGB($0.intValue)) }
-    let isEnabled = (dict["enabled"] as? NSNumber)?.boolValue ?? true
-    let style = dict["style"] as? String ?? "glass"
-    let glassEffectUnionId = dict["glassEffectUnionId"] as? String
-    let glassEffectId = dict["glassEffectId"] as? String
-    let glassEffectInteractive = (dict["glassEffectInteractive"] as? NSNumber)?.boolValue ?? false
+    let processed = preprocessDict(dict)
 
-    let iconImage = loadButtonImage(from: dict, iconSize: iconSize, iconColorARGB: iconColorARGB)
+    let title = processed["label"] as? String
+    let isEnabled = (processed["enabled"] as? NSNumber)?.boolValue ?? true
+    let style = processed["style"] as? String ?? "glass"
+    let glassEffectUnionId = processed["glassEffectUnionId"] as? String
+    let glassEffectId = processed["glassEffectId"] as? String
+    let glassEffectInteractive = (processed["glassEffectInteractive"] as? NSNumber)?.boolValue ?? false
+
+    let iconConfig = IconConfig.from(dict: processed)
+    let theme = CNButtonTheme.from(dict: processed)
 
     let config = GlassButtonConfig(
-      borderRadius: (dict["borderRadius"] as? NSNumber).map { CGFloat(truncating: $0) },
-      top: (dict["paddingTop"] as? NSNumber).map { CGFloat(truncating: $0) },
-      bottom: (dict["paddingBottom"] as? NSNumber).map { CGFloat(truncating: $0) },
-      left: (dict["paddingLeft"] as? NSNumber).map { CGFloat(truncating: $0) },
-      right: (dict["paddingRight"] as? NSNumber).map { CGFloat(truncating: $0) },
-      horizontal: (dict["paddingHorizontal"] as? NSNumber).map { CGFloat(truncating: $0) },
-      vertical: (dict["paddingVertical"] as? NSNumber).map { CGFloat(truncating: $0) },
-      minHeight: (dict["minHeight"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 44.0,
-      spacing: (dict["imagePadding"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 8.0
+      borderRadius: (processed["borderRadius"] as? NSNumber).map { CGFloat(truncating: $0) },
+      top: (processed["paddingTop"] as? NSNumber).map { CGFloat(truncating: $0) },
+      bottom: (processed["paddingBottom"] as? NSNumber).map { CGFloat(truncating: $0) },
+      left: (processed["paddingLeft"] as? NSNumber).map { CGFloat(truncating: $0) },
+      right: (processed["paddingRight"] as? NSNumber).map { CGFloat(truncating: $0) },
+      horizontal: (processed["paddingHorizontal"] as? NSNumber).map { CGFloat(truncating: $0) },
+      vertical: (processed["paddingVertical"] as? NSNumber).map { CGFloat(truncating: $0) },
+      minHeight: (processed["minHeight"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 44.0,
+      spacing: (processed["imagePadding"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 8.0
     )
 
-    let imagePlacement = dict["imagePlacement"] as? String ?? "leading"
-    let glassMaterial = dict["glassMaterial"] as? String ?? "regular"
+    let imagePlacement = processed["imagePlacement"] as? String ?? "leading"
 
     let callback: () -> Void = {
       channel.invokeMethod("buttonPressed", arguments: ["index": index], result: nil as FlutterResult?)
@@ -318,11 +274,8 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
 
     return GlassButtonData(
       title: title,
-      iconName: iconName,
-      iconImage: iconImage,
-      iconSize: iconSize,
-      iconColor: iconColor,
-      tint: tint,
+      iconConfig: iconConfig.hasIcon ? iconConfig : nil,
+      theme: theme,
       style: style,
       isEnabled: isEnabled,
       onPressed: callback,
@@ -330,8 +283,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: imagePlacement,
-      glassMaterial: glassMaterial
+      imagePlacement: imagePlacement
     )
   }
 }

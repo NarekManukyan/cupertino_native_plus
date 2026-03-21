@@ -8,6 +8,8 @@ import '../utils/theme_helper.dart';
 import '../channel/params.dart';
 import '../channel/view_types.dart';
 import '../style/button_data.dart';
+import '../style/button_theme.dart';
+import '../style/sf_symbol.dart';
 import '../utils/platform_view_builder.dart';
 import '../style/image_placement.dart';
 import 'button.dart';
@@ -29,16 +31,16 @@ import 'button.dart';
 /// CNGlassButtonGroup(
 ///   buttons: [
 ///     CNButtonData.icon(
-///       icon: CNSFSymbol.house,
+///       icon: CNImageAsset.symbol('house'),
 ///       onPressed: () => print('Home'),
 ///     ),
 ///     CNButtonData.icon(
-///       icon: CNSFSymbol.gear,
+///       icon: CNImageAsset.symbol('gear'),
 ///       onPressed: () => print('Settings'),
 ///     ),
 ///     CNButtonData(
 ///       label: 'More',
-///       icon: CNSFSymbol.ellipsis,
+///       icon: CNImageAsset.symbol('ellipsis'),
 ///       onPressed: () => print('More'),
 ///     ),
 ///   ],
@@ -275,7 +277,6 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     final ch = _channel;
     if (ch == null) return;
 
-    // Capture context before any async operations
     final capturedContext = context;
 
     final currentSnapshots = _usingWidgets
@@ -355,6 +356,142 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     return true;
   }
 
+  // ---------------------------------------------------------------------------
+  // Serialization helpers
+  // ---------------------------------------------------------------------------
+
+  /// Builds the native dict for a [CNButtonData].
+  Future<Map<String, dynamic>> _buttonDataToMapAsync(
+    CNButtonData button,
+    BuildContext context,
+  ) async {
+    // Resolve context-derived values before the async gap.
+    final themeMap = _themeToMap(button.theme, context);
+    final iconMap = await _resolveIconMap(button.icon, context);
+    return _buildButtonMap(
+      label: button.label,
+      iconMap: iconMap,
+      enabled: button.enabled,
+      theme: button.theme,
+      themeMap: themeMap,
+      config: button.config,
+    );
+  }
+
+  /// Builds the native dict for a legacy [CNButton] widget.
+  Future<Map<String, dynamic>> _buttonWidgetToMapAsync(
+    CNButton button,
+    BuildContext context,
+  ) async {
+    final iconMap = await _resolveIconMap(button.icon, context);
+    final tintArgb = button.tint != null
+        ? resolveColorToArgb(button.tint, context)
+        : null;
+    return {
+      if (button.label != null) 'label': button.label,
+      ...iconMap,
+      'enabled': button.enabled,
+      if (tintArgb != null) 'tint': tintArgb,
+      'minHeight': button.config.minHeight ?? 44.0,
+      'style': button.config.style.name,
+      if (button.config.glassEffectUnionId != null)
+        'glassEffectUnionId': button.config.glassEffectUnionId,
+      if (button.config.glassEffectId != null)
+        'glassEffectId': button.config.glassEffectId,
+      'glassEffectInteractive': button.config.glassEffectInteractive,
+      if (button.config.borderRadius != null)
+        'borderRadius': button.config.borderRadius,
+      if (button.config.padding != null) ..._paddingMap(button.config.padding!),
+      if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
+      if (button.config.imagePadding != null)
+        'imagePadding': button.config.imagePadding,
+      'glassMaterial': button.config.glassMaterial.name,
+    };
+  }
+
+  /// Resolves [CNImageAsset] into a flat dict ready for the native layer.
+  Future<Map<String, dynamic>> _resolveIconMap(
+    CNImageAsset? icon,
+    BuildContext context,
+  ) async {
+    if (icon == null) return {};
+    final base = icon.toMap();
+    // Resolve asset path for DPI variants if needed.
+    final assetPath = base['assetPath'] as String?;
+    if (assetPath != null) {
+      final resolved = await resolveAssetPathForPixelRatio(assetPath);
+      return {...base, 'assetPath': resolved};
+    }
+    return base;
+  }
+
+  /// Serializes [CNButtonTheme] into a flat dict.
+  Map<String, dynamic> _themeToMap(CNButtonTheme theme, BuildContext context) {
+    final map = <String, dynamic>{'glassMaterial': theme.glassMaterial.name};
+    if (theme.tint != null) {
+      map['tint'] = resolveColorToArgb(theme.tint, context);
+    }
+    if (theme.tintDark != null) {
+      map['tintDark'] = resolveColorToArgb(theme.tintDark, context);
+    }
+    if (theme.labelColor != null) {
+      map['labelColor'] = resolveColorToArgb(theme.labelColor, context);
+    }
+    if (theme.labelColorDark != null) {
+      map['labelColorDark'] = resolveColorToArgb(theme.labelColorDark, context);
+    }
+    if (theme.iconColor != null) {
+      map['themeIconColor'] = resolveColorToArgb(theme.iconColor, context);
+    }
+    if (theme.iconColorDark != null) {
+      map['themeIconColorDark'] = resolveColorToArgb(
+        theme.iconColorDark,
+        context,
+      );
+    }
+    return map;
+  }
+
+  Map<String, dynamic> _buildButtonMap({
+    required String? label,
+    required Map<String, dynamic> iconMap,
+    required bool enabled,
+    required CNButtonTheme theme,
+    required Map<String, dynamic> themeMap,
+    required CNButtonDataConfig config,
+  }) {
+    // Per-asset icon color (lower priority than theme colors).
+    return {
+      if (label != null) 'label': label,
+      ...iconMap,
+      'enabled': enabled,
+      ...themeMap,
+      'minHeight': config.minHeight ?? 44.0,
+      'style': config.style.name,
+      if (config.glassEffectUnionId != null)
+        'glassEffectUnionId': config.glassEffectUnionId,
+      if (config.glassEffectId != null) 'glassEffectId': config.glassEffectId,
+      'glassEffectInteractive': config.glassEffectInteractive,
+      if (config.borderRadius != null) 'borderRadius': config.borderRadius,
+      if (config.padding != null) ..._paddingMap(config.padding!),
+      if (config.minHeight != null) 'minHeight': config.minHeight,
+      if (config.imagePadding != null) 'imagePadding': config.imagePadding,
+    };
+  }
+
+  Map<String, dynamic> _paddingMap(EdgeInsets p) => {
+    if (p.top != 0.0) 'paddingTop': p.top,
+    if (p.bottom != 0.0) 'paddingBottom': p.bottom,
+    if (p.left != 0.0) 'paddingLeft': p.left,
+    if (p.right != 0.0) 'paddingRight': p.right,
+    if (p.left == p.right && p.left != 0.0) 'paddingHorizontal': p.left,
+    if (p.top == p.bottom && p.top != 0.0) 'paddingVertical': p.top,
+  };
+
+  // ---------------------------------------------------------------------------
+  // Flutter fallback
+  // ---------------------------------------------------------------------------
+
   Widget _buildFlutterFallback(BuildContext context) {
     final children = _usingWidgets
         ? _buildWidgetChildren()
@@ -385,9 +522,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     return widget._buttonWidgets!.map((button) {
       if (button.isIcon) {
         return CNButton.icon(
-          icon: button.icon,
-          customIcon: button.customIcon,
-          imageAsset: button.imageAsset,
+          icon: button.icon!,
           onPressed: button.onPressed,
           enabled: button.enabled,
           tint: button.tint,
@@ -408,8 +543,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       } else {
         return CNButton(
           label: button.label!,
-          customIcon: button.customIcon,
-          imageAsset: button.imageAsset,
+          icon: button.icon,
           onPressed: button.onPressed,
           enabled: button.enabled,
           tint: button.tint,
@@ -433,246 +567,50 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
 
   List<Widget> _buildDataChildren() {
     return widget.buttons.map((data) {
+      final tint = data.theme.tint;
+      final config = CNButtonConfig(
+        width: data.config.width,
+        style: data.config.style,
+        shrinkWrap: true,
+        padding: data.config.padding,
+        borderRadius: data.config.borderRadius,
+        minHeight: data.config.minHeight,
+        imagePadding: data.config.imagePadding,
+        imagePlacement: data.config.imagePlacement ?? CNImagePlacement.leading,
+        glassEffectUnionId: data.config.glassEffectUnionId,
+        glassEffectId: data.config.glassEffectId,
+        glassEffectInteractive: data.config.glassEffectInteractive,
+        glassMaterial: data.theme.glassMaterial,
+      );
       if (data.isIcon) {
         return CNButton.icon(
-          icon: data.icon,
-          customIcon: data.customIcon,
-          imageAsset: data.imageAsset,
+          icon: data.icon!,
           onPressed: data.onPressed,
           enabled: data.enabled,
-          tint: data.tint,
-          config: CNButtonConfig(
-            width: data.config.width,
-            style: data.config.style,
-            shrinkWrap: true,
-            padding: data.config.padding,
-            borderRadius: data.config.borderRadius,
-            minHeight: data.config.minHeight,
-            imagePadding: data.config.imagePadding,
-            imagePlacement:
-                data.config.imagePlacement ?? CNImagePlacement.leading,
-            glassEffectUnionId: data.config.glassEffectUnionId,
-            glassEffectId: data.config.glassEffectId,
-            glassEffectInteractive: data.config.glassEffectInteractive,
-          ),
+          tint: tint,
+          config: config,
         );
       } else {
         return CNButton(
           label: data.label!,
           icon: data.icon,
-          customIcon: data.customIcon,
-          imageAsset: data.imageAsset,
           onPressed: data.onPressed,
           enabled: data.enabled,
-          tint: data.tint,
-          config: CNButtonConfig(
-            width: data.config.width,
-            style: data.config.style,
-            shrinkWrap: true,
-            padding: data.config.padding,
-            borderRadius: data.config.borderRadius,
-            minHeight: data.config.minHeight,
-            imagePadding: data.config.imagePadding,
-            imagePlacement:
-                data.config.imagePlacement ?? CNImagePlacement.leading,
-            glassEffectUnionId: data.config.glassEffectUnionId,
-            glassEffectId: data.config.glassEffectId,
-            glassEffectInteractive: data.config.glassEffectInteractive,
-          ),
+          tint: tint,
+          config: config,
         );
       }
     }).toList();
   }
-
-  Future<Map<String, dynamic>> _buttonDataToMapAsync(
-    CNButtonData button,
-    BuildContext context,
-  ) async {
-    final iconColorArgb = button.imageAsset?.color != null
-        ? resolveColorToArgb(button.imageAsset!.color, context)
-        : (button.icon?.color != null
-              ? resolveColorToArgb(button.icon!.color, context)
-              : null);
-    final tintArgb = button.tint != null
-        ? resolveColorToArgb(button.tint, context)
-        : null;
-
-    Uint8List? iconBytes;
-    if (button.customIcon != null) {
-      iconBytes = await iconDataToImageBytes(
-        button.customIcon!,
-        size: button.icon?.size ?? 20.0,
-      );
-    }
-
-    Uint8List? imageBytes;
-    String? imageFormat;
-    String? resolvedAssetPath;
-    if (button.imageAsset != null) {
-      resolvedAssetPath = await resolveAssetPathForPixelRatio(
-        button.imageAsset!.assetPath,
-      );
-      imageBytes = button.imageAsset!.imageData;
-      imageFormat =
-          button.imageAsset!.imageFormat ??
-          detectImageFormat(resolvedAssetPath, button.imageAsset!.imageData);
-    }
-
-    final iconSize = button.imageAsset?.size ?? button.icon?.size ?? 20.0;
-
-    return {
-      if (button.label != null) 'label': button.label,
-      if (button.icon != null) 'iconName': button.icon!.name,
-      if (button.icon != null) 'iconSize': button.icon!.size,
-      if (button.imageAsset != null) 'iconSize': iconSize,
-      if (iconColorArgb != null) 'iconColor': iconColorArgb,
-      if (iconBytes != null) 'iconBytes': iconBytes,
-      if (imageBytes != null) 'imageBytes': imageBytes,
-      if (imageFormat != null) 'imageFormat': imageFormat,
-      if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
-        'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
-      if (button.imageAsset?.xcassetName != null &&
-          button.imageAsset!.xcassetName!.isNotEmpty)
-        'xcassetName': button.imageAsset!.xcassetName,
-      'enabled': button.enabled,
-      if (tintArgb != null) 'tint': tintArgb,
-      if ((button.config.tintWhenGlassInverted ??
-              button.tintWhenGlassInverted) !=
-          null)
-        'tintWhenGlassInverted': resolveColorToArgb(
-          (button.config.tintWhenGlassInverted ??
-              button.tintWhenGlassInverted)!,
-          context,
-        ),
-      'minHeight': button.config.minHeight ?? 44.0,
-      'style': button.config.style.name,
-      if (button.config.glassEffectUnionId != null)
-        'glassEffectUnionId': button.config.glassEffectUnionId,
-      if (button.config.glassEffectId != null)
-        'glassEffectId': button.config.glassEffectId,
-      'glassEffectInteractive': button.config.glassEffectInteractive,
-      if (button.config.borderRadius != null)
-        'borderRadius': button.config.borderRadius,
-      if (button.config.padding != null) ...{
-        if (button.config.padding!.top != 0.0)
-          'paddingTop': button.config.padding!.top,
-        if (button.config.padding!.bottom != 0.0)
-          'paddingBottom': button.config.padding!.bottom,
-        if (button.config.padding!.left != 0.0)
-          'paddingLeft': button.config.padding!.left,
-        if (button.config.padding!.right != 0.0)
-          'paddingRight': button.config.padding!.right,
-        if (button.config.padding!.left == button.config.padding!.right &&
-            button.config.padding!.left != 0.0)
-          'paddingHorizontal': button.config.padding!.left,
-        if (button.config.padding!.top == button.config.padding!.bottom &&
-            button.config.padding!.top != 0.0)
-          'paddingVertical': button.config.padding!.top,
-      },
-      if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
-      if (button.config.imagePadding != null)
-        'imagePadding': button.config.imagePadding,
-      'glassMaterial': button.config.glassMaterial.name,
-    };
-  }
-
-  Future<Map<String, dynamic>> _buttonWidgetToMapAsync(
-    CNButton button,
-    BuildContext context,
-  ) async {
-    final iconColorArgb = button.imageAsset?.color != null
-        ? resolveColorToArgb(button.imageAsset!.color, context)
-        : (button.icon?.color != null
-              ? resolveColorToArgb(button.icon!.color, context)
-              : null);
-    final tintArgb = button.tint != null
-        ? resolveColorToArgb(button.tint, context)
-        : null;
-
-    Uint8List? iconBytes;
-    if (button.customIcon != null) {
-      iconBytes = await iconDataToImageBytes(
-        button.customIcon!,
-        size: button.icon?.size ?? 20.0,
-      );
-    }
-
-    Uint8List? imageBytes;
-    String? imageFormat;
-    String? resolvedAssetPath;
-    if (button.imageAsset != null) {
-      resolvedAssetPath = await resolveAssetPathForPixelRatio(
-        button.imageAsset!.assetPath,
-      );
-      imageBytes = button.imageAsset!.imageData;
-      imageFormat =
-          button.imageAsset!.imageFormat ??
-          detectImageFormat(resolvedAssetPath, button.imageAsset!.imageData);
-    }
-
-    final iconSize = button.imageAsset?.size ?? button.icon?.size ?? 20.0;
-
-    return {
-      if (button.label != null) 'label': button.label,
-      if (button.icon != null) 'iconName': button.icon!.name,
-      if (button.icon != null) 'iconSize': button.icon!.size,
-      if (button.imageAsset != null) 'iconSize': iconSize,
-      if (iconColorArgb != null) 'iconColor': iconColorArgb,
-      if (iconBytes != null) 'iconBytes': iconBytes,
-      if (imageBytes != null) 'imageBytes': imageBytes,
-      if (imageFormat != null) 'imageFormat': imageFormat,
-      if (button.imageAsset != null && button.imageAsset!.assetPath.isNotEmpty)
-        'assetPath': resolvedAssetPath ?? button.imageAsset!.assetPath,
-      if (button.imageAsset?.xcassetName != null &&
-          button.imageAsset!.xcassetName!.isNotEmpty)
-        'xcassetName': button.imageAsset!.xcassetName,
-      'enabled': button.enabled,
-      if (tintArgb != null) 'tint': tintArgb,
-      'minHeight': button.config.minHeight ?? 44.0,
-      'style': button.config.style.name,
-      if (button.config.glassEffectUnionId != null)
-        'glassEffectUnionId': button.config.glassEffectUnionId,
-      if (button.config.glassEffectId != null)
-        'glassEffectId': button.config.glassEffectId,
-      'glassEffectInteractive': button.config.glassEffectInteractive,
-      if (button.config.borderRadius != null)
-        'borderRadius': button.config.borderRadius,
-      if (button.config.padding != null) ...{
-        if (button.config.padding!.top != 0.0)
-          'paddingTop': button.config.padding!.top,
-        if (button.config.padding!.bottom != 0.0)
-          'paddingBottom': button.config.padding!.bottom,
-        if (button.config.padding!.left != 0.0)
-          'paddingLeft': button.config.padding!.left,
-        if (button.config.padding!.right != 0.0)
-          'paddingRight': button.config.padding!.right,
-        if (button.config.padding!.left == button.config.padding!.right &&
-            button.config.padding!.left != 0.0)
-          'paddingHorizontal': button.config.padding!.left,
-        if (button.config.padding!.top == button.config.padding!.bottom &&
-            button.config.padding!.top != 0.0)
-          'paddingVertical': button.config.padding!.top,
-      },
-      if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
-      if (button.config.imagePadding != null)
-        'imagePadding': button.config.imagePadding,
-      'glassMaterial': button.config.glassMaterial.name,
-    };
-  }
 }
 
-/// Snapshot of button properties for change detection
+// ---------------------------------------------------------------------------
+// Change detection snapshot
+// ---------------------------------------------------------------------------
+
 class _ButtonSnapshot {
   final String? label;
-  final String? iconName;
-  final double? iconSize;
-  final int? iconColor;
-  final String? imageAssetPath;
-  final int? imageAssetDataLength;
-  final double? imageAssetSize;
-  final int? imageAssetColor;
-  final String? imageAssetXcassetName;
-  final int? customIconHash;
+  final Map<String, dynamic> iconMap;
   final String style;
   final bool enabled;
   final int? tint;
@@ -680,15 +618,7 @@ class _ButtonSnapshot {
 
   _ButtonSnapshot({
     this.label,
-    this.iconName,
-    this.iconSize,
-    this.iconColor,
-    this.imageAssetPath,
-    this.imageAssetDataLength,
-    this.imageAssetSize,
-    this.imageAssetColor,
-    this.imageAssetXcassetName,
-    this.customIconHash,
+    required this.iconMap,
     required this.style,
     required this.enabled,
     this.tint,
@@ -698,15 +628,7 @@ class _ButtonSnapshot {
   factory _ButtonSnapshot.fromButtonWidget(CNButton button) {
     return _ButtonSnapshot(
       label: button.label,
-      iconName: button.icon?.name,
-      iconSize: button.icon?.size,
-      iconColor: button.icon?.color?.toARGB32(),
-      imageAssetPath: button.imageAsset?.assetPath,
-      imageAssetDataLength: button.imageAsset?.imageData?.length,
-      imageAssetSize: button.imageAsset?.size,
-      imageAssetColor: button.imageAsset?.color?.toARGB32(),
-      imageAssetXcassetName: button.imageAsset?.xcassetName,
-      customIconHash: button.customIcon?.hashCode,
+      iconMap: button.icon?.toMap() ?? {},
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
@@ -717,36 +639,25 @@ class _ButtonSnapshot {
   factory _ButtonSnapshot.fromButtonData(CNButtonData button) {
     return _ButtonSnapshot(
       label: button.label,
-      iconName: button.icon?.name,
-      iconSize: button.icon?.size,
-      iconColor: button.icon?.color?.toARGB32(),
-      imageAssetPath: button.imageAsset?.assetPath,
-      imageAssetDataLength: button.imageAsset?.imageData?.length,
-      imageAssetSize: button.imageAsset?.size,
-      imageAssetColor: button.imageAsset?.color?.toARGB32(),
-      imageAssetXcassetName: button.imageAsset?.xcassetName,
-      customIconHash: button.customIcon?.hashCode,
+      iconMap: button.icon?.toMap() ?? {},
       style: button.config.style.name,
       enabled: button.enabled,
-      tint: button.tint?.toARGB32(),
-      glassMaterial: button.config.glassMaterial.name,
+      tint: button.theme.tint?.toARGB32(),
+      glassMaterial: button.theme.glassMaterial.name,
     );
   }
 
   bool equals(_ButtonSnapshot other) {
-    return label == other.label &&
-        iconName == other.iconName &&
-        iconSize == other.iconSize &&
-        iconColor == other.iconColor &&
-        imageAssetPath == other.imageAssetPath &&
-        imageAssetDataLength == other.imageAssetDataLength &&
-        imageAssetSize == other.imageAssetSize &&
-        imageAssetColor == other.imageAssetColor &&
-        imageAssetXcassetName == other.imageAssetXcassetName &&
-        customIconHash == other.customIconHash &&
-        style == other.style &&
-        enabled == other.enabled &&
-        tint == other.tint &&
-        glassMaterial == other.glassMaterial;
+    if (label != other.label) return false;
+    if (style != other.style) return false;
+    if (enabled != other.enabled) return false;
+    if (tint != other.tint) return false;
+    if (glassMaterial != other.glassMaterial) return false;
+    // Compare icon maps
+    if (iconMap.length != other.iconMap.length) return false;
+    for (final key in iconMap.keys) {
+      if (iconMap[key] != other.iconMap[key]) return false;
+    }
+    return true;
   }
 }

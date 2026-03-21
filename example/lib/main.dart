@@ -117,7 +117,10 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             CNButton.icon(
-              icon: CNSymbol(isDarkMode ? 'sun.max' : 'moon', size: 18),
+              icon: CNImageAsset.symbol(
+                isDarkMode ? 'sun.max' : 'moon',
+                size: Size(18, 18),
+              ),
               onPressed: onToggleTheme,
             ),
           ],

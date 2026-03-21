@@ -24,7 +24,7 @@ class FloatingIslandPlatformView: NSObject, FlutterPlatformView {
         var expandedHeight: CGFloat? = nil
         var expandedWidth: CGFloat? = nil
         var cornerRadius: CGFloat = 22
-        var tint: UIColor? = nil
+        var tintUIColor: UIColor? = nil
         var springDamping: CGFloat = 0.8
         var springResponse: CGFloat = 0.4
         var isDark = false
@@ -37,7 +37,7 @@ class FloatingIslandPlatformView: NSObject, FlutterPlatformView {
             if let v = dict["expandedHeight"] as? NSNumber { expandedHeight = CGFloat(truncating: v) }
             if let v = dict["expandedWidth"] as? NSNumber { expandedWidth = CGFloat(truncating: v) }
             if let v = dict["cornerRadius"] as? NSNumber { cornerRadius = CGFloat(truncating: v) }
-            if let v = dict["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(v.intValue) }
+            if let v = dict["tint"] as? NSNumber { tintUIColor = ImageUtils.colorFromARGB(v.intValue) }
             if let v = dict["springDamping"] as? NSNumber { springDamping = CGFloat(truncating: v) }
             if let v = dict["springResponse"] as? NSNumber { springResponse = CGFloat(truncating: v) }
             if let v = dict["isDark"] as? Bool { isDark = v }
@@ -49,7 +49,11 @@ class FloatingIslandPlatformView: NSObject, FlutterPlatformView {
         viewModel.expandedHeight = expandedHeight ?? 200
         viewModel.expandedWidth = expandedWidth
         viewModel.cornerRadius = cornerRadius
-        viewModel.tint = tint.map { Color(uiColor: $0) }
+        viewModel.tint = tintUIColor.map { uiColor -> Color in
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+            return Color(red: Double(r), green: Double(g), blue: Double(b), opacity: Double(a))
+        }
         viewModel.springDamping = springDamping
         viewModel.springResponse = springResponse
         viewModel.isTop = position == "top"
@@ -61,9 +65,7 @@ class FloatingIslandPlatformView: NSObject, FlutterPlatformView {
         super.init()
 
         container.backgroundColor = .clear
-        if #available(iOS 13.0, *) {
-            container.overrideUserInterfaceStyle = isDark ? .dark : .light
-        }
+        container.overrideUserInterfaceStyle = isDark ? .dark : .light
 
         hostingController.view.backgroundColor = .clear
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
@@ -110,9 +112,7 @@ class FloatingIslandPlatformView: NSObject, FlutterPlatformView {
             case "setBrightness":
                 if let args = call.arguments as? [String: Any],
                    let isDark = (args["isDark"] as? NSNumber)?.boolValue {
-                    if #available(iOS 13.0, *) {
-                        self.container.overrideUserInterfaceStyle = isDark ? .dark : .light
-                    }
+                    self.container.overrideUserInterfaceStyle = isDark ? .dark : .light
                     result(nil)
                 } else {
                     result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil))
@@ -166,7 +166,6 @@ class FloatingIslandViewModel: ObservableObject {
 
 struct FloatingIslandSwiftUI: View {
     @ObservedObject var viewModel: FloatingIslandViewModel
-    @Namespace private var animation
 
     var body: some View {
         GeometryReader { geometry in
@@ -183,7 +182,6 @@ struct FloatingIslandSwiftUI: View {
 
                 islandContent(width: currentWidth, height: currentHeight, cornerRadius: currentRadius)
                     .frame(width: currentWidth, height: currentHeight)
-                    .matchedGeometryEffect(id: "island", in: animation)
 
                 if viewModel.isTop {
                     Spacer()
@@ -208,39 +206,25 @@ struct FloatingIslandSwiftUI: View {
                 }
         } else {
             // Fallback for older iOS
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(fallbackBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                )
-                .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-                .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
-                .onTapGesture {
-                    withAnimation(.spring(response: viewModel.springResponse, dampingFraction: viewModel.springDamping)) {
-                        viewModel.onTapped?()
-                    }
+            fallbackIslandContent(cornerRadius: cornerRadius)
+        }
+    }
+
+    @ViewBuilder
+    private func fallbackIslandContent(cornerRadius: CGFloat) -> some View {
+        let tintColor = viewModel.tint
+        RoundedRectangle(cornerRadius: cornerRadius)
+            .fill(tintColor != nil ? tintColor!.opacity(0.3) : Color(.systemGray5).opacity(0.9))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .onTapGesture {
+                withAnimation(.spring(response: viewModel.springResponse, dampingFraction: viewModel.springDamping)) {
+                    viewModel.onTapped?()
                 }
-        }
-    }
-
-    private var fallbackBackground: some ShapeStyle {
-        if let tint = viewModel.tint {
-            return AnyShapeStyle(tint.opacity(0.3))
-        }
-        return AnyShapeStyle(Color(.systemGray5).opacity(0.9))
-    }
-}
-
-// Helper for type erasure
-struct AnyShapeStyle: ShapeStyle {
-    private let _makeBody: (inout CGRect, inout Bool) -> AnyView
-
-    init<S: ShapeStyle>(_ style: S) {
-        _makeBody = { _, _ in AnyView(Rectangle().fill(style)) }
-    }
-
-    func resolve(in environment: EnvironmentValues) -> some ShapeStyle {
-        return self
+            }
     }
 }

@@ -453,7 +453,9 @@ class _CNTabBarState extends State<CNTabBar> {
     if (!mounted) return null;
 
     final sizes = widget.items
-        .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
+        .map(
+          (e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size.width),
+        )
         .toList();
     final colors = widget.items
         .map(
@@ -761,7 +763,10 @@ class _CNTabBarState extends State<CNTabBar> {
         final activeCustomIconBytes = iconBytes[1];
 
         final sizes = widget.items
-            .map((e) => (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size))
+            .map(
+              (e) =>
+                  (widget.iconSize ?? e.icon?.size ?? e.imageAsset?.size.width),
+            )
             .toList();
         final badgeColors = widget.items
             .map((e) => resolveColorToArgb(e.badgeColor, context))
@@ -1203,11 +1208,14 @@ class _CNTabBarState extends State<CNTabBar> {
     if (isActive && item.activeImageAsset != null) {
       return CNIcon(
         imageAsset: item.activeImageAsset,
-        size: item.activeImageAsset!.size,
+        size: item.activeImageAsset!.size.width,
       );
     }
     if (item.imageAsset != null) {
-      return CNIcon(imageAsset: item.imageAsset, size: item.imageAsset!.size);
+      return CNIcon(
+        imageAsset: item.imageAsset,
+        size: item.imageAsset!.size.width,
+      );
     }
 
     // Check for custom icon (medium priority)

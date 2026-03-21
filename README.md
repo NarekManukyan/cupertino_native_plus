@@ -42,7 +42,7 @@ void main() {
 - **Reliable Version Detection**: Uses `Platform.operatingSystemVersion` parsing instead of platform channels, ensuring accurate version detection in both debug and release builds
 - **Native Rendering**: All widgets use native platform views for authentic iOS/macOS appearance
 - **Comprehensive Fallbacks**: Every widget gracefully degrades on older OS versions
-- **Multiple Icon Types**: Supports SF Symbols, custom IconData, and image assets with automatic resolution selection
+- **Multiple Icon Types**: Unified `CNImageAsset` supports SF Symbols, xcassets, Flutter asset paths, and raw bytes (SVG/PNG/JPG)
 - **Dark Mode Support**: Automatic theme synchronization with system preferences
 - **Glass Effect Unioning**: Multiple buttons can share unified glass effects
 
@@ -69,31 +69,43 @@ void main() {
 
 ### Icon Support
 
-All widgets support three icon types with unified priority:
+All widgets use `CNImageAsset` as the single unified icon type. Choose the named constructor that matches your source:
 
-1. **Image Assets** (highest priority) - PNG, SVG, JPG with automatic resolution selection
-2. **Custom Icons** - Any `IconData` (CupertinoIcons, Icons, custom)
-3. **SF Symbols** - Native Apple SF Symbols with rendering modes
+| Constructor | Source |
+|---|---|
+| `CNImageAsset.symbol('name')` | SF Symbol (system icon) |
+| `CNImageAsset.xcasset('name')` | App asset catalog (xcassets) |
+| `CNImageAsset.asset('path')` | Flutter asset path (SVG/PNG/JPG auto-detected) |
+| `CNImageAsset.svg(bytes)` | SVG bytes |
+| `CNImageAsset.png(bytes)` | PNG bytes |
+| `CNImageAsset.jpg(bytes)` | JPG bytes |
 
 ```dart
 // SF Symbol
 CNButton(
   label: 'Settings',
-  icon: CNSymbol('gear', size: 20),
+  icon: const CNImageAsset.symbol('gear', size: Size(20, 20)),
   onPressed: () {},
 )
 
-// Custom Icon
-CNButton(
-  label: 'Home',
-  customIcon: CupertinoIcons.home,
-  onPressed: () {},
-)
-
-// Image Asset
+// Flutter asset (SVG/PNG/JPG — format auto-detected from extension)
 CNButton(
   label: 'Custom',
-  imageAsset: CNImageAsset('assets/icons/custom.png', size: 20),
+  icon: const CNImageAsset.asset('assets/icons/custom.png', size: Size(20, 20)),
+  onPressed: () {},
+)
+
+// App asset catalog (xcassets)
+CNButton(
+  label: 'Logo',
+  icon: const CNImageAsset.xcasset('AppIcon', size: Size(20, 20)),
+  onPressed: () {},
+)
+
+// Tinted icon
+CNButton.icon(
+  icon: const CNImageAsset.symbol('house.fill', size: Size(20, 20)),
+  tint: Colors.blue,
   onPressed: () {},
 )
 ```
@@ -149,13 +161,13 @@ CNTabBar(
   items: [
     CNTabBarItem(
       label: 'Home',
-      icon: CNSymbol('house'),
-      activeIcon: CNSymbol('house.fill'),
+      icon: const CNImageAsset.symbol('house'),
+      activeIcon: const CNImageAsset.symbol('house.fill'),
     ),
     CNTabBarItem(
       label: 'Profile',
-      icon: CNSymbol('person.crop.circle'),
-      activeIcon: CNSymbol('person.crop.circle.fill'),
+      icon: const CNImageAsset.symbol('person.crop.circle'),
+      activeIcon: const CNImageAsset.symbol('person.crop.circle.fill'),
     ),
   ],
   currentIndex: _selectedIndex,
@@ -175,9 +187,9 @@ void initState() {
   super.initState();
   CNTabBarNative.enable(
     tabs: [
-      CNTab(title: 'Home', sfSymbol: CNSymbol('house.fill')),
-      CNTab(title: 'Search', sfSymbol: CNSymbol('magnifyingglass'), isSearchTab: true),
-      CNTab(title: 'Profile', sfSymbol: CNSymbol('person.fill')),
+      CNTab(title: 'Home', sfSymbol: const CNImageAsset.symbol('house.fill')),
+      CNTab(title: 'Search', sfSymbol: const CNImageAsset.symbol('magnifyingglass'), isSearchTab: true),
+      CNTab(title: 'Profile', sfSymbol: const CNImageAsset.symbol('person.fill')),
     ],
     onTabSelected: (index) => setState(() => _selectedTab = index),
     onSearchChanged: (query) => filterResults(query),
@@ -200,12 +212,12 @@ CNTabBar(
   items: [
     CNTabBarItem(
       label: 'Overview',
-      icon: CNSymbol('square.grid.2x2.fill'),
+      icon: const CNImageAsset.symbol('square.grid.2x2.fill'),
     ),
     CNTabBarItem(
       label: 'Projects',
-      icon: CNSymbol('folder'),
-      activeIcon: CNSymbol('folder.fill'),
+      icon: const CNImageAsset.symbol('folder'),
+      activeIcon: const CNImageAsset.symbol('folder.fill'),
     ),
   ],
   currentIndex: _index,
@@ -265,8 +277,8 @@ dependencies:
 ```dart
 CNButton(
   label: 'Get Started',
-  icon: CNSymbol('arrow.right', size: 18),
-  config: CNButtonConfig(
+  icon: const CNImageAsset.symbol('arrow.right', size: Size(18, 18)),
+  config: const CNButtonConfig(
     style: CNButtonStyle.filled,
     imagePlacement: CNImagePlacement.trailing,
   ),
@@ -294,8 +306,8 @@ CNButton(
 
 ```dart
 CNButton.icon(
-  icon: CNSymbol('plus', size: 24),
-  config: CNButtonConfig(style: CNButtonStyle.glass),
+  icon: const CNImageAsset.symbol('plus', size: Size(24, 24)),
+  config: const CNButtonConfig(style: CNButtonStyle.glass),
   onPressed: () {},
 )
 ```
@@ -308,9 +320,9 @@ CNButton.icon(
 
 ```dart
 CNIcon(
-  symbol: CNSymbol(
+  asset: const CNImageAsset.symbol(
     'star.fill',
-    size: 32,
+    size: Size(32, 32),
     color: Colors.amber,
     mode: CNSymbolRenderingMode.multicolor,
   ),
@@ -378,16 +390,16 @@ CNPopupMenuButton(
   items: [
     CNPopupMenuItem(
       label: 'Edit',
-      icon: CNSymbol('pencil'),
+      icon: const CNImageAsset.symbol('pencil'),
     ),
     CNPopupMenuItem(
       label: 'Share',
-      icon: CNSymbol('square.and.arrow.up'),
+      icon: const CNImageAsset.symbol('square.and.arrow.up'),
     ),
     const CNPopupMenuDivider(), // Visual separator
     CNPopupMenuItem(
       label: 'Delete',
-      icon: CNSymbol('trash', color: Colors.red),
+      icon: const CNImageAsset.symbol('trash', color: Colors.red),
       enabled: true,
     ),
   ],
@@ -398,11 +410,11 @@ CNPopupMenuButton(
 
 // Icon-only popup menu (circular glass button)
 CNPopupMenuButton.icon(
-  buttonIcon: CNSymbol('ellipsis.circle', size: 24),
+  buttonIcon: const CNImageAsset.symbol('ellipsis.circle', size: Size(24, 24)),
   buttonStyle: CNButtonStyle.glass,
   items: [
-    CNPopupMenuItem(label: 'Option 1', icon: CNSymbol('star')),
-    CNPopupMenuItem(label: 'Option 2', icon: CNSymbol('heart')),
+    CNPopupMenuItem(label: 'Option 1', icon: const CNImageAsset.symbol('star')),
+    CNPopupMenuItem(label: 'Option 2', icon: const CNImageAsset.symbol('heart')),
   ],
   onSelected: (index) {},
 )
@@ -429,9 +441,9 @@ CNSegmentedControl(
 CNSegmentedControl(
   labels: ['List', 'Grid', 'Gallery'],
   sfSymbols: [
-    CNSymbol('list.bullet'),
-    CNSymbol('square.grid.2x2'),
-    CNSymbol('photo.on.rectangle'),
+    const CNImageAsset.symbol('list.bullet'),
+    const CNImageAsset.symbol('square.grid.2x2'),
+    const CNImageAsset.symbol('photo.on.rectangle'),
   ],
   selectedIndex: _viewMode,
   onValueChanged: (index) {
@@ -510,11 +522,21 @@ print('macOS version: ${PlatformVersion.macOSVersion}');
 
 ## Migration from Previous Versions
 
-The API is fully compatible with previous versions. Simply update to the latest version:
+Version 0.0.7 introduces **breaking changes** to the icon/image API. See [MIGRATION.md](MIGRATION.md) for the full guide.
+
+### Quick Reference
+
+| Before | After |
+|---|---|
+| `CNSymbol('house', size: 20)` | `CNImageAsset.symbol('house', size: Size(20, 20))` |
+| `CNImageAsset('path', size: 20)` | `CNImageAsset.asset('path', size: Size(20, 20))` |
+| `customIcon: CupertinoIcons.home` | `icon: CNImageAsset.symbol('house.fill'), tint: color` |
+| `CNButtonData(icon: CNSymbol(...))` | `CNButtonData(icon: CNImageAsset.symbol(...))` |
+| `CNButtonDataConfig(glassMaterial: ...)` | `CNButtonData(theme: CNButtonTheme(glassMaterial: ...))` |
 
 ```yaml
 dependencies:
-  cupertino_native_plus: ^1.0.0
+  cupertino_native_plus: ^0.0.7
 ```
 
 ## Contributing

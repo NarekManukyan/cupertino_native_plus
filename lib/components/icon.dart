@@ -112,21 +112,18 @@ class _CNIconState extends State<CNIcon> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             final defaultSize =
-                widget.size ?? (widget.imageAsset?.size ?? 24.0);
+                widget.size ?? (widget.imageAsset?.size.width ?? 24.0);
             return SizedBox(
               width: defaultSize,
               height: widget.height ?? defaultSize,
             );
           }
           // Create a new CNImageAsset with resolved path
-          final resolvedImageAsset = CNImageAsset(
+          final resolvedImageAsset = CNImageAsset.asset(
             snapshot.data!,
             size: widget.imageAsset!.size,
             color: widget.imageAsset!.color,
-            imageFormat: widget.imageAsset!.imageFormat,
-            imageData: widget.imageAsset!.imageData,
-            mode: widget.imageAsset!.mode,
-            gradient: widget.imageAsset!.gradient,
+            format: widget.imageAsset!.imageFormat,
           );
           return _buildNativeIcon(context, imageAsset: resolvedImageAsset);
         },
@@ -177,7 +174,7 @@ class _CNIconState extends State<CNIcon> {
       imageFormat =
           imageAsset.imageFormat ??
           detectImageFormat(imageAsset.assetPath, imageAsset.imageData);
-      size = widget.size ?? imageAsset.size;
+      size = widget.size ?? imageAsset.size.width;
       color = widget.color ?? imageAsset.color;
       mode = widget.mode ?? imageAsset.mode;
       gradient = widget.gradient ?? imageAsset.gradient;
@@ -227,7 +224,7 @@ class _CNIconState extends State<CNIcon> {
 
     // Ensure the platform view always has finite constraints
     final fallbackSize =
-        widget.size ?? (imageAsset?.size ?? widget.symbol?.size ?? 24.0);
+        widget.size ?? (imageAsset?.size.width ?? widget.symbol?.size ?? 24.0);
     final h = widget.height ?? fallbackSize;
     final w = fallbackSize;
     return ClipRect(
@@ -253,7 +250,7 @@ class _CNIconState extends State<CNIcon> {
     // Determine current source and cache accordingly
     if (widget.imageAsset != null) {
       _lastName = widget.imageAsset!.assetPath;
-      _lastSize = widget.size ?? widget.imageAsset!.size;
+      _lastSize = widget.size ?? widget.imageAsset!.size.width;
       _lastColor = resolveColorToArgb(
         widget.color ?? widget.imageAsset!.color,
         context,
@@ -298,7 +295,7 @@ class _CNIconState extends State<CNIcon> {
       if (!mounted) return;
 
       name = resolvedAssetPath;
-      size = widget.size ?? widget.imageAsset!.size;
+      size = widget.size ?? widget.imageAsset!.size.width;
       color = resolveColorToArgb(
         widget.color ?? widget.imageAsset!.color,
         context,
@@ -412,7 +409,7 @@ class _CNIconState extends State<CNIcon> {
       // For image assets in fallback, use a placeholder
       iconWidget = Icon(
         CupertinoIcons.circle_fill,
-        size: widget.imageAsset!.size,
+        size: widget.imageAsset!.size.width,
         color: widget.imageAsset!.color ?? widget.color,
       );
     } else if (widget.customIcon != null) {

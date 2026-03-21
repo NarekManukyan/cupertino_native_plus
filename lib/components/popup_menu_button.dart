@@ -457,7 +457,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
 
         isDivider.add(false);
         enabled.add(e.enabled);
-        sizes.add(e.imageAsset?.size ?? e.icon?.size);
+        sizes.add(e.imageAsset?.size.width ?? e.icon?.size);
         colors.add(capturedMenuItemColors[i]);
         modes.add(e.imageAsset?.mode?.name ?? e.icon?.mode?.name);
         palettes.add(capturedMenuItemPalettes[i]);
@@ -485,7 +485,9 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       },
       if (widget.buttonIcon != null) 'buttonIconName': widget.buttonIcon!.name,
       'buttonIconSize':
-          widget.buttonImageAsset?.size ?? widget.buttonIcon?.size ?? 20.0,
+          widget.buttonImageAsset?.size.width ??
+          widget.buttonIcon?.size ??
+          20.0,
       if (capturedButtonIconColor != null)
         'buttonIconColor': capturedButtonIconColor,
       if (widget.isIconButton) 'round': true,
@@ -671,7 +673,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
         updSymbols.add(e.icon?.name ?? '');
         updIsDivider.add(false);
         updEnabled.add(e.enabled);
-        updSizes.add(e.imageAsset?.size ?? e.icon?.size);
+        updSizes.add(e.imageAsset?.size.width ?? e.icon?.size);
         updColors.add(
           resolveColorToArgb(e.imageAsset?.color ?? e.icon?.color, context),
         );
@@ -745,7 +747,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
               resolvedAssetPath,
               widget.buttonImageAsset!.imageData,
             );
-        updates['buttonIconSize'] = widget.buttonImageAsset!.size;
+        updates['buttonIconSize'] = widget.buttonImageAsset!.size.width;
         if (widget.buttonImageAsset!.color != null) {
           if (mounted) {
             updates['buttonIconColor'] = resolveColorToArgb(

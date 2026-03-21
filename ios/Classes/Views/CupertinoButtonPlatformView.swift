@@ -2,6 +2,48 @@ import Flutter
 import SwiftUI
 import UIKit
 
+// MARK: - ViewModel
+
+@available(iOS 26.0, *)
+final class CupertinoButtonViewModel: ObservableObject {
+  @Published var title: String?
+  @Published var iconConfig: IconConfig?
+  @Published var theme: CNButtonTheme
+  @Published var style: String
+  @Published var isEnabled: Bool
+  @Published var glassEffectUnionId: String?
+  @Published var glassEffectId: String?
+  @Published var glassEffectInteractive: Bool
+  @Published var config: GlassButtonConfig
+  @Published var imagePlacement: String
+
+  init(
+    title: String?,
+    iconConfig: IconConfig?,
+    theme: CNButtonTheme,
+    style: String,
+    isEnabled: Bool,
+    glassEffectUnionId: String?,
+    glassEffectId: String?,
+    glassEffectInteractive: Bool,
+    config: GlassButtonConfig,
+    imagePlacement: String
+  ) {
+    self.title = title
+    self.iconConfig = iconConfig
+    self.theme = theme
+    self.style = style
+    self.isEnabled = isEnabled
+    self.glassEffectUnionId = glassEffectUnionId
+    self.glassEffectId = glassEffectId
+    self.glassEffectInteractive = glassEffectInteractive
+    self.config = config
+    self.imagePlacement = imagePlacement
+  }
+}
+
+// MARK: - Platform View
+
 class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private let channel: FlutterMethodChannel
   private let container: UIView
@@ -12,33 +54,9 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
   private var usesSwiftUI: Bool = false
   private var makeRound: Bool = false
   private var currentTint: UIColor?
-  // currentTintWhenGlassInverted removed; only currentTint is used now.
 
-  // Stored params for SwiftUI button reconstruction on tint change
-  private var swiftUITitle: String?
-  private var swiftUIIconName: String?
-  private var swiftUIIconImage: UIImage?
-  private var swiftUIIconSize: CGFloat = 20
-  private var swiftUIIconColor: UIColor?
-  private var swiftUIIsRound: Bool = false
-  private var swiftUIStyle: String = "automatic"
-  private var swiftUIGlassEffectUnionId: String?
-  private var swiftUIGlassEffectId: String?
-  private var swiftUIGlassEffectInteractive: Bool = false
-  // GlassButtonConfig params stored individually to avoid @available restriction on stored properties
-  private var swiftUIBorderRadius: CGFloat?
-  private var swiftUIPaddingTop: CGFloat?
-  private var swiftUIPaddingBottom: CGFloat?
-  private var swiftUIPaddingLeft: CGFloat?
-  private var swiftUIPaddingRight: CGFloat?
-  private var swiftUIPaddingHorizontal: CGFloat?
-  private var swiftUIPaddingVertical: CGFloat?
-  private var swiftUIMinHeight: CGFloat = 44.0
-  private var swiftUISpacing: CGFloat = 8.0
-  private var swiftUIImagePlacement: String = "leading"
-  private var swiftUIWidth: CGFloat?
-  private var swiftUIExpandWidth: Bool = false
-  private var swiftUIGlassMaterial: String = "regular"
+  // Holds CupertinoButtonViewModel when iOS 26+; typed as AnyObject to avoid @available restriction.
+  private var _buttonViewModel: AnyObject?
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(
@@ -76,7 +94,12 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     var glassEffectUnionId: String? = nil
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
-    // tintWhenGlassInverted removed
+    var swiftUIWidth: CGFloat? = nil
+    var swiftUIExpandWidth: Bool = false
+
+    // Build icon/theme args dicts for SwiftUI path (iOS 26+).
+    var iconArgs: [String: Any] = [:]
+    var themeArgs: [String: Any] = [:]
 
     if let dict = args as? [String: Any] {
       if let t = dict["buttonTitle"] as? String { title = t }
@@ -118,29 +141,42 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let pv = dict["paddingVertical"] as? NSNumber { paddingVertical = CGFloat(truncating: pv) }
       if let br = dict["borderRadius"] as? NSNumber { borderRadius = CGFloat(truncating: br) }
       if let mh = dict["minHeight"] as? NSNumber { minHeight = CGFloat(truncating: mh) }
-      if let bw = dict["buttonWidth"] as? NSNumber { self.swiftUIWidth = CGFloat(truncating: bw) }
-      if let ew = dict["buttonExpandWidth"] as? NSNumber { self.swiftUIExpandWidth = ew.boolValue }
-      if let gm = dict["glassMaterial"] as? String { self.swiftUIGlassMaterial = gm }
+      if let bw = dict["buttonWidth"] as? NSNumber { swiftUIWidth = CGFloat(truncating: bw) }
+      if let ew = dict["buttonExpandWidth"] as? NSNumber { swiftUIExpandWidth = ew.boolValue }
       if let gueId = dict["glassEffectUnionId"] as? String { glassEffectUnionId = gueId }
       if let geId = dict["glassEffectId"] as? String { glassEffectId = geId }
       if let geInteractive = dict["glassEffectInteractive"] as? NSNumber {
         glassEffectInteractive = geInteractive.boolValue
       }
-    }
 
-    NSLog(
-      "CupertinoButton init: xcassetName=%@ assetPath=%@ iconName=%@ iconColor=%@",
-      xcassetName ?? "nil",
-      assetPath ?? "nil",
-      iconName ?? "nil",
-      iconColor?.description ?? "nil")
+      // Build icon args dict: pre-convert FlutterStandardTypedData → Data.
+      iconArgs = dict
+      for key in ["buttonImageData", "buttonCustomIconBytes"] {
+        if let td = iconArgs[key] as? FlutterStandardTypedData { iconArgs[key] = td.data }
+      }
+
+      // Build flat theme dict from nested style + top-level glassMaterial + CNButtonTheme colors.
+      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber {
+        themeArgs["tint"] = n.intValue
+      }
+      if let gm = dict["glassMaterial"] as? String { themeArgs["glassMaterial"] = gm }
+      for key in ["tintDark", "labelColor", "labelColorDark", "themeIconColor", "themeIconColorDark"] {
+        if let n = dict[key] as? NSNumber { themeArgs[key] = n.intValue }
+      }
+    }
 
     super.init()
     self.currentTint = tint
 
     container.backgroundColor = .clear
     container.clipsToBounds = false
+    container.insetsLayoutMarginsFromSafeArea = false
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
+
+    // Observe frame/bounds so glassEffect re-computes its window position after
+    // Flutter moves the container from {0,0} to the real layout position.
+    container.addObserver(self, forKeyPath: "frame", options: [.new, .old], context: nil)
+    container.addObserver(self, forKeyPath: "bounds", options: [.new, .old], context: nil)
 
     // Create final image first (needed for both SwiftUI and UIKit paths)
     var finalImage: UIImage? = nil
@@ -149,9 +185,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     // Handle xcasset (highest priority). Always load from the app's main bundle.
     if let name = xcassetName, !name.isEmpty {
       finalImage = UIImage(named: name, in: Bundle.main, compatibleWith: nil)
-      if finalImage == nil {
-        NSLog("CupertinoButton init: UIImage(named: %@) returned nil", name)
-      }
     }
 
     // Handle imageAsset (next priority)
@@ -248,29 +281,13 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       finalImage = image
     }
 
-    if finalImage == nil {
-      NSLog(
-        "CupertinoButton init: finalImage is nil (xcassetName=%@ assetPath=%@ iconName=%@)",
-        xcassetName ?? "nil",
-        assetPath ?? "nil",
-        iconName ?? "nil")
-    } else {
-      let sizeString = NSCoder.string(for: finalImage!.size)
-      NSLog("CupertinoButton init: finalImage.size=%@", sizeString)
-    }
-
     // Check if we should use SwiftUI for full glass effect support
     if #available(iOS 26.0, *) {
       usesSwiftUI = true
-      self.swiftUIImagePlacement = imagePlacement
       setupSwiftUIButton(
         title: title,
-        iconName: iconName,
-        iconImage: finalImage,
-        iconSize: iconSize ?? 20,
-        iconColor: iconColor,
-        tint: tint,
-        isRound: makeRound,
+        iconArgs: iconArgs,
+        themeArgs: themeArgs,
         style: buttonStyle,
         enabled: enabled,
         glassEffectUnionId: glassEffectUnionId,
@@ -283,8 +300,11 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         paddingRight: paddingRight,
         paddingHorizontal: paddingHorizontal,
         paddingVertical: paddingVertical,
-        minHeight: minHeight,
-        spacing: imagePadding
+        minHeight: minHeight ?? 44.0,
+        spacing: imagePadding ?? 8.0,
+        imagePlacement: imagePlacement,
+        width: swiftUIWidth,
+        expandWidth: swiftUIExpandWidth
       )
     } else {
       // Use UIKit button for standard implementation
@@ -339,7 +359,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       uiButton.adjustsImageWhenHighlighted = true
 
       // Force layout update for proper first-time rendering
-      // Similar to TabBar fix - ensures button is properly laid out before display
       DispatchQueue.main.async { [weak self, weak uiButton] in
         guard let self = self, let uiButton = uiButton else { return }
         self.container.setNeedsLayout()
@@ -363,12 +382,50 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       }
       switch call.method {
       case "getIntrinsicSize":
-        // Defer result until after layout so Flutter gets size only when native has finished layout.
-        // This avoids sizing issues from reading intrinsicContentSize before the first layout pass.
         DispatchQueue.main.async { [weak self] in
           guard let self = self else { return }
           if usesSwiftUI {
-            result(["width": 80.0, "height": 32.0])
+            if #available(iOS 16.0, *), let hc = self.hostingController {
+              // When expandWidth is true the SwiftUI button fills the entire
+              // proposed width, causing sizeThatFits to return the proposed
+              // width and the validity check below to fail (falling back to
+              // 80 px).  Temporarily disable expand so we measure the button's
+              // natural content size instead.  Both assignments happen on the
+              // same run-loop turn so SwiftUI coalesces them into a no-op render.
+              if #available(iOS 26.0, *), let vm = self.buttonViewModel, vm.config.expandWidth {
+                let original = vm.config
+                vm.config = GlassButtonConfig(
+                  borderRadius: original.borderRadius,
+                  padding: original.padding,
+                  minHeight: original.minHeight,
+                  spacing: original.spacing,
+                  width: original.width,
+                  expandWidth: false
+                )
+                hc.view.setNeedsLayout()
+                hc.view.layoutIfNeeded()
+                let proposed = CGSize(
+                  width: UIScreen.main.bounds.width * 2, height: UIScreen.main.bounds.height)
+                let sz = hc.sizeThatFits(in: proposed)
+                vm.config = original
+                let validWidth = sz.width > 0 && sz.width < proposed.width * 0.9
+                let w = validWidth ? Double(ceil(sz.width)) : 80.0
+                let h = sz.height > 0 ? Double(ceil(sz.height)) : 44.0
+                result(["width": w, "height": h])
+                return
+              }
+              hc.view.setNeedsLayout()
+              hc.view.layoutIfNeeded()
+              let proposed = CGSize(
+                width: UIScreen.main.bounds.width * 2, height: UIScreen.main.bounds.height)
+              let sz = hc.sizeThatFits(in: proposed)
+              let validWidth = sz.width > 0 && sz.width < proposed.width * 0.9
+              let w = validWidth ? Double(ceil(sz.width)) : 80.0
+              let h = sz.height > 0 ? Double(ceil(sz.height)) : 44.0
+              result(["width": w, "height": h])
+            } else {
+              result(["width": 80.0, "height": 44.0])
+            }
           } else if let button = self.button {
             self.view().layoutIfNeeded()
             let size = button.intrinsicContentSize
@@ -383,11 +440,28 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
             self.currentTint = ImageUtils.colorFromARGB(n.intValue)
           }
           if usesSwiftUI {
-            if #available(iOS 26.0, *) {
-              if let bs = args["buttonStyle"] as? String {
-                self.swiftUIStyle = bs
+            if #available(iOS 26.0, *), let vm = self.buttonViewModel {
+              if let bs = args["buttonStyle"] as? String { vm.style = bs }
+              // Merge incoming color overrides into the existing theme, preserving
+              // fields (e.g. glassMaterial) that are not included in this call.
+              let existing = vm.theme
+              func argbToColor(_ n: NSNumber) -> Color {
+                let v = n.intValue
+                let a = Double((v >> 24) & 0xFF) / 255.0
+                let r = Double((v >> 16) & 0xFF) / 255.0
+                let g = Double((v >> 8)  & 0xFF) / 255.0
+                let b = Double( v        & 0xFF) / 255.0
+                return Color(.sRGB, red: r, green: g, blue: b, opacity: a)
               }
-              self.rebuildSwiftUIView()
+              vm.theme = CNButtonTheme(
+                tint:           (args["tint"]           as? NSNumber).map(argbToColor) ?? existing.tint,
+                tintDark:       (args["tintDark"]       as? NSNumber).map(argbToColor) ?? existing.tintDark,
+                labelColor:     (args["labelColor"]     as? NSNumber).map(argbToColor) ?? existing.labelColor,
+                labelColorDark: (args["labelColorDark"] as? NSNumber).map(argbToColor) ?? existing.labelColorDark,
+                iconColor:      (args["themeIconColor"]     as? NSNumber).map(argbToColor) ?? existing.iconColor,
+                iconColorDark:  (args["themeIconColorDark"] as? NSNumber).map(argbToColor) ?? existing.iconColorDark,
+                glassMaterial:  existing.glassMaterial
+              )
             }
           } else if self.button != nil {
             if args["tint"] != nil {
@@ -409,7 +483,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           self.isEnabled = e.boolValue
           if usesSwiftUI {
             if #available(iOS 26.0, *) {
-              self.rebuildSwiftUIView()
+              self.buttonViewModel?.isEnabled = e.boolValue
             }
           } else if let button = self.button {
             button.isEnabled = self.isEnabled
@@ -431,8 +505,9 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       case "setButtonTitle":
         if let args = call.arguments as? [String: Any], let t = args["title"] as? String {
           if usesSwiftUI {
-            self.swiftUITitle = t
-            if #available(iOS 26.0, *) { self.rebuildSwiftUIView() }
+            if #available(iOS 26.0, *) {
+              self.buttonViewModel?.title = t
+            }
           } else {
             self.setButtonContent(
               title: t, image: nil, iconOnly: false, imagePlacement: nil, imagePadding: nil,
@@ -444,7 +519,6 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         }
       case "setButtonIcon":
         if let args = call.arguments as? [String: Any] {
-          NSLog("CupertinoButton setButtonIcon args=%@", String(describing: args))
           var image: UIImage? = nil
           let size = CGSize(
             width: args["buttonIconSize"] as? CGFloat ?? 20,
@@ -545,24 +619,15 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
             }
           }
 
-          if image == nil {
-            NSLog(
-              "CupertinoButton setButtonIcon: image is nil, xcasset=%@ assetPath=%@ iconName=%@",
-              (args["buttonXcassetName"] as? String) ?? "nil",
-              (args["buttonAssetPath"] as? String) ?? "nil",
-              (args["buttonIconName"] as? String) ?? "nil")
-          }
-
           if usesSwiftUI {
-            self.swiftUIIconImage = image
-            if let name = args["buttonIconName"] as? String { self.swiftUIIconName = name }
-            if let s = args["buttonIconSize"] as? NSNumber {
-              self.swiftUIIconSize = CGFloat(truncating: s)
+            if #available(iOS 26.0, *), let vm = self.buttonViewModel {
+              var iconArgs = args
+              for key in ["buttonImageData", "buttonCustomIconBytes"] {
+                if let td = iconArgs[key] as? FlutterStandardTypedData { iconArgs[key] = td.data }
+              }
+              let iconConfig = IconConfig.from(dict: iconArgs)
+              vm.iconConfig = iconConfig.hasIcon ? iconConfig : nil
             }
-            if let c = args["buttonIconColor"] as? NSNumber {
-              self.swiftUIIconColor = ImageUtils.colorFromARGB(c.intValue)
-            }
-            if #available(iOS 26.0, *) { self.rebuildSwiftUIView() }
           } else {
             self.setButtonContent(
               title: nil, image: image, iconOnly: true, imagePlacement: nil, imagePadding: nil,
@@ -587,8 +652,9 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         if let args = call.arguments as? [String: Any], let placement = args["placement"] as? String
         {
           if usesSwiftUI {
-            self.swiftUIImagePlacement = placement
-            if #available(iOS 26.0, *) { self.rebuildSwiftUIView() }
+            if #available(iOS 26.0, *) {
+              self.buttonViewModel?.imagePlacement = placement
+            }
           } else if let button = self.button, #available(iOS 15.0, *) {
             var cfg = button.configuration ?? .plain()
             switch placement {
@@ -609,8 +675,17 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           let padding = (args["padding"] as? NSNumber).map({ CGFloat(truncating: $0) })
         {
           if usesSwiftUI {
-            self.swiftUISpacing = padding
-            if #available(iOS 26.0, *) { self.rebuildSwiftUIView() }
+            if #available(iOS 26.0, *), let vm = self.buttonViewModel {
+              let old = vm.config
+              vm.config = GlassButtonConfig(
+                borderRadius: old.borderRadius,
+                padding: old.padding,
+                minHeight: old.minHeight,
+                spacing: padding,
+                width: old.width,
+                expandWidth: old.expandWidth
+              )
+            }
           } else if let button = self.button, #available(iOS 15.0, *) {
             var cfg = button.configuration ?? .plain()
             cfg.imagePadding = padding
@@ -620,8 +695,17 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         } else {
           // Clear padding if args is nil
           if usesSwiftUI {
-            self.swiftUISpacing = 8.0
-            if #available(iOS 26.0, *) { self.rebuildSwiftUIView() }
+            if #available(iOS 26.0, *), let vm = self.buttonViewModel {
+              let old = vm.config
+              vm.config = GlassButtonConfig(
+                borderRadius: old.borderRadius,
+                padding: old.padding,
+                minHeight: old.minHeight,
+                spacing: 8.0,
+                width: old.width,
+                expandWidth: old.expandWidth
+              )
+            }
           } else if let button = self.button, #available(iOS 15.0, *) {
             var cfg = button.configuration ?? .plain()
             cfg.imagePadding = 0
@@ -671,15 +755,43 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
 
   func view() -> UIView { container }
 
+  // MARK: - Frame observation
+
+  override func observeValue(
+    forKeyPath keyPath: String?,
+    of object: Any?,
+    change: [NSKeyValueChangeKey: Any]?,
+    context: UnsafeMutableRawPointer?
+  ) {
+    guard keyPath == "frame" || keyPath == "bounds",
+      let view = object as? UIView, view === container
+    else {
+      super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self, let hc = self.hostingController else { return }
+      self.container.setNeedsLayout()
+      self.container.layoutIfNeeded()
+      hc.view.setNeedsLayout()
+      hc.view.layoutIfNeeded()
+    }
+  }
+
+  deinit {
+    container.removeObserver(self, forKeyPath: "frame")
+    container.removeObserver(self, forKeyPath: "bounds")
+  }
+
+  // MARK: - SwiftUI setup
+
+  /// Creates the ViewModel and the hosting controller once. The rootView is never replaced after
+  /// this point — all state changes flow through @Published properties on the ViewModel.
   @available(iOS 26.0, *)
   private func setupSwiftUIButton(
     title: String?,
-    iconName: String?,
-    iconImage: UIImage?,
-    iconSize: CGFloat,
-    iconColor: UIColor?,
-    tint: UIColor?,
-    isRound: Bool,
+    iconArgs: [String: Any],
+    themeArgs: [String: Any],
     style: String,
     enabled: Bool,
     glassEffectUnionId: String?,
@@ -692,32 +804,12 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     paddingRight: CGFloat?,
     paddingHorizontal: CGFloat?,
     paddingVertical: CGFloat?,
-    minHeight: CGFloat?,
-    spacing: CGFloat?
+    minHeight: CGFloat,
+    spacing: CGFloat,
+    imagePlacement: String,
+    width: CGFloat?,
+    expandWidth: Bool
   ) {
-    // Store params for later reconstruction on tint/state changes
-    self.swiftUITitle = title
-    self.swiftUIIconName = iconName
-    self.swiftUIIconImage = iconImage
-    self.swiftUIIconSize = iconSize
-    self.swiftUIIconColor = iconColor
-    self.swiftUIIsRound = isRound
-    self.swiftUIStyle = style
-    self.swiftUIGlassEffectUnionId = glassEffectUnionId
-    self.swiftUIGlassEffectId = glassEffectId
-    self.swiftUIGlassEffectInteractive = glassEffectInteractive
-    self.swiftUIBorderRadius = borderRadius
-    self.swiftUIPaddingTop = paddingTop
-    self.swiftUIPaddingBottom = paddingBottom
-    self.swiftUIPaddingLeft = paddingLeft
-    self.swiftUIPaddingRight = paddingRight
-    self.swiftUIPaddingHorizontal = paddingHorizontal
-    self.swiftUIPaddingVertical = paddingVertical
-    self.swiftUIMinHeight = minHeight ?? 44.0
-    self.swiftUISpacing = spacing ?? 8.0
-
-    // Create GlassButtonConfig with provided values or defaults
-    let expandWidth = self.swiftUIExpandWidth
     let config = GlassButtonConfig(
       borderRadius: borderRadius,
       top: paddingTop,
@@ -726,78 +818,59 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       right: paddingRight,
       horizontal: paddingHorizontal,
       vertical: paddingVertical,
-      minHeight: minHeight ?? 44.0,
-      spacing: spacing ?? 8.0,
-      width: self.swiftUIWidth,
+      minHeight: minHeight,
+      spacing: spacing,
+      width: width,
       expandWidth: expandWidth
     )
-    let placement = self.swiftUIImagePlacement
-    let glassMaterial = self.swiftUIGlassMaterial
+    let iconConfig = IconConfig.from(dict: iconArgs)
+    let theme = CNButtonTheme.from(dict: themeArgs)
 
-    // Create a wrapper view that provides a namespace for the button
-    struct ButtonWrapperView: View {
-      @Namespace private var namespace
-
-      let title: String?
-      let iconName: String?
-      let iconImage: UIImage?
-      let iconSize: CGFloat
-      let iconColor: Color?
-      let tint: Color?
-      let style: String
-      let isEnabled: Bool
-      let onPressed: () -> Void
-      let glassEffectUnionId: String?
-      let glassEffectId: String?
-      let glassEffectInteractive: Bool
-      let config: GlassButtonConfig
-      let imagePlacement: String
-      let glassMaterial: String
-
-      var body: some View {
-        GlassButtonSwiftUI(
-          title: title,
-          iconName: iconName,
-          iconImage: iconImage,
-          iconSize: iconSize,
-          iconColor: iconColor,
-          tint: tint,
-          style: style,
-          isEnabled: isEnabled,
-          onPressed: onPressed,
-          glassEffectUnionId: glassEffectUnionId,
-          glassEffectId: glassEffectId,
-          glassEffectInteractive: glassEffectInteractive,
-          namespace: namespace,
-          config: config,
-          imagePlacement: imagePlacement,
-          glassMaterial: glassMaterial
-        )
-      }
-    }
-
-    let swiftUIButton = ButtonWrapperView(
+    let viewModel = CupertinoButtonViewModel(
       title: title,
-      iconName: iconName,
-      iconImage: iconImage,
-      iconSize: iconSize,
-      iconColor: iconColor != nil ? Color(iconColor!) : nil,
-      tint: tint != nil ? Color(tint!) : nil,
+      iconConfig: iconConfig.hasIcon ? iconConfig : nil,
+      theme: theme,
       style: style,
       isEnabled: enabled,
-      onPressed: { [weak self] in
-        self?.onPressed(nil)
-      },
       glassEffectUnionId: glassEffectUnionId,
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: placement,
-      glassMaterial: glassMaterial
+      imagePlacement: imagePlacement
     )
+    self._buttonViewModel = viewModel
 
-    let hostingController = UIHostingController(rootView: AnyView(swiftUIButton))
-    hostingController.view.backgroundColor = UIColor.clear
+    struct ButtonWrapperView: View {
+      @Namespace private var namespace
+      @ObservedObject var viewModel: CupertinoButtonViewModel
+      let onPressed: () -> Void
+
+      var body: some View {
+        GlassButtonSwiftUI(
+          title: viewModel.title,
+          iconConfig: viewModel.iconConfig,
+          theme: viewModel.theme,
+          style: viewModel.style,
+          isEnabled: viewModel.isEnabled,
+          onPressed: onPressed,
+          glassEffectUnionId: viewModel.glassEffectUnionId,
+          glassEffectId: viewModel.glassEffectId,
+          glassEffectInteractive: viewModel.glassEffectInteractive,
+          namespace: namespace,
+          config: viewModel.config,
+          imagePlacement: viewModel.imagePlacement
+        )
+      }
+    }
+
+    let wrapperView = ButtonWrapperView(
+      viewModel: viewModel,
+      onPressed: { [weak self] in self?.onPressed(nil) }
+    )
+    let hostingController = UIHostingController(rootView: AnyView(wrapperView))
+    hostingController.view.backgroundColor = .clear
+    hostingController.view.insetsLayoutMarginsFromSafeArea = false
+    hostingController.additionalSafeAreaInsets = .zero
     self.hostingController = hostingController
 
     hostingController.view.translatesAutoresizingMaskIntoConstraints = false
@@ -809,110 +882,21 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       hostingController.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
     ])
 
-    // Force layout update for proper first-time rendering
-    // Similar to TabBar fix - ensures SwiftUI view is properly laid out before display
-    DispatchQueue.main.async { [weak self, weak hostingController] in
-      guard let self = self, let hostingController = hostingController else { return }
-      self.container.setNeedsLayout()
-      self.container.layoutIfNeeded()
-      hostingController.view.setNeedsLayout()
-      hostingController.view.layoutIfNeeded()
-      // Force another update cycle for proper rendering
-      DispatchQueue.main.async { [weak hostingController] in
-        guard let hostingController = hostingController else { return }
-        hostingController.view.setNeedsDisplay()
-        hostingController.view.setNeedsLayout()
-        hostingController.view.layoutIfNeeded()
-      }
-    }
   }
+
+  // MARK: - ViewModel accessor
+
+  /// Typed accessor for the ViewModel; only valid on iOS 26+.
+  @available(iOS 26.0, *)
+  private var buttonViewModel: CupertinoButtonViewModel? {
+    _buttonViewModel as? CupertinoButtonViewModel
+  }
+
+  // MARK: - Button actions / helpers
 
   @objc private func onPressed(_ sender: UIButton?) {
     guard isEnabled else { return }
     channel.invokeMethod("pressed", arguments: nil)
-  }
-
-  // Use shared utility functions
-
-  @available(iOS 26.0, *)
-  private func rebuildSwiftUIView() {
-    guard let hostingController = self.hostingController else { return }
-    let expandWidth = self.swiftUIExpandWidth
-    let config = GlassButtonConfig(
-      borderRadius: self.swiftUIBorderRadius,
-      top: self.swiftUIPaddingTop,
-      bottom: self.swiftUIPaddingBottom,
-      left: self.swiftUIPaddingLeft,
-      right: self.swiftUIPaddingRight,
-      horizontal: self.swiftUIPaddingHorizontal,
-      vertical: self.swiftUIPaddingVertical,
-      minHeight: self.swiftUIMinHeight,
-      spacing: self.swiftUISpacing,
-      width: self.swiftUIWidth,
-      expandWidth: expandWidth
-    )
-    let tintColor = self.currentTint
-    let title = self.swiftUITitle
-    let iconName = self.swiftUIIconName
-    let iconImage = self.swiftUIIconImage
-    let iconSize = self.swiftUIIconSize
-    let iconColor = self.swiftUIIconColor
-    let style = self.swiftUIStyle
-    let isEnabled = self.isEnabled
-    let glassEffectUnionId = self.swiftUIGlassEffectUnionId
-    let glassEffectId = self.swiftUIGlassEffectId
-    let glassEffectInteractive = self.swiftUIGlassEffectInteractive
-    let imagePlacement = self.swiftUIImagePlacement
-    let glassMaterial = self.swiftUIGlassMaterial
-
-    struct ButtonWrapperView: View {
-      @Namespace private var namespace
-      let title: String?
-      let iconName: String?
-      let iconImage: UIImage?
-      let iconSize: CGFloat
-      let iconColor: Color?
-      let tint: Color?
-      let style: String
-      let isEnabled: Bool
-      let onPressed: () -> Void
-      let glassEffectUnionId: String?
-      let glassEffectId: String?
-      let glassEffectInteractive: Bool
-      let config: GlassButtonConfig
-      let imagePlacement: String
-      let glassMaterial: String
-      var body: some View {
-        GlassButtonSwiftUI(
-          title: title, iconName: iconName, iconImage: iconImage,
-          iconSize: iconSize, iconColor: iconColor, tint: tint,
-          style: style, isEnabled: isEnabled,
-          onPressed: onPressed, glassEffectUnionId: glassEffectUnionId,
-          glassEffectId: glassEffectId, glassEffectInteractive: glassEffectInteractive,
-          namespace: namespace, config: config, imagePlacement: imagePlacement,
-          glassMaterial: glassMaterial
-        )
-      }
-    }
-
-    let view = ButtonWrapperView(
-      title: title,
-      iconName: iconName,
-      iconImage: iconImage,
-      iconSize: iconSize,
-      iconColor: iconColor != nil ? Color(iconColor!) : nil,
-      tint: tintColor != nil ? Color(tintColor!) : nil,
-      style: style,
-      isEnabled: isEnabled,
-      onPressed: { [weak self] in self?.onPressed(nil) },
-      glassEffectUnionId: glassEffectUnionId,
-      glassEffectId: glassEffectId,
-      glassEffectInteractive: glassEffectInteractive,
-      config: config,
-      imagePlacement: imagePlacement,
-      glassMaterial: glassMaterial
-    )
-    hostingController.rootView = AnyView(view)
   }
 
   private func applyButtonStyle(buttonStyle: String, round: Bool) {

@@ -52,44 +52,45 @@ class CupertinoSearchBarPlatformView: NSObject, FlutterPlatformView {
             if let v = dict["isDark"] as? Bool { isDark = v }
         }
 
-        // Create SwiftUI view
-        let searchBarView = CNSearchBarSwiftUI(
-            placeholder: placeholder,
-            expandable: expandable,
-            initiallyExpanded: initiallyExpanded,
-            collapsedWidth: collapsedWidth,
-            expandedHeight: expandedHeight,
-            tint: tint.map { Color(uiColor: $0) } ?? .blue,
-            backgroundColor: backgroundColor.map { Color(uiColor: $0) },
-            textColor: textColor.map { Color(uiColor: $0) },
-            placeholderColor: placeholderColor.map { Color(uiColor: $0) },
-            showCancelButton: showCancelButton,
-            cancelText: cancelText,
-            autofocus: autofocus,
-            searchIconName: searchIconName,
-            clearIconName: clearIconName,
-            onTextChanged: { text in
-                channelRef.invokeMethod("textChanged", arguments: ["text": text])
-            },
-            onSubmitted: { text in
-                channelRef.invokeMethod("submitted", arguments: ["text": text])
-            },
-            onExpandStateChanged: { expanded in
-                channelRef.invokeMethod(expanded ? "expanded" : "collapsed", arguments: nil)
-            },
-            onCancelTapped: {
-                channelRef.invokeMethod("cancelTapped", arguments: nil)
-            }
-        )
-
-        self.hostingController = UIHostingController(rootView: searchBarView)
+        // CNSearchBarSwiftUI requires iOS 15+ — fall back to empty view on older OS
+        if #available(iOS 15.0, *) {
+            let searchBarView = CNSearchBarSwiftUI(
+                placeholder: placeholder,
+                expandable: expandable,
+                initiallyExpanded: initiallyExpanded,
+                collapsedWidth: collapsedWidth,
+                expandedHeight: expandedHeight,
+                tint: tint.map { Color(uiColor: $0) } ?? .blue,
+                backgroundColor: backgroundColor.map { Color(uiColor: $0) },
+                textColor: textColor.map { Color(uiColor: $0) },
+                placeholderColor: placeholderColor.map { Color(uiColor: $0) },
+                showCancelButton: showCancelButton,
+                cancelText: cancelText,
+                autofocus: autofocus,
+                searchIconName: searchIconName,
+                clearIconName: clearIconName,
+                onTextChanged: { text in
+                    channelRef.invokeMethod("textChanged", arguments: ["text": text])
+                },
+                onSubmitted: { text in
+                    channelRef.invokeMethod("submitted", arguments: ["text": text])
+                },
+                onExpandStateChanged: { expanded in
+                    channelRef.invokeMethod(expanded ? "expanded" : "collapsed", arguments: nil)
+                },
+                onCancelTapped: {
+                    channelRef.invokeMethod("cancelTapped", arguments: nil)
+                }
+            )
+            self.hostingController = UIHostingController(rootView: searchBarView)
+        } else {
+            self.hostingController = UIHostingController(rootView: AnyView(Color.clear))
+        }
 
         super.init()
 
         container.backgroundColor = .clear
-        if #available(iOS 13.0, *) {
-            container.overrideUserInterfaceStyle = isDark ? .dark : .light
-        }
+        container.overrideUserInterfaceStyle = isDark ? .dark : .light
 
         hostingController.view.backgroundColor = .clear
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
@@ -111,16 +112,12 @@ class CupertinoSearchBarPlatformView: NSObject, FlutterPlatformView {
 
             switch call.method {
             case "expand":
-                // Handled by SwiftUI state
                 result(nil)
             case "collapse":
-                // Handled by SwiftUI state
                 result(nil)
             case "clear":
-                // Handled by SwiftUI state
                 result(nil)
             case "setText":
-                // Handled by SwiftUI state
                 result(nil)
             case "focus":
                 result(nil)
@@ -129,9 +126,7 @@ class CupertinoSearchBarPlatformView: NSObject, FlutterPlatformView {
             case "setBrightness":
                 if let args = call.arguments as? [String: Any],
                    let isDark = (args["isDark"] as? NSNumber)?.boolValue {
-                    if #available(iOS 13.0, *) {
-                        self.container.overrideUserInterfaceStyle = isDark ? .dark : .light
-                    }
+                    self.container.overrideUserInterfaceStyle = isDark ? .dark : .light
                     result(nil)
                 } else {
                     result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil))
@@ -149,6 +144,7 @@ class CupertinoSearchBarPlatformView: NSObject, FlutterPlatformView {
 
 // MARK: - SwiftUI Search Bar View
 
+@available(iOS 15.0, *)
 struct CNSearchBarSwiftUI: View {
     let placeholder: String
     let expandable: Bool

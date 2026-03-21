@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'button_style.dart';
-import 'glass_effect.dart';
+import 'button_theme.dart';
 import 'sf_symbol.dart';
 import 'image_placement.dart';
 
@@ -16,11 +16,11 @@ import 'image_placement.dart';
 /// CNGlassButtonGroup(
 ///   buttons: [
 ///     CNButtonData.icon(
-///       icon: CNSFSymbol.house,
+///       icon: CNImageAsset.symbol('house'),
 ///       onPressed: () => print('Home'),
 ///     ),
 ///     CNButtonData.icon(
-///       icon: CNSFSymbol.gear,
+///       icon: CNImageAsset.symbol('gear'),
 ///       onPressed: () => print('Settings'),
 ///     ),
 ///   ],
@@ -31,24 +31,18 @@ class CNButtonData {
   const CNButtonData({
     required this.label,
     this.icon,
-    this.customIcon,
-    this.imageAsset,
     this.onPressed,
     this.enabled = true,
-    this.tint,
-    this.tintWhenGlassInverted,
+    this.theme = const CNButtonTheme(),
     this.config = const CNButtonDataConfig(),
   }) : isIcon = false;
 
   /// Creates an icon-only button data model.
   const CNButtonData.icon({
     this.icon,
-    this.customIcon,
-    this.imageAsset,
     this.onPressed,
     this.enabled = true,
-    this.tint,
-    this.tintWhenGlassInverted,
+    this.theme = const CNButtonTheme(),
     this.config = const CNButtonDataConfig(),
   }) : label = null,
        isIcon = true;
@@ -56,14 +50,9 @@ class CNButtonData {
   /// The text label for the button. Null for icon-only buttons.
   final String? label;
 
-  /// SF Symbol icon to display.
-  final CNSymbol? icon;
-
-  /// Custom Flutter IconData to render as an image.
-  final IconData? customIcon;
-
-  /// Image asset to display.
-  final CNImageAsset? imageAsset;
+  /// Image/icon asset to display. Use [CNImageAsset.symbol], [CNImageAsset.xcasset],
+  /// [CNImageAsset.asset], [CNImageAsset.png], [CNImageAsset.svg], etc.
+  final CNImageAsset? icon;
 
   /// Callback when the button is pressed.
   final VoidCallback? onPressed;
@@ -71,12 +60,8 @@ class CNButtonData {
   /// Whether the button is enabled.
   final bool enabled;
 
-  /// Tint color for the button.
-  final Color? tint;
-
-  /// Tint for label/icon when the glass is in its inverted state (e.g. dark mode).
-  /// See [CNButtonDataConfig.tintWhenGlassInverted].
-  final Color? tintWhenGlassInverted;
+  /// Color and material theme for this button.
+  final CNButtonTheme theme;
 
   /// Configuration for the button appearance.
   final CNButtonDataConfig config;
@@ -87,38 +72,27 @@ class CNButtonData {
   /// Creates a copy of this data with the given fields replaced.
   CNButtonData copyWith({
     String? label,
-    CNSymbol? icon,
-    IconData? customIcon,
-    CNImageAsset? imageAsset,
+    CNImageAsset? icon,
     VoidCallback? onPressed,
     bool? enabled,
-    Color? tint,
-    Color? tintWhenGlassInverted,
+    CNButtonTheme? theme,
     CNButtonDataConfig? config,
   }) {
     if (isIcon) {
       return CNButtonData.icon(
         icon: icon ?? this.icon,
-        customIcon: customIcon ?? this.customIcon,
-        imageAsset: imageAsset ?? this.imageAsset,
         onPressed: onPressed ?? this.onPressed,
         enabled: enabled ?? this.enabled,
-        tint: tint ?? this.tint,
-        tintWhenGlassInverted:
-            tintWhenGlassInverted ?? this.tintWhenGlassInverted,
+        theme: theme ?? this.theme,
         config: config ?? this.config,
       );
     }
     return CNButtonData(
       label: label ?? this.label!,
       icon: icon ?? this.icon,
-      customIcon: customIcon ?? this.customIcon,
-      imageAsset: imageAsset ?? this.imageAsset,
       onPressed: onPressed ?? this.onPressed,
       enabled: enabled ?? this.enabled,
-      tint: tint ?? this.tint,
-      tintWhenGlassInverted:
-          tintWhenGlassInverted ?? this.tintWhenGlassInverted,
+      theme: theme ?? this.theme,
       config: config ?? this.config,
     );
   }
@@ -138,11 +112,9 @@ class CNButtonDataConfig {
     this.minHeight,
     this.imagePadding,
     this.imagePlacement,
-    this.glassMaterial = CNButtonGlassMaterial.regular,
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
-    this.tintWhenGlassInverted,
   });
 
   /// Fixed width for the button.
@@ -166,9 +138,6 @@ class CNButtonDataConfig {
   /// Position of the image relative to the label.
   final CNImagePlacement? imagePlacement;
 
-  /// Glass material for the button effect on iOS 26+.
-  final CNButtonGlassMaterial glassMaterial;
-
   /// Glass effect union ID for effect blending.
   final String? glassEffectUnionId;
 
@@ -177,9 +146,6 @@ class CNButtonDataConfig {
 
   /// Whether the glass effect responds to touches.
   final bool glassEffectInteractive;
-
-  /// Tint for label/icon when the glass is in its inverted state (e.g. dark mode).
-  final Color? tintWhenGlassInverted;
 
   /// Creates a copy with the given fields replaced.
   CNButtonDataConfig copyWith({
@@ -190,11 +156,9 @@ class CNButtonDataConfig {
     double? minHeight,
     double? imagePadding,
     CNImagePlacement? imagePlacement,
-    CNButtonGlassMaterial? glassMaterial,
     String? glassEffectUnionId,
     String? glassEffectId,
     bool? glassEffectInteractive,
-    Color? tintWhenGlassInverted,
   }) {
     return CNButtonDataConfig(
       width: width ?? this.width,
@@ -204,13 +168,10 @@ class CNButtonDataConfig {
       minHeight: minHeight ?? this.minHeight,
       imagePadding: imagePadding ?? this.imagePadding,
       imagePlacement: imagePlacement ?? this.imagePlacement,
-      glassMaterial: glassMaterial ?? this.glassMaterial,
       glassEffectUnionId: glassEffectUnionId ?? this.glassEffectUnionId,
       glassEffectId: glassEffectId ?? this.glassEffectId,
       glassEffectInteractive:
           glassEffectInteractive ?? this.glassEffectInteractive,
-      tintWhenGlassInverted:
-          tintWhenGlassInverted ?? this.tintWhenGlassInverted,
     );
   }
 }

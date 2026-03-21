@@ -143,11 +143,11 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Overlay Test'),
         leading: CNButton.icon(
-          icon: const CNSymbol('arrow.left', size: 18),
+          icon: const CNImageAsset.symbol('arrow.left', size: Size(18, 18)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         trailing: CNButton.icon(
-          icon: const CNSymbol('info.circle', size: 18),
+          icon: const CNImageAsset.symbol('info.circle', size: Size(18, 18)),
           onPressed: () {
             showCupertinoDialog(
               context: context,

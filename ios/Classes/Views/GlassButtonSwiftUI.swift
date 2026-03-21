@@ -5,11 +5,8 @@ import UIKit
 @available(iOS 26.0, *)
 struct GlassButtonSwiftUI: View {
   let title: String?
-  let iconName: String?
-  let iconImage: UIImage?
-  let iconSize: CGFloat
-  let iconColor: Color?
-  let tint: Color?
+  let iconConfig: IconConfig?
+  let theme: CNButtonTheme
   let style: String
   let isEnabled: Bool
   let onPressed: () -> Void
@@ -20,14 +17,11 @@ struct GlassButtonSwiftUI: View {
   let config: GlassButtonConfig
   /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
   let imagePlacement: String
-  /// Glass material: "clear" | "regular".
-  let glassMaterial: String
 
   @Environment(\.colorScheme) private var colorScheme
 
-  /// Tint takes priority over explicit iconColor; nil falls back to semantic .primary.
-  private var effectiveIconStyle: Color? { iconColor ?? tint }
-  private var effectiveLabelStyle: Color? { tint }
+  private var effectiveLabelColor: Color? { theme.effectiveLabelColor(for: colorScheme) }
+  private var effectiveIconColor: Color? { theme.effectiveIconColor(for: colorScheme) }
 
   var body: some View {
     // Compute shape once and reuse for both contentShape and glassEffect.
@@ -65,51 +59,61 @@ struct GlassButtonSwiftUI: View {
       switch imagePlacement {
       case "trailing":
         HStack(spacing: config.spacing) {
-          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
           iconView
         }
       case "top":
         VStack(spacing: config.spacing) {
           iconView
-          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
         }
       case "bottom":
         VStack(spacing: config.spacing) {
-          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
           iconView
         }
       default: // "leading"
         HStack(spacing: config.spacing) {
           iconView
-          Text(title).foregroundStyle(effectiveLabelStyle ?? .primary)
+          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
         }
       }
     } else if hasIcon {
       iconView
     } else if let text = title {
-      Text(text)
-        .foregroundStyle(effectiveLabelStyle ?? .primary)
+      Text(text).foregroundStyle(effectiveLabelColor ?? .primary)
     }
   }
 
   @ViewBuilder
   private var iconView: some View {
-    if let img = iconImage {
-      Image(uiImage: img)
-        .renderingMode(effectiveIconStyle != nil ? .template : .original)
-        .resizable()
-        .foregroundStyle(effectiveIconStyle ?? .primary)
-        .frame(width: iconSize, height: iconSize)
-    } else if let name = iconName {
-      Image(systemName: name)
-        .renderingMode(.template)
-        .resizable()
-        .foregroundStyle(effectiveIconStyle ?? .primary)
-        .frame(width: iconSize, height: iconSize)
+    if let ic = iconConfig, let asset = ic.asset {
+      resolvedIconView(ic: ic, asset: asset)
     }
   }
 
-  private var hasIcon: Bool { iconImage != nil || iconName != nil }
+  @ViewBuilder
+  private func resolvedIconView(ic: IconConfig, asset: CNImageAsset) -> some View {
+    let resolved = asset.resolve(
+      width: ic.width, height: ic.height, scale: UIScreen.main.scale)
+    if let image = resolved.0 {
+      Image(uiImage: image)
+        .renderingMode(effectiveIconColor != nil ? .template : .original)
+        .resizable()
+        .aspectRatio(contentMode: ic.contentMode)
+        .foregroundStyle(effectiveIconColor ?? .primary)
+        .frame(width: ic.width, height: ic.height)
+    } else if let symbolName = resolved.1 {
+      Image(systemName: symbolName)
+        .renderingMode(.template)
+        .resizable()
+        .aspectRatio(contentMode: ic.contentMode)
+        .foregroundStyle(effectiveIconColor ?? .primary)
+        .frame(width: ic.width, height: ic.height)
+    }
+  }
+
+  private var hasIcon: Bool { iconConfig?.hasIcon ?? false }
 
   // MARK: - Helpers
 
@@ -121,7 +125,7 @@ struct GlassButtonSwiftUI: View {
   }
 
   private var glassEffectValue: Glass {
-    var glass: Glass = glassMaterial == "regular" ? Glass.regular : Glass.clear
+    var glass: Glass = theme.glassMaterial == "regular" ? Glass.regular : Glass.clear
     if glassEffectInteractive { glass = glass.interactive() }
     return glass
   }
@@ -129,12 +133,12 @@ struct GlassButtonSwiftUI: View {
   // MARK: - Animation state
 
   /// Equatable struct capturing every property that triggers an animation.
-  /// Using a typed struct instead of a String avoids relying on Color.description,
-  /// which has no stable format guarantee.
   private struct AnimState: Equatable {
-    let iconSize: CGFloat
+    let iconWidth: CGFloat
+    let iconHeight: CGFloat
     let iconColor: Color?
-    let tint: Color?
+    let labelColor: Color?
+    let glassMaterial: String
     let colorScheme: ColorScheme
     let style: String
     let imagePlacement: String
@@ -143,14 +147,17 @@ struct GlassButtonSwiftUI: View {
     let borderRadius: CGFloat?
     let width: CGFloat?
     let expandWidth: Bool
-    let glassMaterial: String
+    let frameMinWidth: CGFloat?
+    let frameMaxWidth: CGFloat?
   }
 
   private var animState: AnimState {
     AnimState(
-      iconSize: iconSize,
-      iconColor: iconColor,
-      tint: tint,
+      iconWidth: iconConfig?.width ?? 0,
+      iconHeight: iconConfig?.height ?? 0,
+      iconColor: effectiveIconColor,
+      labelColor: effectiveLabelColor,
+      glassMaterial: theme.glassMaterial,
       colorScheme: colorScheme,
       style: style,
       imagePlacement: imagePlacement,
@@ -159,7 +166,8 @@ struct GlassButtonSwiftUI: View {
       borderRadius: config.borderRadius,
       width: config.width,
       expandWidth: config.expandWidth,
-      glassMaterial: glassMaterial
+      frameMinWidth: frameMinWidth,
+      frameMaxWidth: frameMaxWidth
     )
   }
 }

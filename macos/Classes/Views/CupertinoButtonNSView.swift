@@ -79,26 +79,24 @@ class CupertinoButtonNSView: NSView {
     // Check if we should use SwiftUI for full glass effect support
     if #available(macOS 26.0, *), (glassEffectUnionId != nil || glassEffectId != nil) {
       usesSwiftUI = true
-      // Create icon image if needed
-      var iconImage: NSImage? = nil
-      if let name = iconName {
-        iconImage = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+      // Build flat icon/theme dicts for IconConfig.from(dict:) / CNButtonTheme.from(dict:).
+      let iconArgs = (args as? [String: Any]) ?? [:]
+      var themeArgs: [String: Any] = [:]
+      if let style = (args as? [String: Any])?["style"] as? [String: Any],
+         let n = style["tint"] as? NSNumber {
+        themeArgs["tint"] = n.intValue
       }
-      
+      themeArgs["glassMaterial"] = glassMaterial
+
       setupSwiftUIButton(
         title: title,
-        iconName: iconName,
-        iconImage: iconImage,
-        iconSize: iconSize ?? 20,
-        iconColor: iconColor != nil ? Color(nsColor: iconColor!) : nil,
-        tint: tint != nil ? Color(nsColor: tint!) : nil,
-        style: buttonStyle,
+        iconArgs: iconArgs,
+        themeArgs: themeArgs,
         enabled: enabled,
         glassEffectUnionId: glassEffectUnionId,
         glassEffectId: glassEffectId,
         glassEffectInteractive: glassEffectInteractive,
         imagePlacement: imagePlacement,
-        glassMaterial: glassMaterial,
         borderRadius: borderRadius,
         paddingTop: paddingTop,
         paddingBottom: paddingBottom,
@@ -426,18 +424,13 @@ class CupertinoButtonNSView: NSView {
   @available(macOS 26.0, *)
   private func setupSwiftUIButton(
     title: String?,
-    iconName: String?,
-    iconImage: NSImage?,
-    iconSize: CGFloat,
-    iconColor: Color?,
-    tint: Color?,
-    style: String,
+    iconArgs: [String: Any],
+    themeArgs: [String: Any],
     enabled: Bool,
     glassEffectUnionId: String?,
     glassEffectId: String?,
     glassEffectInteractive: Bool,
     imagePlacement: String,
-    glassMaterial: String,
     borderRadius: CGFloat?,
     paddingTop: CGFloat?,
     paddingBottom: CGFloat?,
@@ -448,7 +441,6 @@ class CupertinoButtonNSView: NSView {
     minHeight: CGFloat?,
     spacing: CGFloat?
   ) {
-    // Create GlassButtonConfig with provided values or defaults
     let config = GlassButtonConfig(
       borderRadius: borderRadius,
       top: paddingTop,
@@ -460,17 +452,14 @@ class CupertinoButtonNSView: NSView {
       minHeight: minHeight ?? 44.0,
       spacing: spacing ?? 8.0
     )
-    
-    // Create a wrapper view that provides a namespace for the button
+    let iconConfig = IconConfig.from(dict: iconArgs)
+    let theme = CNButtonTheme.from(dict: themeArgs)
+
     struct ButtonWrapperView: View {
       @Namespace private var namespace
-
       let title: String?
-      let iconName: String?
-      let iconImage: NSImage?
-      let iconSize: CGFloat
-      let iconColor: Color?
-      let tint: Color?
+      let iconConfig: IconConfig?
+      let theme: CNButtonTheme
       let style: String
       let isEnabled: Bool
       let onPressed: () -> Void
@@ -479,16 +468,11 @@ class CupertinoButtonNSView: NSView {
       let glassEffectInteractive: Bool
       let config: GlassButtonConfig
       let imagePlacement: String
-      let glassMaterial: String
-
       var body: some View {
         GlassButtonSwiftUI(
           title: title,
-          iconName: iconName,
-          iconImage: iconImage,
-          iconSize: iconSize,
-          iconColor: iconColor,
-          tint: tint,
+          iconConfig: iconConfig,
+          theme: theme,
           style: style,
           isEnabled: isEnabled,
           onPressed: onPressed,
@@ -497,36 +481,29 @@ class CupertinoButtonNSView: NSView {
           glassEffectInteractive: glassEffectInteractive,
           namespace: namespace,
           config: config,
-          imagePlacement: imagePlacement,
-          glassMaterial: glassMaterial
+          imagePlacement: imagePlacement
         )
       }
     }
 
     let swiftUIButton = ButtonWrapperView(
       title: title,
-      iconName: iconName,
-      iconImage: iconImage,
-      iconSize: iconSize,
-      iconColor: iconColor,
-      tint: tint,
-      style: style,
+      iconConfig: iconConfig.hasIcon ? iconConfig : nil,
+      theme: theme,
+      style: "glass",
       isEnabled: enabled,
-      onPressed: { [weak self] in
-        self?.onPressed(nil)
-      },
+      onPressed: { [weak self] in self?.onPressed(nil) },
       glassEffectUnionId: glassEffectUnionId,
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: imagePlacement,
-      glassMaterial: glassMaterial
+      imagePlacement: imagePlacement
     )
-    
+
     let hostingController = NSHostingController(rootView: AnyView(swiftUIButton))
     hostingController.view.layer?.backgroundColor = .clear
     self.hostingController = hostingController
-    
+
     hostingController.view.translatesAutoresizingMaskIntoConstraints = false
     addSubview(hostingController.view)
     NSLayoutConstraint.activate([
@@ -535,16 +512,13 @@ class CupertinoButtonNSView: NSView {
       hostingController.view.topAnchor.constraint(equalTo: topAnchor),
       hostingController.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
-    
-    // Force layout update for proper first-time rendering
-    // Similar to TabBar fix - ensures SwiftUI view is properly laid out before display
+
     DispatchQueue.main.async { [weak self, weak hostingController] in
       guard let self = self, let hostingController = hostingController else { return }
       self.needsLayout = true
       self.layout()
       hostingController.view.needsLayout = true
       hostingController.view.layout()
-      // Force another update cycle for proper rendering
       DispatchQueue.main.async { [weak hostingController] in
         guard let hostingController = hostingController else { return }
         hostingController.view.needsDisplay = true

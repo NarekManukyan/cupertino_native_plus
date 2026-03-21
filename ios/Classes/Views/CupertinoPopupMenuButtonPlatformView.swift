@@ -272,30 +272,32 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
     if #available(iOS 14.0, *) {
       // If preserveTopToBottomOrder is enabled, use deferred menu to check position at display time
       if preserveTopToBottomOrder {
-        let deferredElement = UIDeferredMenuElement.uncached { [weak self] completion in
-          guard let self = self else { completion([]); return }
-          let items = self.buildMenuItems(defaultSizes: defaultSizes, defaultColors: defaultColors)
+        if #available(iOS 15.0, *) {
+          let deferredElement = UIDeferredMenuElement.uncached { [weak self] completion in
+            guard let self = self else { completion([]); return }
+            let items = self.buildMenuItems(defaultSizes: defaultSizes, defaultColors: defaultColors)
 
-          // Check button position at display time
-          let buttonFrame = self.button.convert(self.button.bounds, to: nil)
-          let screenHeight = UIScreen.main.bounds.height
-          let opensUpward = buttonFrame.midY > screenHeight * 0.4
+            // Check button position at display time
+            let buttonFrame = self.button.convert(self.button.bounds, to: nil)
+            let screenHeight = UIScreen.main.bounds.height
+            let opensUpward = buttonFrame.midY > screenHeight * 0.4
 
-          if opensUpward {
-            // Reverse groups AND items within each group
-            let reversed: [UIMenuElement] = items.reversed().map { element in
-              if let menu = element as? UIMenu {
-                return UIMenu(title: menu.title, options: menu.options, children: menu.children.reversed())
+            if opensUpward {
+              // Reverse groups AND items within each group
+              let reversed: [UIMenuElement] = items.reversed().map { element in
+                if let menu = element as? UIMenu {
+                  return UIMenu(title: menu.title, options: menu.options, children: menu.children.reversed())
+                }
+                return element
               }
-              return element
+              completion(reversed)
+            } else {
+              completion(items)
             }
-            completion(reversed)
-          } else {
-            completion(items)
           }
+          button.menu = UIMenu(title: "", children: [deferredElement])
+          return
         }
-        button.menu = UIMenu(title: "", children: [deferredElement])
-        return
       }
 
       // Standard menu building (native behavior)

@@ -191,7 +191,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/home.svg',
@@ -199,7 +199,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   size: 24,
                 ),
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/search.svg',
@@ -207,7 +207,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   size: 32,
                 ),
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/home.svg'
                         : 'assets/icons/profile.svg',
@@ -215,7 +215,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   size: 40,
                 ),
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/search.svg'
                         : 'assets/icons/chat.svg',
@@ -235,7 +235,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
               children: [
                 CNIcon(
                   symbol: const CNSymbol('house.fill'),
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/home.svg',
@@ -245,7 +245,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                 const SizedBox(width: 16),
                 CNIcon(
                   symbol: const CNSymbol('magnifyingglass'),
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNImageAsset.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/search.svg',

@@ -17,6 +17,7 @@ Native Liquid Glass widgets for iOS and macOS in Flutter with pixel-perfect fide
   # Shared with iOS: GlassButtonConfig, ChannelConstants, ImageManagerConfig, ImageFormatDetection
   s.source_files = 'Classes/**/*',
     '../ios/Classes/Shared/GlassButtonConfig.swift',
+    '../ios/Classes/Shared/GlassButtonIconConfig.swift',
     '../ios/Classes/Shared/ChannelConstants.swift',
     '../ios/Classes/Shared/ImageManagerConfig.swift',
     '../ios/Classes/Shared/ImageFormatDetection.swift',
