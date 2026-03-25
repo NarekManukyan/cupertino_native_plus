@@ -207,53 +207,37 @@ private func _buttonPrefixedToPlain(_ dict: [String: Any]) -> [String: Any] {
 
 /// Unified color and material theme for glass buttons.
 ///
-/// `tint`/`tintDark` take priority over individual `labelColor`/`iconColor` fields.
+/// `tint` takes priority over individual `labelColor`/`iconColor` fields.
 @available(iOS 26.0, macOS 26.0, *)
 struct CNButtonTheme {
   let tint: Color?
-  let tintDark: Color?
   let labelColor: Color?
-  let labelColorDark: Color?
   let iconColor: Color?
-  let iconColorDark: Color?
+  let backgroundColor: Color?
   let glassMaterial: String   // "regular" | "clear"
 
   // MARK: Effective colors
 
-  /// Effective label foreground for the given color scheme.
-  func effectiveLabelColor(for scheme: ColorScheme) -> Color? {
-    let t = scheme == .dark ? tintDark : tint
-    if let t { return t }
-    return scheme == .dark ? labelColorDark : labelColor
-  }
-
-  /// Effective icon foreground for the given color scheme.
-  func effectiveIconColor(for scheme: ColorScheme) -> Color? {
-    let t = scheme == .dark ? tintDark : tint
-    if let t { return t }
-    return scheme == .dark ? iconColorDark : iconColor
-  }
+  var effectiveLabelColor: Color? { tint ?? labelColor }
+  var effectiveIconColor: Color? { tint ?? iconColor }
+  var effectiveBackgroundColor: Color? { backgroundColor }
 
   // MARK: Parsing
 
   static func from(dict: [String: Any]) -> CNButtonTheme {
     CNButtonTheme(
-      tint:             dict.argbColor(forKey: "tint"),
-      tintDark:         dict.argbColor(forKey: "tintDark"),
-      labelColor:       dict.argbColor(forKey: "labelColor"),
-      labelColorDark:   dict.argbColor(forKey: "labelColorDark"),
-      iconColor:        dict.argbColor(forKey: "themeIconColor"),
-      iconColorDark:    dict.argbColor(forKey: "themeIconColorDark"),
-      glassMaterial:    (dict["glassMaterial"] as? String) ?? "regular"
+      tint:            dict.argbColor(forKey: "tint"),
+      labelColor:      dict.argbColor(forKey: "labelColor"),
+      iconColor:       dict.argbColor(forKey: "themeIconColor"),
+      backgroundColor: dict.argbColor(forKey: "backgroundColor"),
+      glassMaterial:   (dict["glassMaterial"] as? String) ?? "regular"
     )
   }
 
   static var `default`: CNButtonTheme {
     CNButtonTheme(
-      tint: nil, tintDark: nil,
-      labelColor: nil, labelColorDark: nil,
-      iconColor: nil, iconColorDark: nil,
-      glassMaterial: "regular"
+      tint: nil, labelColor: nil, iconColor: nil,
+      backgroundColor: nil, glassMaterial: "regular"
     )
   }
 }

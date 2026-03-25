@@ -177,7 +177,7 @@ class CNButton extends StatefulWidget {
   /// Accent/tint color.
   final Color? tint;
 
-  /// Unified color and material theme. [theme.tint]/[theme.tintDark] take priority over [tint].
+  /// Unified color and material theme. [theme.tint] takes priority over [tint].
   final CNButtonTheme theme;
 
   /// Button configuration.
@@ -213,12 +213,7 @@ class _CNButtonState extends State<CNButton> {
 
   bool get _isDark => ThemeHelper.isDark(context);
 
-  Color? get _effectiveTint {
-    if (_isDark) {
-      return widget.theme.tintDark ?? widget.theme.tint ?? widget.tint;
-    }
-    return widget.theme.tint ?? widget.tint;
-  }
+  Color? get _effectiveTint => widget.theme.tint ?? widget.tint;
 
   @override
   void dispose() {
@@ -358,20 +353,13 @@ class _CNButtonState extends State<CNButton> {
         'glassEffectId': widget.config.glassEffectId,
       'glassEffectInteractive': widget.config.glassEffectInteractive,
       // CNButtonTheme colors
-      if (resolveColorToArgb(widget.theme.tintDark, context) != null)
-        'tintDark': resolveColorToArgb(widget.theme.tintDark, context),
       if (resolveColorToArgb(widget.theme.labelColor, context) != null)
         'labelColor': resolveColorToArgb(widget.theme.labelColor, context),
-      if (resolveColorToArgb(widget.theme.labelColorDark, context) != null)
-        'labelColorDark': resolveColorToArgb(
-          widget.theme.labelColorDark,
-          context,
-        ),
       if (resolveColorToArgb(widget.theme.iconColor, context) != null)
         'themeIconColor': resolveColorToArgb(widget.theme.iconColor, context),
-      if (resolveColorToArgb(widget.theme.iconColorDark, context) != null)
-        'themeIconColorDark': resolveColorToArgb(
-          widget.theme.iconColorDark,
+      if (resolveColorToArgb(widget.theme.backgroundColor, context) != null)
+        'backgroundColor': resolveColorToArgb(
+          widget.theme.backgroundColor,
           context,
         ),
     };
@@ -508,18 +496,13 @@ class _CNButtonState extends State<CNButton> {
 
     // Resolve all colors before any async gap.
     final tint = resolveColorToArgb(_effectiveTint, context);
-    final themeTintDark = resolveColorToArgb(widget.theme.tintDark, context);
     final themeLabelColor = resolveColorToArgb(
       widget.theme.labelColor,
       context,
     );
-    final themeLabelColorDark = resolveColorToArgb(
-      widget.theme.labelColorDark,
-      context,
-    );
     final themeIconColor = resolveColorToArgb(widget.theme.iconColor, context);
-    final themeIconColorDark = resolveColorToArgb(
-      widget.theme.iconColorDark,
+    final themeBackgroundColor = resolveColorToArgb(
+      widget.theme.backgroundColor,
       context,
     );
     final capturedTheme = widget.theme;
@@ -619,14 +602,11 @@ class _CNButtonState extends State<CNButton> {
     if (_lastTheme != widget.theme) {
       final themeUpdates = <String, dynamic>{};
       if (tint != null) themeUpdates['tint'] = tint;
-      if (themeTintDark != null) themeUpdates['tintDark'] = themeTintDark;
       if (themeLabelColor != null) themeUpdates['labelColor'] = themeLabelColor;
-      if (themeLabelColorDark != null)
-        themeUpdates['labelColorDark'] = themeLabelColorDark;
       if (themeIconColor != null)
         themeUpdates['themeIconColor'] = themeIconColor;
-      if (themeIconColorDark != null)
-        themeUpdates['themeIconColorDark'] = themeIconColorDark;
+      if (themeBackgroundColor != null)
+        themeUpdates['backgroundColor'] = themeBackgroundColor;
       if (themeUpdates.isNotEmpty) {
         await ch.invokeMethod('setStyle', themeUpdates);
       }

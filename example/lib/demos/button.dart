@@ -257,10 +257,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text('CNButtonTheme — unified light/dark colors'),
+            const Text('CNButtonTheme — colors'),
             const SizedBox(height: 8),
             const Text(
-              'theme.tint/tintDark: icon + label adapt to light/dark mode. '
+              'theme.tint: applies to both icon and label. '
               'labelColor/iconColor allow independent control.',
               style: TextStyle(
                 fontSize: 12,
@@ -273,37 +273,33 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
-                // tint + tintDark: both label and icon follow the tint
+                // tint: both label and icon follow the tint
                 CNButton(
-                  label: 'Tint/TintDark',
+                  label: 'Tint',
                   icon: const CNImageAsset.symbol(
                     'star.fill',
                     size: Size(16, 16),
                   ),
                   onPressed: () => _set('CNButtonTheme tint'),
-                  theme: const CNButtonTheme(
-                    tint: CupertinoColors.systemBlue,
-                    tintDark: CupertinoColors.systemCyan,
-                  ),
+                  theme: const CNButtonTheme(tint: CupertinoColors.systemBlue),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,
                     shrinkWrap: true,
                   ),
                 ),
-                // labelColor + labelColorDark: text color only, icon is unaffected
+                // labelColor: text color only, icon is unaffected
                 CNButton(
-                  label: 'Label colors',
+                  label: 'Label color',
                   onPressed: () => _set('CNButtonTheme labelColor'),
                   theme: const CNButtonTheme(
                     labelColor: CupertinoColors.systemPurple,
-                    labelColorDark: CupertinoColors.systemPink,
                   ),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,
                     shrinkWrap: true,
                   ),
                 ),
-                // iconColor + iconColorDark: icon tint only, label is unaffected
+                // iconColor: icon tint only, label is unaffected
                 CNButton(
                   label: 'Icon color',
                   icon: const CNImageAsset.symbol(
@@ -313,7 +309,6 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   onPressed: () => _set('CNButtonTheme iconColor'),
                   theme: const CNButtonTheme(
                     iconColor: CupertinoColors.systemRed,
-                    iconColorDark: CupertinoColors.systemOrange,
                   ),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,

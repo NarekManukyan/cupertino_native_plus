@@ -18,10 +18,9 @@ struct GlassButtonSwiftUI: View {
   /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
   let imagePlacement: String
 
-  @Environment(\.colorScheme) private var colorScheme
-
-  private var effectiveLabelColor: Color? { theme.effectiveLabelColor(for: colorScheme) }
-  private var effectiveIconColor: Color? { theme.effectiveIconColor(for: colorScheme) }
+  private var effectiveLabelColor: Color? { theme.effectiveLabelColor }
+  private var effectiveIconColor: Color? { theme.effectiveIconColor }
+  private var effectiveBackgroundColor: Color? { theme.effectiveBackgroundColor }
 
   var body: some View {
     // Compute shape once and reuse for both contentShape and glassEffect.
@@ -41,6 +40,9 @@ struct GlassButtonSwiftUI: View {
     }
     .disabled(!isEnabled)
     .buttonStyle(NoHighlightButtonStyle())
+    // The glass vibrancy system overrides foregroundStyle on inner views.
+    // Applying .tint() on the button propagates the color through the glass
+    // system correctly. nil falls back to the environment/system default.
   }
 
   // MARK: - Frame helpers
@@ -58,30 +60,28 @@ struct GlassButtonSwiftUI: View {
     if let title, hasIcon {
       switch imagePlacement {
       case "trailing":
-        HStack(spacing: config.spacing) {
-          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
-          iconView
-        }
+        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(TrailingIconLabelStyle(spacing: config.spacing))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
       case "top":
-        VStack(spacing: config.spacing) {
-          iconView
-          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
-        }
+        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(TopIconLabelStyle(spacing: config.spacing))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
       case "bottom":
-        VStack(spacing: config.spacing) {
-          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
-          iconView
-        }
+        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(BottomIconLabelStyle(spacing: config.spacing))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
       default: // "leading"
-        HStack(spacing: config.spacing) {
-          iconView
-          Text(title).foregroundStyle(effectiveLabelColor ?? .primary)
-        }
+        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(LeadingIconLabelStyle(spacing: config.spacing))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
       }
     } else if hasIcon {
       iconView
+        .foregroundStyle(effectiveIconColor ?? .primary)
     } else if let text = title {
-      Text(text).foregroundStyle(effectiveLabelColor ?? .primary)
+      Text(text)
+        .foregroundStyle(effectiveLabelColor ?? .primary)
     }
   }
 
@@ -101,14 +101,12 @@ struct GlassButtonSwiftUI: View {
         .renderingMode(effectiveIconColor != nil ? .template : .original)
         .resizable()
         .aspectRatio(contentMode: ic.contentMode)
-        .foregroundStyle(effectiveIconColor ?? .primary)
         .frame(width: ic.width, height: ic.height)
     } else if let symbolName = resolved.1 {
       Image(systemName: symbolName)
         .renderingMode(.template)
         .resizable()
         .aspectRatio(contentMode: ic.contentMode)
-        .foregroundStyle(effectiveIconColor ?? .primary)
         .frame(width: ic.width, height: ic.height)
     }
   }
@@ -126,6 +124,7 @@ struct GlassButtonSwiftUI: View {
 
   private var glassEffectValue: Glass {
     var glass: Glass = theme.glassMaterial == "regular" ? Glass.regular : Glass.clear
+    if let bg = effectiveBackgroundColor { glass = glass.tint(bg) }
     if glassEffectInteractive { glass = glass.interactive() }
     return glass
   }
@@ -139,7 +138,6 @@ struct GlassButtonSwiftUI: View {
     let iconColor: Color?
     let labelColor: Color?
     let glassMaterial: String
-    let colorScheme: ColorScheme
     let style: String
     let imagePlacement: String
     let spacing: CGFloat
@@ -158,7 +156,6 @@ struct GlassButtonSwiftUI: View {
       iconColor: effectiveIconColor,
       labelColor: effectiveLabelColor,
       glassMaterial: theme.glassMaterial,
-      colorScheme: colorScheme,
       style: style,
       imagePlacement: imagePlacement,
       spacing: config.spacing,
@@ -169,5 +166,39 @@ struct GlassButtonSwiftUI: View {
       frameMinWidth: frameMinWidth,
       frameMaxWidth: frameMaxWidth
     )
+  }
+}
+
+// MARK: - Label styles for icon placement
+
+@available(iOS 26.0, *)
+private struct LeadingIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  func makeBody(configuration: Configuration) -> some View {
+    HStack(spacing: spacing) { configuration.icon; configuration.title }
+  }
+}
+
+@available(iOS 26.0, *)
+private struct TrailingIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  func makeBody(configuration: Configuration) -> some View {
+    HStack(spacing: spacing) { configuration.title; configuration.icon }
+  }
+}
+
+@available(iOS 26.0, *)
+private struct TopIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  func makeBody(configuration: Configuration) -> some View {
+    VStack(spacing: spacing) { configuration.icon; configuration.title }
+  }
+}
+
+@available(iOS 26.0, *)
+private struct BottomIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  func makeBody(configuration: Configuration) -> some View {
+    VStack(spacing: spacing) { configuration.title; configuration.icon }
   }
 }

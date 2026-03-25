@@ -431,21 +431,15 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     if (theme.tint != null) {
       map['tint'] = resolveColorToArgb(theme.tint, context);
     }
-    if (theme.tintDark != null) {
-      map['tintDark'] = resolveColorToArgb(theme.tintDark, context);
-    }
     if (theme.labelColor != null) {
       map['labelColor'] = resolveColorToArgb(theme.labelColor, context);
-    }
-    if (theme.labelColorDark != null) {
-      map['labelColorDark'] = resolveColorToArgb(theme.labelColorDark, context);
     }
     if (theme.iconColor != null) {
       map['themeIconColor'] = resolveColorToArgb(theme.iconColor, context);
     }
-    if (theme.iconColorDark != null) {
-      map['themeIconColorDark'] = resolveColorToArgb(
-        theme.iconColorDark,
+    if (theme.backgroundColor != null) {
+      map['backgroundColor'] = resolveColorToArgb(
+        theme.backgroundColor,
         context,
       );
     }

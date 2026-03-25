@@ -160,7 +160,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         themeArgs["tint"] = n.intValue
       }
       if let gm = dict["glassMaterial"] as? String { themeArgs["glassMaterial"] = gm }
-      for key in ["tintDark", "labelColor", "labelColorDark", "themeIconColor", "themeIconColorDark"] {
+      for key in ["labelColor", "themeIconColor", "backgroundColor"] {
         if let n = dict[key] as? NSNumber { themeArgs[key] = n.intValue }
       }
     }
@@ -454,13 +454,11 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
                 return Color(.sRGB, red: r, green: g, blue: b, opacity: a)
               }
               vm.theme = CNButtonTheme(
-                tint:           (args["tint"]           as? NSNumber).map(argbToColor) ?? existing.tint,
-                tintDark:       (args["tintDark"]       as? NSNumber).map(argbToColor) ?? existing.tintDark,
-                labelColor:     (args["labelColor"]     as? NSNumber).map(argbToColor) ?? existing.labelColor,
-                labelColorDark: (args["labelColorDark"] as? NSNumber).map(argbToColor) ?? existing.labelColorDark,
-                iconColor:      (args["themeIconColor"]     as? NSNumber).map(argbToColor) ?? existing.iconColor,
-                iconColorDark:  (args["themeIconColorDark"] as? NSNumber).map(argbToColor) ?? existing.iconColorDark,
-                glassMaterial:  existing.glassMaterial
+                tint:            (args["tint"]            as? NSNumber).map(argbToColor) ?? existing.tint,
+                labelColor:      (args["labelColor"]      as? NSNumber).map(argbToColor) ?? existing.labelColor,
+                iconColor:       (args["themeIconColor"]  as? NSNumber).map(argbToColor) ?? existing.iconColor,
+                backgroundColor: (args["backgroundColor"] as? NSNumber).map(argbToColor) ?? existing.backgroundColor,
+                glassMaterial:   existing.glassMaterial
               )
             }
           } else if self.button != nil {
