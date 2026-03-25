@@ -20,6 +20,9 @@ enum CNButtonGlassMaterial {
 
   /// Regular glass. More opaque, standard glass appearance.
   regular,
+
+  /// Identity glass. Pass-through base material for custom-tinted or layered glass.
+  identity,
 }
 
 /// Shapes for Liquid Glass effects.

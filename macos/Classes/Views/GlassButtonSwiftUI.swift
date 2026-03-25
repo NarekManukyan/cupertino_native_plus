@@ -140,10 +140,18 @@ struct GlassButtonSwiftUI: View {
   }
 
   private var glassEffectValue: Glass {
-    var glass: Glass = theme.glassMaterial == "regular" ? Glass.regular : Glass.clear
+    var glass: Glass = Self.glassMaterial(from: theme.glassMaterial)
     if let bg = effectiveBackgroundColor { glass = glass.tint(bg) }
     if glassEffectInteractive { glass = glass.interactive() }
     return glass
+  }
+
+  private static func glassMaterial(from string: String) -> Glass {
+    switch string {
+    case "regular": return .regular
+    case "identity": return .identity
+    default: return .clear
+    }
   }
 
   // MARK: - Animation state

@@ -214,7 +214,7 @@ struct CNButtonTheme {
   let labelColor: Color?
   let iconColor: Color?
   let backgroundColor: Color?
-  let glassMaterial: String   // "regular" | "clear"
+  let glassMaterial: String   // "regular" | "clear" | "identity"
 
   // MARK: Effective colors
 

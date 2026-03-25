@@ -406,7 +406,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
       if (button.config.minHeight != null) 'minHeight': button.config.minHeight,
       if (button.config.imagePadding != null)
         'imagePadding': button.config.imagePadding,
-      'glassMaterial': button.config.glassMaterial.name,
+      'glassMaterial': button.theme.glassMaterial.name,
     };
   }
 
@@ -520,6 +520,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
           icon: button.icon!,
           onPressed: button.onPressed,
           enabled: button.enabled,
+          theme: button.theme,
           tint: button.tint,
           config: CNButtonConfig(
             width: button.config.width,
@@ -541,6 +542,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
           icon: button.icon,
           onPressed: button.onPressed,
           enabled: button.enabled,
+          theme: button.theme,
           tint: button.tint,
           config: CNButtonConfig(
             width: button.config.width,
@@ -562,7 +564,6 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
 
   List<Widget> _buildDataChildren() {
     return widget.buttons.map((data) {
-      final tint = data.theme.tint;
       final config = CNButtonConfig(
         width: data.config.width,
         style: data.config.style,
@@ -575,14 +576,13 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
         glassEffectUnionId: data.config.glassEffectUnionId,
         glassEffectId: data.config.glassEffectId,
         glassEffectInteractive: data.config.glassEffectInteractive,
-        glassMaterial: data.theme.glassMaterial,
       );
       if (data.isIcon) {
         return CNButton.icon(
           icon: data.icon!,
           onPressed: data.onPressed,
           enabled: data.enabled,
-          tint: tint,
+          theme: data.theme,
           config: config,
         );
       } else {
@@ -591,7 +591,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
           icon: data.icon,
           onPressed: data.onPressed,
           enabled: data.enabled,
-          tint: tint,
+          theme: data.theme,
           config: config,
         );
       }
@@ -627,7 +627,7 @@ class _ButtonSnapshot {
       style: button.config.style.name,
       enabled: button.enabled,
       tint: button.tint?.toARGB32(),
-      glassMaterial: button.config.glassMaterial.name,
+      glassMaterial: button.theme.glassMaterial.name,
     );
   }
 

@@ -11,7 +11,6 @@ import '../channel/params.dart';
 import '../channel/view_types.dart';
 import '../style/button_style.dart';
 import '../style/button_theme.dart';
-import '../style/glass_effect.dart';
 import '../utils/platform_view_builder.dart';
 import '../style/image_placement.dart';
 import '../style/sf_symbol.dart';
@@ -47,12 +46,6 @@ class CNButtonConfig extends Equatable {
 
   /// If true, sizes the control to its intrinsic width.
   final bool shrinkWrap;
-
-  /// Glass material for the button effect on iOS 26+.
-  ///
-  /// Controls whether the button uses [CNButtonGlassMaterial.clear] (default,
-  /// subtle) or [CNButtonGlassMaterial.regular] (more opaque standard glass).
-  final CNButtonGlassMaterial glassMaterial;
 
   /// Optional ID for glass effect union.
   ///
@@ -97,7 +90,6 @@ class CNButtonConfig extends Equatable {
     this.style = CNButtonStyle.glass,
     this.width,
     this.shrinkWrap = false,
-    this.glassMaterial = CNButtonGlassMaterial.regular,
     this.glassEffectUnionId,
     this.glassEffectId,
     this.glassEffectInteractive = true,
@@ -114,7 +106,6 @@ class CNButtonConfig extends Equatable {
     style,
     width,
     shrinkWrap,
-    glassMaterial,
     glassEffectUnionId,
     glassEffectId,
     glassEffectInteractive,
@@ -346,7 +337,7 @@ class _CNButtonState extends State<CNButton> {
           !(widget.isIcon && widget.label == null) &&
           !widget.config.shrinkWrap &&
           widget.config.width == null,
-      'glassMaterial': widget.config.glassMaterial.name,
+      'glassMaterial': widget.theme.glassMaterial.name,
       if (widget.config.glassEffectUnionId != null)
         'glassEffectUnionId': widget.config.glassEffectUnionId,
       if (widget.config.glassEffectId != null)
@@ -600,16 +591,18 @@ class _CNButtonState extends State<CNButton> {
 
     // Sync theme colors — resolve all colors before async gap
     if (_lastTheme != widget.theme) {
-      final themeUpdates = <String, dynamic>{};
+      final themeUpdates = <String, dynamic>{
+        'glassMaterial': widget.theme.glassMaterial.name,
+      };
       if (tint != null) themeUpdates['tint'] = tint;
       if (themeLabelColor != null) themeUpdates['labelColor'] = themeLabelColor;
-      if (themeIconColor != null)
+      if (themeIconColor != null) {
         themeUpdates['themeIconColor'] = themeIconColor;
-      if (themeBackgroundColor != null)
-        themeUpdates['backgroundColor'] = themeBackgroundColor;
-      if (themeUpdates.isNotEmpty) {
-        await ch.invokeMethod('setStyle', themeUpdates);
       }
+      if (themeBackgroundColor != null) {
+        themeUpdates['backgroundColor'] = themeBackgroundColor;
+      }
+      await ch.invokeMethod('setStyle', themeUpdates);
       _lastTheme = capturedTheme;
     }
   }
