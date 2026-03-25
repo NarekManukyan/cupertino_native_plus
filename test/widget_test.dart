@@ -267,8 +267,8 @@ void main() {
           home: Scaffold(
             body: CNGlassButtonGroup(
               buttons: [
-                CNButtonData.icon(customIcon: Icons.home),
-                CNButtonData.icon(customIcon: Icons.settings),
+                CNButtonData.icon(icon: CNImageAsset.symbol('house')),
+                CNButtonData.icon(icon: CNImageAsset.symbol('gearshape')),
               ],
             ),
           ),
@@ -277,8 +277,7 @@ void main() {
 
       await tester.pump();
 
-      expect(find.byIcon(Icons.home), findsOneWidget);
-      expect(find.byIcon(Icons.settings), findsOneWidget);
+      expect(find.byType(CNButton), findsNWidgets(2));
     });
 
     testWidgets('triggers onPressed callback', (tester) async {
@@ -750,8 +749,8 @@ void main() {
     });
 
     test('creates item with image asset', () {
-      final asset = CNImageAsset('assets/icon.png');
-      final activeAsset = CNImageAsset('assets/icon_active.png');
+      final asset = CNImageAsset.asset('assets/icon.png');
+      final activeAsset = CNImageAsset.asset('assets/icon_active.png');
       final item = CNTabBarItem(
         label: 'Custom',
         imageAsset: asset,

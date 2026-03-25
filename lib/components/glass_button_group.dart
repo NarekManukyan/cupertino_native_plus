@@ -385,6 +385,7 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
   ) async {
     final iconMap = await _resolveIconMap(button.icon, context);
     final tintArgb = button.tint != null
+        // ignore: use_build_context_synchronously
         ? resolveColorToArgb(button.tint, context)
         : null;
     return {

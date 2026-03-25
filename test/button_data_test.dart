@@ -11,10 +11,8 @@ void main() {
       expect(button.isIcon, false);
       expect(button.enabled, true);
       expect(button.icon, isNull);
-      expect(button.customIcon, isNull);
-      expect(button.imageAsset, isNull);
       expect(button.onPressed, isNull);
-      expect(button.tint, isNull);
+      expect(button.theme.tint, isNull);
       expect(button.config, isNotNull);
     });
 
@@ -27,24 +25,28 @@ void main() {
     });
 
     test('creates button with SF Symbol icon', () {
-      final icon = CNSymbol('star.fill', size: 24.0);
+      const icon = CNImageAsset.symbol('star.fill', size: Size(24, 24));
       final button = CNButtonData.icon(icon: icon);
 
       expect(button.icon, isNotNull);
-      expect(button.icon!.name, 'star.fill');
-      expect(button.icon!.size, 24.0);
+      expect(button.icon!.toMap()['iconName'], 'star.fill');
+      expect(button.icon!.size, const Size(24, 24));
     });
 
-    test('creates button with custom IconData', () {
-      final button = CNButtonData.icon(customIcon: Icons.star);
+    test('creates icon button with Flutter asset', () {
+      const icon = CNImageAsset.asset('assets/star.png');
+      final button = CNButtonData.icon(icon: icon);
 
-      expect(button.customIcon, Icons.star);
+      expect(button.icon!.assetPath, 'assets/star.png');
     });
 
-    test('creates button with tint color', () {
-      final button = CNButtonData(label: 'Colored', tint: Colors.red);
+    test('creates button with tint color via theme', () {
+      final button = CNButtonData(
+        label: 'Colored',
+        theme: const CNButtonTheme(tint: Colors.red),
+      );
 
-      expect(button.tint, Colors.red);
+      expect(button.theme.tint, Colors.red);
     });
 
     test('creates disabled button', () {
@@ -89,10 +91,14 @@ void main() {
       });
 
       test('copies icon button with new icon', () {
-        final original = CNButtonData.icon(icon: CNSymbol('star'));
-        final copy = original.copyWith(icon: CNSymbol('heart'));
+        final original = CNButtonData.icon(
+          icon: const CNImageAsset.symbol('star'),
+        );
+        final copy = original.copyWith(
+          icon: const CNImageAsset.symbol('heart'),
+        );
 
-        expect(copy.icon!.name, 'heart');
+        expect(copy.icon!.toMap()['iconName'], 'heart');
         expect(copy.isIcon, true);
       });
 
@@ -103,24 +109,29 @@ void main() {
         expect(copy.enabled, false);
       });
 
-      test('copies button with new tint', () {
-        final original = CNButtonData(label: 'Test', tint: Colors.blue);
-        final copy = original.copyWith(tint: Colors.red);
+      test('copies button with new theme tint', () {
+        final original = CNButtonData(
+          label: 'Test',
+          theme: const CNButtonTheme(tint: Colors.blue),
+        );
+        final copy = original.copyWith(
+          theme: const CNButtonTheme(tint: Colors.red),
+        );
 
-        expect(copy.tint, Colors.red);
+        expect(copy.theme.tint, Colors.red);
       });
 
       test('preserves original values when not specified', () {
         final original = CNButtonData(
           label: 'Original',
           enabled: false,
-          tint: Colors.blue,
+          theme: const CNButtonTheme(tint: Colors.blue),
         );
         final copy = original.copyWith(label: 'New Label');
 
         expect(copy.label, 'New Label');
         expect(copy.enabled, false);
-        expect(copy.tint, Colors.blue);
+        expect(copy.theme.tint, Colors.blue);
       });
     });
   });
@@ -234,25 +245,25 @@ void main() {
 
   group('CNImageAsset', () {
     test('creates image asset with asset path', () {
-      const asset = CNImageAsset('assets/icon.png');
+      const asset = CNImageAsset.asset('assets/icon.png');
 
       expect(asset.assetPath, 'assets/icon.png');
-      expect(asset.size, 24.0); // default size
+      expect(asset.size, const Size(24, 24));
       expect(asset.color, isNull);
       expect(asset.imageData, isNull);
       expect(asset.imageFormat, isNull);
     });
 
     test('creates image asset with all parameters', () {
-      final asset = CNImageAsset(
+      final asset = CNImageAsset.asset(
         'assets/icon.svg',
-        size: 24.0,
+        size: const Size(24, 24),
         color: Colors.blue,
-        imageFormat: 'svg',
+        format: 'svg',
       );
 
       expect(asset.assetPath, 'assets/icon.svg');
-      expect(asset.size, 24.0);
+      expect(asset.size, const Size(24, 24));
       expect(asset.color, Colors.blue);
       expect(asset.imageFormat, 'svg');
     });

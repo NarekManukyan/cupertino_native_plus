@@ -1,9 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-<<<<<<< HEAD
-import 'package:cupertino_native_plus/cupertino_native.dart';
-=======
 import 'package:cupertino_native_plus/cupertino_native_plus.dart';
->>>>>>> fork/main
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockCupertinoNativePlatform
@@ -20,33 +16,25 @@ void main() {
   final CupertinoNativePlatform initialPlatform =
       CupertinoNativePlatform.instance;
 
-<<<<<<< HEAD
-  test('$MethodChannelCupertinoNative is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelCupertinoNative>());
+  tearDown(() {
+    CupertinoNativePlatform.instance = initialPlatform;
   });
 
-  test('getPlatformVersion', () async {
-    CupertinoNative cupertinoNativePlugin = CupertinoNative();
-    MockCupertinoNativePlatform fakePlatform = MockCupertinoNativePlatform();
-    CupertinoNativePlatform.instance = fakePlatform;
-
-    expect(await cupertinoNativePlugin.getPlatformVersion(), '42');
-=======
   group('CupertinoNativePlatform', () {
-    test('\$MethodChannelCupertinoNative is the default instance', () {
+    test('MethodChannelCupertinoNative is the default instance', () {
       expect(initialPlatform, isInstanceOf<MethodChannelCupertinoNative>());
     });
 
     test('getPlatformVersion returns expected value', () async {
-      CupertinoNativeBetter cupertinoNativePlugin = CupertinoNativeBetter();
-      MockCupertinoNativePlatform fakePlatform = MockCupertinoNativePlatform();
+      final cupertinoNativePlugin = CupertinoNative();
+      final fakePlatform = MockCupertinoNativePlatform();
       CupertinoNativePlatform.instance = fakePlatform;
 
       expect(await cupertinoNativePlugin.getPlatformVersion(), '42');
     });
 
     test('getMajorOSVersion returns expected value', () async {
-      MockCupertinoNativePlatform fakePlatform = MockCupertinoNativePlatform();
+      final fakePlatform = MockCupertinoNativePlatform();
       CupertinoNativePlatform.instance = fakePlatform;
 
       expect(await fakePlatform.getMajorOSVersion(), 26);
@@ -154,6 +142,5 @@ void main() {
         contains(CNFloatingIslandPosition.bottom),
       );
     });
->>>>>>> fork/main
   });
 }
