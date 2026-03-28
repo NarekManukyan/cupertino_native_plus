@@ -263,7 +263,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  cupertino_native_plus: ^1.0.0
+  cupertino_native_plus: ^0.0.7
 ```
 
 ## Usage
@@ -517,7 +517,7 @@ print('macOS version: ${PlatformVersion.macOSVersion}');
 
 - **Flutter**: >= 3.3.0
 - **Dart SDK**: >= 3.9.0
-- **iOS**: >= 15.0 (Liquid Glass requires iOS 26+)
+- **iOS**: >= 13.0 (Liquid Glass requires iOS 26+)
 - **macOS**: >= 11.0 (Liquid Glass requires macOS 26+)
 
 ## Migration from Previous Versions
