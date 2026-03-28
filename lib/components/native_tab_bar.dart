@@ -115,7 +115,10 @@ class CNTabBarNative {
     _isEnabled = true;
   }
 
-  /// Disable native tab bar and return to Flutter-only mode
+  /// Disables the native tab bar and restores Flutter-only mode.
+  ///
+  /// Call this in [State.dispose] of the widget that called [enable].
+  /// No-op when the native tab bar is not already enabled.
   static Future<void> disable() async {
     if (!_isEnabled) {
       return;
@@ -131,37 +134,52 @@ class CNTabBarNative {
     _onSearchActiveChanged = null;
   }
 
-  /// Set the selected tab index
+  /// Selects the tab at [index] in the native tab bar.
+  ///
+  /// No-op when the native tab bar is not enabled.
   static Future<void> setSelectedIndex(int index) async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('setSelectedIndex', {'index': index});
   }
 
-  /// Activate the search (go to search tab and focus search bar)
+  /// Navigates to the search tab and focuses the search field.
+  ///
+  /// No-op when the native tab bar is not enabled.
   static Future<void> activateSearch() async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('activateSearch');
   }
 
-  /// Deactivate the search
+  /// Dismisses the search bar and returns to the previously selected tab.
+  ///
+  /// No-op when the native tab bar is not enabled.
   static Future<void> deactivateSearch() async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('deactivateSearch');
   }
 
-  /// Set the search text programmatically
+  /// Sets the search field text to [text] without triggering the keyboard.
+  ///
+  /// No-op when the native tab bar is not enabled.
   static Future<void> setSearchText(String text) async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('setSearchText', {'text': text});
   }
 
-  /// Update badge counts for tabs
+  /// Updates badge counts for each tab.
+  ///
+  /// Provide `null` for a tab to clear its badge.
+  /// The list length should match the number of tabs passed to [enable].
+  /// No-op when the native tab bar is not enabled.
   static Future<void> setBadgeCounts(List<int?> badgeCounts) async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('setBadgeCounts', {'badgeCounts': badgeCounts});
   }
 
-  /// Update style (tint colors)
+  /// Updates the tint colors of the native tab bar.
+  ///
+  /// Pass `null` for either parameter to keep its current value.
+  /// No-op when the native tab bar is not enabled.
   static Future<void> setStyle({
     Color? tintColor,
     Color? unselectedTintColor,
@@ -174,13 +192,17 @@ class CNTabBarNative {
     });
   }
 
-  /// Update brightness (dark mode)
+  /// Notifies the native tab bar of a light/dark mode change.
+  ///
+  /// Call this when [MediaQuery.platformBrightness] changes if you have not
+  /// enabled automatic brightness propagation.
+  /// No-op when the native tab bar is not enabled.
   static Future<void> setBrightness({required bool isDark}) async {
     if (!_isEnabled) return;
     await _channel.invokeMethod('setBrightness', {'isDark': isDark});
   }
 
-  /// Check if native tab bar is currently enabled
+  /// Returns `true` if the native tab bar is currently active on the platform side.
   static Future<bool> checkIsEnabled() async {
     try {
       final result = await _channel.invokeMethod<bool>('isEnabled');
@@ -190,7 +212,9 @@ class CNTabBarNative {
     }
   }
 
-  /// Whether the native tab bar is enabled
+  /// Whether the native tab bar is currently enabled.
+  ///
+  /// Returns `true` after [enable] completes and before [disable] is called.
   static bool get isEnabled => _isEnabled;
 
   static Future<dynamic> _handleMethodCall(MethodCall call) async {
@@ -233,24 +257,24 @@ class CNTabBarNative {
 /// )
 /// ```
 class CNTab extends Equatable {
-  /// The title of the tab (shown below icon)
+  /// Title shown below the tab icon.
   final String title;
 
-  /// SF Symbol for the tab icon (unselected state)
+  /// SF Symbol for the unselected state.
   final CNSymbol? sfSymbol;
 
-  /// SF Symbol for the tab icon (selected state)
-  /// If not provided, uses [sfSymbol]
+  /// SF Symbol for the selected state.
+  ///
+  /// Falls back to [sfSymbol] when not provided.
   final CNSymbol? activeSfSymbol;
 
-  /// Whether this tab is a search tab
+  /// Whether this tab triggers the iOS 26 native search bar.
   ///
-  /// Only one tab should be marked as a search tab.
-  /// When selected, the native iOS 26 search bar will appear with
-  /// the liquid glass morphing effect.
+  /// Only one tab should be marked as a search tab. When selected, the native
+  /// search bar appears with the Liquid Glass morphing effect.
   final bool isSearchTab;
 
-  /// Badge count to display on the tab
+  /// Badge count shown on the tab. Pass `null` for no badge.
   final int? badgeCount;
 
   /// Creates a tab configuration for [CNTabBarNative].

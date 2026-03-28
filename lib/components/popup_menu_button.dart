@@ -123,24 +123,27 @@ class CNPopupMenuButton extends StatefulWidget {
     );
   }
 
-  /// Text for the button (null when using [buttonIcon]).
-  final String? buttonLabel; // null in icon mode
-  /// Icon for the button (non-null in icon mode).
-  /// Priority: [buttonImageAsset] > [buttonCustomIcon] > [buttonIcon]
-  final CNSymbol? buttonIcon; // non-null in icon mode
-  /// Optional custom icon from CupertinoIcons, Icons, or any IconData for the button.
-  /// If provided, this takes precedence over [buttonIcon] but not [buttonImageAsset].
+  /// Text label for the button. `null` in icon-only mode.
+  final String? buttonLabel;
+
+  /// SF Symbol icon for the button.
+  /// Priority: [buttonImageAsset] > [buttonCustomIcon] > [buttonIcon].
+  final CNSymbol? buttonIcon;
+
+  /// Custom icon from [CupertinoIcons], [Icons], or any [IconData].
+  /// Takes precedence over [buttonIcon] but not [buttonImageAsset].
   final IconData? buttonCustomIcon;
 
-  /// Optional image asset (SVG, PNG, etc.) for the button icon.
-  /// If provided, this takes precedence over [buttonIcon] and [buttonCustomIcon].
+  /// Image asset (SVG, PNG, etc.) for the button icon.
+  /// Takes precedence over both [buttonIcon] and [buttonCustomIcon].
   final CNImageAsset? buttonImageAsset;
-  // Fixed size (width = height) when in icon mode.
-  /// Fixed width in icon mode; otherwise computed/intrinsic.
+
+  /// Fixed width. In icon mode this equals the button diameter.
   final double? width;
 
-  /// Whether this is the round icon variant.
-  final bool round; // internal: text=false, icon=true
+  /// `true` when using the round icon variant, `false` for the text variant.
+  final bool round;
+
   /// Entries that populate the popup menu.
   final List<CNPopupMenuEntry> items;
 

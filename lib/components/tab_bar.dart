@@ -14,6 +14,19 @@ import '../utils/theme_helper.dart';
 import 'icon.dart';
 
 /// Immutable data describing a single tab bar item.
+///
+/// Provide at least a [label] or an [icon] (or both). Icons can be SF Symbols
+/// via [icon]/[activeIcon], Flutter [IconData] via [customIcon], or image
+/// assets via [imageAsset].
+///
+/// Example:
+/// ```dart
+/// CNTabBarItem(
+///   label: 'Home',
+///   icon: CNSymbol('house.fill'),
+///   badge: '3',
+/// )
+/// ```
 class CNTabBarItem extends Equatable {
   /// Creates a tab bar item description.
   const CNTabBarItem({

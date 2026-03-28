@@ -1,4 +1,5 @@
-// Public exports and convenience API for the plugin.
+// Internal barrel — re-exported by cupertino_native_plus.dart.
+// Add new public files here so they are accessible via the package entry point.
 
 export 'cupertino_native_platform_interface.dart';
 export 'cupertino_native_method_channel.dart';
@@ -39,9 +40,19 @@ export 'utils/theme_helper.dart';
 import 'cupertino_native_platform_interface.dart';
 
 /// Top-level facade for simple plugin interactions.
+///
+/// Most developers should use the individual widgets and utilities directly
+/// (e.g. [CNButton], [PlatformVersion]) rather than this class. This facade
+/// exists primarily for version-checking during plugin setup.
+///
+/// Example:
+/// ```dart
+/// final version = await CupertinoNative().getPlatformVersion();
+/// debugPrint('Platform: $version');
+/// ```
 class CupertinoNative {
-  /// Returns a user-friendly platform version string supplied by the
-  /// platform implementation.
+  /// Returns a user-friendly platform version string from the host platform
+  /// (e.g. `"iOS 26.0"` or `"macOS 26.0"`).
   Future<String?> getPlatformVersion() {
     return CupertinoNativePlatform.instance.getPlatformVersion();
   }

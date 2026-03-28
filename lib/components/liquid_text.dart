@@ -25,6 +25,7 @@ import '../utils/version_detector.dart';
 /// )
 /// ```
 class CNLiquidText extends StatefulWidget {
+  /// Creates a native text widget with a Liquid Glass effect.
   const CNLiquidText({
     super.key,
     required this.text,
