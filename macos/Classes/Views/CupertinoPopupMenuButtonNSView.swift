@@ -63,7 +63,35 @@ class CupertinoPopupMenuButtonNSView: NSView {
     layer?.backgroundColor = NSColor.clear.cgColor
     appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
 
-    if let t = title { button.title = t }
+    if let t = title {
+      if let ls = (args as? [String: Any])?["labelStyle"] as? [String: Any] {
+        let lsFontSize = (ls["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+        let lsFontWeight = ls["fontWeight"] as? Int
+        let lsFontFamily = ls["fontFamily"] as? String
+        var lsFont: NSFont? = nil
+        if let sz = lsFontSize {
+          if let fam = lsFontFamily, let cf = NSFont(name: fam, size: sz) { lsFont = cf }
+          else {
+            let w: NSFont.Weight
+            switch lsFontWeight ?? 400 {
+            case 100: w = .ultraLight; case 200: w = .thin; case 300: w = .light; case 400: w = .regular
+            case 500: w = .medium; case 600: w = .semibold; case 700: w = .bold; case 800: w = .heavy; case 900: w = .black
+            default: w = .regular
+            }
+            lsFont = NSFont.systemFont(ofSize: sz, weight: w)
+          }
+        }
+        if (ls["italic"] as? Bool) == true, let f = lsFont {
+          let descriptor = f.fontDescriptor.withSymbolicTraits(.italic)
+          lsFont = NSFont(descriptor: descriptor, size: f.pointSize) ?? lsFont
+        }
+        var attrs: [NSAttributedString.Key: Any] = [:]
+        if let f = lsFont { attrs[.font] = f }
+        button.attributedTitle = NSAttributedString(string: t, attributes: attrs)
+      } else {
+        button.title = t
+      }
+    }
     if let name = iconName, var image = NSImage(systemSymbolName: name, accessibilityDescription: nil) {
       if #available(macOS 12.0, *), let sz = iconSize {
         let cfg = NSImage.SymbolConfiguration(pointSize: sz, weight: .regular)
@@ -232,6 +260,42 @@ class CupertinoPopupMenuButtonNSView: NSView {
           self.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setTextStyle":
+        if let args = call.arguments as? [String: Any] {
+          let fontSize = (args["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+          let fontWeight = args["fontWeight"] as? Int
+          let fontFamily = args["fontFamily"] as? String
+          var font: NSFont? = nil
+          if let fontSize = fontSize {
+            if let fontFamily = fontFamily, let customFont = NSFont(name: fontFamily, size: fontSize) {
+              font = customFont
+            } else {
+              let weight: NSFont.Weight
+              switch fontWeight ?? 400 {
+              case 100: weight = .ultraLight; case 200: weight = .thin; case 300: weight = .light
+              case 400: weight = .regular; case 500: weight = .medium; case 600: weight = .semibold
+              case 700: weight = .bold; case 800: weight = .heavy; case 900: weight = .black
+              default:  weight = .regular
+              }
+              font = NSFont.systemFont(ofSize: fontSize, weight: weight)
+            }
+          }
+          if (args["italic"] as? Bool) == true, let f = font {
+            let descriptor = f.fontDescriptor.withSymbolicTraits(.italic)
+            font = NSFont(descriptor: descriptor, size: f.pointSize) ?? font
+          }
+          let title = self.button.title
+          if !title.isEmpty {
+            var attrs: [NSAttributedString.Key: Any] = [:]
+            if let font = font { attrs[.font] = font }
+            self.button.attributedTitle = NSAttributedString(string: title, attributes: attrs)
+          }
+          result(nil)
+        } else {
+          // nil args → clear custom style
+          self.button.attributedTitle = NSAttributedString(string: self.button.title)
+          result(nil)
+        }
       case "setButtonTitle":
         if let args = call.arguments as? [String: Any], let t = args["title"] as? String {
           self.button.title = t

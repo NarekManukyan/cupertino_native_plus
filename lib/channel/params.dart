@@ -34,6 +34,25 @@ int? resolveColorToArgb(Color? color, BuildContext context) {
   return _argbFromColor(color);
 }
 
+/// Encodes a [TextStyle] into a map suitable for platform view method channel calls.
+///
+/// Returns `null` if [style] is null (signals "clear style" on the native side).
+/// Keys: `fontSize` (double), `fontWeight` (CSS 100-900 int), `italic` (bool),
+/// `fontFamily` (string). Only non-null fields are included.
+/// Color is intentionally excluded — use dedicated tint/labelColor/iconColor params.
+Map<String, dynamic>? encodeTextStyle(TextStyle? style, BuildContext context) {
+  if (style == null) return null;
+  final map = <String, dynamic>{};
+  if (style.fontSize != null) map['fontSize'] = style.fontSize;
+  if (style.fontWeight != null) {
+    // FontWeight.index is 0-based (w100=0 … w900=8); CSS scale is 100-900.
+    map['fontWeight'] = (style.fontWeight!.index + 1) * 100;
+  }
+  if (style.fontStyle == FontStyle.italic) map['italic'] = true;
+  if (style.fontFamily != null) map['fontFamily'] = style.fontFamily;
+  return map;
+}
+
 /// Creates a unified style map for platform views.
 /// Keys (all ARGB ints):
 /// - tint: general accent color

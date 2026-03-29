@@ -60,19 +60,19 @@ struct GlassButtonSwiftUI: View {
     if let title, hasIcon {
       switch imagePlacement {
       case "trailing":
-        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
           .labelStyle(TrailingIconLabelStyle(spacing: config.spacing))
           .foregroundStyle(effectiveLabelColor ?? .primary)
       case "top":
-        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
           .labelStyle(TopIconLabelStyle(spacing: config.spacing))
           .foregroundStyle(effectiveLabelColor ?? .primary)
       case "bottom":
-        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
           .labelStyle(BottomIconLabelStyle(spacing: config.spacing))
           .foregroundStyle(effectiveLabelColor ?? .primary)
       default: // "leading"
-        Label { Text(title) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
           .labelStyle(LeadingIconLabelStyle(spacing: config.spacing))
           .foregroundStyle(effectiveLabelColor ?? .primary)
       }
@@ -81,6 +81,7 @@ struct GlassButtonSwiftUI: View {
         .foregroundStyle(effectiveIconColor ?? .primary)
     } else if let text = title {
       Text(text)
+        .font(theme.labelFont)
         .foregroundStyle(effectiveLabelColor ?? .primary)
     }
   }

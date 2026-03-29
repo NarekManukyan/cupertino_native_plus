@@ -35,6 +35,85 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
   private var rightInsetVal: CGFloat = 0
   private var splitSpacingVal: CGFloat = 12 // Apple's recommended spacing for visual separation
   private var suppressSelectionCallbacks: Bool = false
+  private var labelStyleDict: [String: Any]? = nil
+  private var activeLabelStyleDict: [String: Any]? = nil
+
+  // MARK: - Text style helpers
+
+  private func parseTextStyle(_ dict: [String: Any]) -> UIFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: UIFont? = nil
+    if let size = fontSize {
+      if let family = fontFamily, let customFont = UIFont(name: family, size: size) {
+        font = customFont
+      } else {
+        let weight: UIFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = UIFont.systemFont(ofSize: size, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+        font = UIFont(descriptor: descriptor, size: f.pointSize)
+      }
+    }
+    return font
+  }
+
+  private func applyLabelStyles() {
+    let bars: [UITabBar] = [tabBar, tabBarLeft, tabBarRight].compactMap { $0 }
+    guard !bars.isEmpty else { return }
+
+    if #available(iOS 13.0, *) {
+      for bar in bars {
+        let appearance: UITabBarAppearance
+        if #available(iOS 15.0, *) {
+          appearance = bar.standardAppearance.copy() as! UITabBarAppearance
+        } else {
+          appearance = UITabBarAppearance()
+          appearance.configureWithDefaultBackground()
+        }
+        func buildAttrs(_ dict: [String: Any]?) -> [NSAttributedString.Key: Any]? {
+          guard let dict = dict else { return nil }
+          let font = parseTextStyle(dict)
+          var attrs: [NSAttributedString.Key: Any] = [:]
+          if let f = font { attrs[.font] = f }
+          return attrs.isEmpty ? nil : attrs
+        }
+        for layoutAppearance in [
+          appearance.stackedLayoutAppearance,
+          appearance.inlineLayoutAppearance,
+          appearance.compactInlineLayoutAppearance,
+        ] {
+          if let attrs = buildAttrs(labelStyleDict) {
+            layoutAppearance.normal.titleTextAttributes = attrs
+          }
+          if let attrs = buildAttrs(activeLabelStyleDict) {
+            layoutAppearance.selected.titleTextAttributes = attrs
+          }
+        }
+        bar.standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+          bar.scrollEdgeAppearance = appearance
+        }
+        bar.setNeedsLayout()
+        bar.layoutIfNeeded()
+      }
+    }
+  }
 
   /// Parses badges from method channel: null = no badge, "" = dot only, non-empty = badge text.
   private static func parseBadges(_ any: Any?) -> [String?] {
@@ -291,6 +370,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
       if let s = dict["split"] as? NSNumber { split = s.boolValue }
       if let rc = dict["rightCount"] as? NSNumber { rightCount = rc.intValue }
       if let sp = dict["splitSpacing"] as? NSNumber { splitSpacingVal = CGFloat(truncating: sp) }
+      if let ls = dict["labelStyle"] as? [String: Any] { self.labelStyleDict = ls }
+      if let als = dict["activeLabelStyle"] as? [String: Any] { self.activeLabelStyleDict = als }
       // content insets controlled by Flutter padding; keep zero here
     }
 
@@ -521,6 +602,9 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
     self.leftInsetVal = leftInset
     self.rightInsetVal = rightInset
     scheduleBadgeLayout()
+    if labelStyleDict != nil || activeLabelStyleDict != nil {
+      applyLabelStyles()
+    }
     channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
       switch call.method {
@@ -1011,6 +1095,14 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
             selectNextLeft()
           }
         }
+        result(nil)
+      case "setLabelStyle":
+        self.labelStyleDict = call.arguments as? [String: Any]
+        self.applyLabelStyles()
+        result(nil)
+      case "setActiveLabelStyle":
+        self.activeLabelStyleDict = call.arguments as? [String: Any]
+        self.applyLabelStyles()
         result(nil)
       default:
         result(FlutterMethodNotImplemented)

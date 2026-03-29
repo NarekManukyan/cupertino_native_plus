@@ -163,6 +163,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       for key in ["labelColor", "themeIconColor", "backgroundColor"] {
         if let n = dict[key] as? NSNumber { themeArgs[key] = n.intValue }
       }
+      if let ls = dict["labelStyle"] as? [String: Any] { themeArgs["labelStyle"] = ls }
     }
 
     super.init()
@@ -458,7 +459,8 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
                 labelColor:      (args["labelColor"]      as? NSNumber).map(argbToColor) ?? existing.labelColor,
                 iconColor:       (args["themeIconColor"]  as? NSNumber).map(argbToColor) ?? existing.iconColor,
                 backgroundColor: (args["backgroundColor"] as? NSNumber).map(argbToColor) ?? existing.backgroundColor,
-                glassMaterial:   existing.glassMaterial
+                glassMaterial:   existing.glassMaterial,
+                labelFont:       existing.labelFont
               )
             }
           } else if self.button != nil {
@@ -708,6 +710,92 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
             var cfg = button.configuration ?? .plain()
             cfg.imagePadding = 0
             button.configuration = cfg
+          }
+          result(nil)
+        }
+      case "setTextStyle":
+        if usesSwiftUI {
+          if #available(iOS 26.0, *), let vm = buttonViewModel {
+            let labelFont: Font? = {
+              guard let d = call.arguments as? [String: Any] else { return nil }
+              let size = (d["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+              let weightInt = d["fontWeight"] as? Int
+              let family = d["fontFamily"] as? String
+              let w: Font.Weight
+              switch weightInt ?? 400 {
+              case 100: w = .ultraLight; case 200: w = .thin; case 300: w = .light
+              case 400: w = .regular; case 500: w = .medium; case 600: w = .semibold
+              case 700: w = .bold; case 800: w = .heavy; case 900: w = .black
+              default: w = .regular
+              }
+              let isItalic = (d["italic"] as? Bool) == true
+              var f: Font?
+              if let family, let sz = size { f = .custom(family, size: sz) }
+              else if let sz = size { f = .system(size: sz, weight: w) }
+              if isItalic, let existing = f { return existing.italic() }
+              return f
+            }()
+            vm.theme = CNButtonTheme(
+              tint: vm.theme.tint, labelColor: vm.theme.labelColor,
+              iconColor: vm.theme.iconColor, backgroundColor: vm.theme.backgroundColor,
+              glassMaterial: vm.theme.glassMaterial, labelFont: labelFont
+            )
+          }
+          result(nil)
+        } else if let args = call.arguments as? [String: Any] {
+          let color = (args["color"] as? NSNumber).map { ImageUtils.colorFromARGB($0.intValue) }
+          let fontSize = (args["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+          let fontWeight = args["fontWeight"] as? Int
+          let fontFamily = args["fontFamily"] as? String
+          var font: UIFont? = nil
+          if let fontSize = fontSize {
+            if let fontFamily = fontFamily, let customFont = UIFont(name: fontFamily, size: fontSize) {
+              font = customFont
+            } else {
+              let weight: UIFont.Weight
+              switch fontWeight ?? 400 {
+              case 100: weight = .ultraLight; case 200: weight = .thin; case 300: weight = .light
+              case 400: weight = .regular; case 500: weight = .medium; case 600: weight = .semibold
+              case 700: weight = .bold; case 800: weight = .heavy; case 900: weight = .black
+              default: weight = .regular
+              }
+              font = UIFont.systemFont(ofSize: fontSize, weight: weight)
+            }
+          }
+          if (args["italic"] as? Bool) == true, let f = font {
+            if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+              font = UIFont(descriptor: descriptor, size: f.pointSize)
+            }
+          }
+          if let button = self.button {
+            if #available(iOS 15.0, *) {
+              var cfg = button.configuration ?? .plain()
+              if let title = button.title(for: .normal), !title.isEmpty {
+                var attrStr = AttributedString(title)
+                if let font = font { attrStr.uiKit.font = font }
+                if let color = color { attrStr.uiKit.foregroundColor = color }
+                cfg.attributedTitle = attrStr
+                button.configuration = cfg
+              }
+            } else {
+              if let title = button.title(for: .normal), !title.isEmpty {
+                let attrString = NSMutableAttributedString(string: title)
+                if let font = font { attrString.addAttribute(.font, value: font, range: NSRange(location: 0, length: title.count)) }
+                if let color = color { attrString.addAttribute(.foregroundColor, value: color, range: NSRange(location: 0, length: title.count)) }
+                button.setAttributedTitle(attrString, for: .normal)
+              }
+            }
+          }
+          result(nil)
+        } else {
+          if let button = self.button {
+            if #available(iOS 15.0, *) {
+              var cfg = button.configuration ?? .plain()
+              cfg.attributedTitle = nil
+              button.configuration = cfg
+            } else {
+              button.setAttributedTitle(nil, for: .normal)
+            }
           }
           result(nil)
         }

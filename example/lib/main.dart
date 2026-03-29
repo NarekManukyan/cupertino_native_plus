@@ -11,6 +11,10 @@ import 'demos/overlay_test.dart';
 import 'demos/app_bar.dart';
 import 'demos/issues_test.dart';
 import 'demos/native_tab_bar_demo.dart';
+import 'demos/toast.dart';
+import 'demos/floating_island.dart';
+import 'demos/liquid_text.dart';
+import 'demos/search_bar_demo.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -249,6 +253,63 @@ class HomePage extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).push(
                     CupertinoPageRoute(builder: (_) => const AppBarDemoPage()),
+                  );
+                },
+              ),
+            ],
+          ),
+          CupertinoListSection.insetGrouped(
+            header: Text('Overlays & Effects'),
+            children: [
+              CupertinoListTile(
+                title: Text('Toast'),
+                leading: CNIcon(
+                  symbol: CNSymbol('bell.badge', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const ToastDemoPage()),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Floating Island'),
+                leading: CNIcon(symbol: CNSymbol('oval', color: accentColor)),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const FloatingIslandDemoPage(),
+                    ),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Liquid Text'),
+                leading: CNIcon(
+                  symbol: CNSymbol('textformat.alt', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const LiquidTextDemoPage(),
+                    ),
+                  );
+                },
+              ),
+              CupertinoListTile(
+                title: Text('Search Bar'),
+                leading: CNIcon(
+                  symbol: CNSymbol('magnifyingglass', color: accentColor),
+                ),
+                trailing: CupertinoListTileChevron(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (_) => const SearchBarDemoPage(),
+                    ),
                   );
                 },
               ),

@@ -17,6 +17,54 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
   private var defaultIconPalette: [UIColor] = []
   private var defaultIconRenderingMode: String? = nil
   private var defaultIconGradientEnabled: Bool = false
+  private var pendingLabelStyle: [String: Any]? = nil
+  private var pendingActiveLabelStyle: [String: Any]? = nil
+
+  // MARK: - Text style helpers
+
+  private func parseTextStyle(_ dict: [String: Any]) -> UIFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: UIFont? = nil
+    if let fontSize = fontSize {
+      if let fontFamily = fontFamily, let customFont = UIFont(name: fontFamily, size: fontSize) {
+        font = customFont
+      } else {
+        let weight: UIFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = UIFont.systemFont(ofSize: fontSize, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+        font = UIFont(descriptor: descriptor, size: f.pointSize)
+      }
+    }
+    return font
+  }
+
+  private func applyLabelStyle(_ dict: [String: Any]?, forState state: UIControl.State) {
+    guard let dict = dict else {
+      control.setTitleTextAttributes(nil, for: state)
+      return
+    }
+    let font = parseTextStyle(dict)
+    var attrs: [NSAttributedString.Key: Any] = [:]
+    if let font = font { attrs[.font] = font }
+    control.setTitleTextAttributes(attrs, for: state)
+  }
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSegmentedControl)_\(viewId)", binaryMessenger: messenger)
@@ -51,6 +99,12 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["enabled"] as? NSNumber { enabled = v.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
+      if let labelStyleDict = dict["labelStyle"] as? [String: Any] {
+        self.pendingLabelStyle = labelStyleDict
+      }
+      if let activeLabelStyleDict = dict["activeLabelStyle"] as? [String: Any] {
+        self.pendingActiveLabelStyle = activeLabelStyleDict
+      }
       if let style = dict["style"] as? [String: Any] {
         if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
         if let n = style["iconColor"] as? NSNumber { self.defaultIconColor = ImageUtils.colorFromARGB(n.intValue) }
@@ -85,6 +139,10 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
     ])
 
     control.addTarget(self, action: #selector(onChanged(_:)), for: .valueChanged)
+
+    // Apply label styles from creation params
+    if let labelStyle = pendingLabelStyle { applyLabelStyle(labelStyle, forState: .normal) }
+    if let activeLabelStyle = pendingActiveLabelStyle { applyLabelStyle(activeLabelStyle, forState: .selected) }
 
     channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
@@ -131,6 +189,12 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
           }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setLabelStyle":
+        self.applyLabelStyle(call.arguments as? [String: Any], forState: .normal)
+        result(nil)
+      case "setActiveLabelStyle":
+        self.applyLabelStyle(call.arguments as? [String: Any], forState: .selected)
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }

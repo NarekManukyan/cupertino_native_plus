@@ -1362,6 +1362,89 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
             const SizedBox(height: 12),
             _ParameterChangeTest(),
             const SizedBox(height: 48),
+            const Text('CNButtonTheme — labelStyle'),
+            const SizedBox(height: 8),
+            const Text(
+              'Use theme.labelStyle to apply a custom TextStyle to the button label.',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                CNButton(
+                  label: 'Large Label',
+                  onPressed: () => _set('Large Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(fontSize: 20),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Bold Label',
+                  onPressed: () => _set('Bold Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Italic Label',
+                  onPressed: () => _set('Italic Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 16,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Georgia Label',
+                  onPressed: () => _set('Georgia Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(fontFamily: 'Georgia', fontSize: 16),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Colored Label',
+                  onPressed: () => _set('Colored Label'),
+                  theme: const CNButtonTheme(
+                    tint: CupertinoColors.systemOrange,
+                    labelStyle: TextStyle(
+                      color: CupertinoColors.systemOrange,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.gray,
+                    shrinkWrap: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
             Center(child: Text('Last pressed: $_last')),
           ],
         ),

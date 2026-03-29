@@ -19,6 +19,57 @@ class CupertinoTabBarNSView: NSView {
   private var currentSizes: [NSNumber] = []
   private var currentTint: NSColor? = nil
   private var currentBackground: NSColor? = nil
+  private var labelStyleDict: [String: Any]? = nil
+  private var activeLabelStyleDict: [String: Any]? = nil
+
+  // MARK: - Text style helpers
+
+  private func parseTextStyle(_ dict: [String: Any]) -> NSFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: NSFont? = nil
+    if let size = fontSize {
+      if let family = fontFamily, let customFont = NSFont(name: family, size: size) {
+        font = customFont
+      } else {
+        let weight: NSFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = NSFont.systemFont(ofSize: size, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      let descriptor = f.fontDescriptor.withSymbolicTraits(.italic)
+      font = NSFont(descriptor: descriptor, size: f.pointSize) ?? font
+    }
+    return font
+  }
+
+  /// Applies font from labelStyleDict to all segment labels.
+  ///
+  /// **macOS limitation:** NSSegmentedControl has no per-state label API.
+  /// Uses `control.font` for uniform font; activeLabelStyle color is a no-op.
+  private func applyLabelStyles() {
+    let dict = labelStyleDict ?? activeLabelStyleDict
+    guard let dict = dict else { return }
+    let font = parseTextStyle(dict)
+    if let font = font {
+      control.font = font
+      control.needsLayout = true
+      control.needsDisplay = true
+    }
+  }
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
     self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeTabBar)_\(viewId)", binaryMessenger: messenger)
@@ -72,6 +123,8 @@ class CupertinoTabBarNSView: NSView {
         if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
         if let n = style["backgroundColor"] as? NSNumber { bg = ImageUtils.colorFromARGB(n.intValue) }
       }
+      if let ls = dict["labelStyle"] as? [String: Any] { self.labelStyleDict = ls }
+      if let als = dict["activeLabelStyle"] as? [String: Any] { self.activeLabelStyleDict = als }
     }
 
     super.init(frame: .zero)
@@ -108,6 +161,7 @@ class CupertinoTabBarNSView: NSView {
     self.currentBackground = bg
     if let b = bg { wantsLayer = true; layer?.backgroundColor = b.cgColor }
     applySegmentTint()
+    applyLabelStyles()
 
     control.target = self
     control.action = #selector(onChanged(_:))
@@ -190,6 +244,14 @@ class CupertinoTabBarNSView: NSView {
           self.applySegmentTint()
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing items", details: nil)) }
+      case "setLabelStyle":
+        self.labelStyleDict = call.arguments as? [String: Any]
+        self.applyLabelStyles()
+        result(nil)
+      case "setActiveLabelStyle":
+        self.activeLabelStyleDict = call.arguments as? [String: Any]
+        self.applyLabelStyles()
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }

@@ -197,6 +197,7 @@ class _CNButtonState extends State<CNButton> {
   EdgeInsets? _lastPadding;
   Map<String, dynamic>? _lastIconMap;
   CNButtonTheme? _lastTheme;
+  TextStyle? _lastLabelStyle;
   Offset? _downPosition;
   bool _pressed = false;
   Future<String>? _assetPathFuture;
@@ -353,6 +354,8 @@ class _CNButtonState extends State<CNButton> {
           widget.theme.backgroundColor,
           context,
         ),
+      if (encodeTextStyle(widget.theme.labelStyle, context) != null)
+        'labelStyle': encodeTextStyle(widget.theme.labelStyle, context),
     };
 
     final platformView = buildCupertinoPlatformView(
@@ -605,6 +608,14 @@ class _CNButtonState extends State<CNButton> {
       await ch.invokeMethod('setStyle', themeUpdates);
       _lastTheme = capturedTheme;
     }
+    if (_lastLabelStyle != widget.theme.labelStyle) {
+      await ch.invokeMethod(
+        'setTextStyle',
+        encodeTextStyle(widget.theme.labelStyle, context),
+      );
+      _lastLabelStyle = widget.theme.labelStyle;
+      _requestIntrinsicSize();
+    }
   }
 
   /// Shallow comparison of icon maps for change detection.
@@ -683,6 +694,7 @@ class _CNButtonState extends State<CNButton> {
     } else {
       child = Text(
         widget.label ?? '',
+        style: widget.theme.labelStyle,
         maxLines: widget.config.maxLines,
         overflow: widget.config.maxLines != null ? TextOverflow.ellipsis : null,
       );
@@ -745,6 +757,7 @@ class _CNButtonState extends State<CNButton> {
     } else {
       child = Text(
         widget.label ?? '',
+        style: widget.theme.labelStyle,
         maxLines: widget.config.maxLines,
         overflow: widget.config.maxLines != null ? TextOverflow.ellipsis : null,
       );
@@ -803,6 +816,7 @@ class _CNButtonState extends State<CNButton> {
           children: [
             Text(
               widget.label ?? '',
+              style: widget.theme.labelStyle,
               maxLines: widget.config.maxLines,
               overflow: widget.config.maxLines != null
                   ? TextOverflow.ellipsis
@@ -822,6 +836,7 @@ class _CNButtonState extends State<CNButton> {
               SizedBox(height: widget.config.imagePadding!),
             Text(
               widget.label ?? '',
+              style: widget.theme.labelStyle,
               maxLines: widget.config.maxLines,
               overflow: widget.config.maxLines != null
                   ? TextOverflow.ellipsis
@@ -835,6 +850,7 @@ class _CNButtonState extends State<CNButton> {
           children: [
             Text(
               widget.label ?? '',
+              style: widget.theme.labelStyle,
               maxLines: widget.config.maxLines,
               overflow: widget.config.maxLines != null
                   ? TextOverflow.ellipsis
@@ -854,6 +870,7 @@ class _CNButtonState extends State<CNButton> {
               SizedBox(width: widget.config.imagePadding!),
             Text(
               widget.label ?? '',
+              style: widget.theme.labelStyle,
               maxLines: widget.config.maxLines,
               overflow: widget.config.maxLines != null
                   ? TextOverflow.ellipsis

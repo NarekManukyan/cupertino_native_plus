@@ -215,6 +215,7 @@ struct CNButtonTheme {
   let iconColor: Color?
   let backgroundColor: Color?
   let glassMaterial: String   // "regular" | "clear" | "identity"
+  let labelFont: Font?
 
   // MARK: Effective colors
 
@@ -230,14 +231,15 @@ struct CNButtonTheme {
       labelColor:      dict.argbColor(forKey: "labelColor"),
       iconColor:       dict.argbColor(forKey: "themeIconColor"),
       backgroundColor: dict.argbColor(forKey: "backgroundColor"),
-      glassMaterial:   (dict["glassMaterial"] as? String) ?? "regular"
+      glassMaterial:   (dict["glassMaterial"] as? String) ?? "regular",
+      labelFont:       dict.swiftUIFont(forKey: "labelStyle")
     )
   }
 
   static var `default`: CNButtonTheme {
     CNButtonTheme(
       tint: nil, labelColor: nil, iconColor: nil,
-      backgroundColor: nil, glassMaterial: "regular"
+      backgroundColor: nil, glassMaterial: "regular", labelFont: nil
     )
   }
 }
@@ -253,5 +255,37 @@ private extension Dictionary where Key == String, Value == Any {
     let g = Double((argb >> 8)  & 0xFF) / 255.0
     let b = Double( argb        & 0xFF) / 255.0
     return Color(.sRGB, red: r, green: g, blue: b, opacity: a)
+  }
+
+  /// Decodes a labelStyle dict and returns a SwiftUI `Font`.
+  func swiftUIFont(forKey key: String) -> Font? {
+    guard let style = self[key] as? [String: Any] else { return nil }
+    let size = (style["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let weight = style["fontWeight"] as? Int
+    let family = style["fontFamily"] as? String
+    let swiftWeight: Font.Weight
+    switch weight ?? 400 {
+    case 100: swiftWeight = .ultraLight
+    case 200: swiftWeight = .thin
+    case 300: swiftWeight = .light
+    case 400: swiftWeight = .regular
+    case 500: swiftWeight = .medium
+    case 600: swiftWeight = .semibold
+    case 700: swiftWeight = .bold
+    case 800: swiftWeight = .heavy
+    case 900: swiftWeight = .black
+    default:  swiftWeight = .regular
+    }
+    let isItalic = (style["italic"] as? Bool) == true
+    var font: Font?
+    if let family = family, let sz = size {
+      font = .custom(family, size: sz)
+    } else if let sz = size {
+      font = .system(size: sz, weight: swiftWeight)
+    }
+    if isItalic, let f = font {
+      return f.italic()
+    }
+    return font
   }
 }

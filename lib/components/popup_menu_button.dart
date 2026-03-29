@@ -91,6 +91,7 @@ class CNPopupMenuButton extends StatefulWidget {
     this.shrinkWrap = false,
     this.buttonStyle = CNButtonStyle.plain,
     this.preserveTopToBottomOrder = false,
+    this.labelStyle,
   }) : buttonIcon = null,
        buttonCustomIcon = null,
        buttonImageAsset = null,
@@ -114,6 +115,7 @@ class CNPopupMenuButton extends StatefulWidget {
        width = size,
        height = size,
        shrinkWrap = false,
+       labelStyle = null,
        super() {
     assert(
       buttonIcon != null ||
@@ -169,6 +171,12 @@ class CNPopupMenuButton extends StatefulWidget {
   /// bottom. Set to true to always display items 1,2,3,4 from top to bottom.
   final bool preserveTopToBottomOrder;
 
+  /// Optional text style for the trigger button label.
+  ///
+  /// Only applies to the text variant (created with the default constructor).
+  /// Has no effect on icon-only buttons.
+  final TextStyle? labelStyle;
+
   /// Whether this instance is configured as an icon button variant.
   bool get isIconButton =>
       buttonIcon != null ||
@@ -189,6 +197,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
   int? _lastIconColor;
   double? _intrinsicWidth;
   CNButtonStyle? _lastStyle;
+  Map<String, dynamic>? _lastLabelStyle;
   Offset? _downPosition;
   bool _pressed = false;
 
@@ -344,6 +353,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
     final capturedButtonPaletteColors = widget.buttonIcon?.paletteColors
         ?.map((c) => resolveColorToArgb(c, context))
         .toList();
+    final capturedLabelStyle = encodeTextStyle(widget.labelStyle, context);
     // Pre-capture menu item colors
     final capturedMenuItemColors = <int?>[];
     final capturedMenuItemIconColors = <int?>[];
@@ -518,6 +528,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       if (widget.buttonIcon?.gradient != null)
         'buttonIconGradientEnabled': widget.buttonIcon!.gradient,
       'preserveTopToBottomOrder': widget.preserveTopToBottomOrder,
+      if (capturedLabelStyle != null) 'labelStyle': capturedLabelStyle,
     };
 
     // Create a comprehensive key that includes all parameters affecting platform view creation
@@ -710,6 +721,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
     }
     // Capture context-dependent values before any awaits
     final tint = resolveColorToArgb(_effectiveTint, context);
+    final capturedLabelStyle = encodeTextStyle(widget.labelStyle, context);
     final preIconName = widget.buttonIcon?.name;
     final preIconSize = widget.buttonIcon?.size;
     final preIconColor = resolveColorToArgb(widget.buttonIcon?.color, context);
@@ -727,6 +739,10 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
       await ch.invokeMethod('setButtonTitle', {'title': widget.buttonLabel});
       _lastTitle = widget.buttonLabel;
       _requestIntrinsicSize();
+    }
+    if (_lastLabelStyle != capturedLabelStyle) {
+      await ch.invokeMethod('setTextStyle', capturedLabelStyle);
+      _lastLabelStyle = capturedLabelStyle;
     }
 
     if (widget.isIconButton) {
@@ -888,7 +904,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
                       color: widget.buttonIcon!.color,
                     )
                   : const SizedBox.shrink())
-            : Text(widget.buttonLabel ?? ''),
+            : Text(widget.buttonLabel ?? '', style: widget.labelStyle),
       ),
     );
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/scheduler.dart';
+import 'package:flutter/material.dart' show TabController, TabBarView, Colors;
 import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 
 class TabBarDemoPage extends StatefulWidget {
@@ -9,155 +9,294 @@ class TabBarDemoPage extends StatefulWidget {
   State<TabBarDemoPage> createState() => _TabBarDemoPageState();
 }
 
-class _TabBarDemoPageState extends State<TabBarDemoPage> {
-  int _selectedTab = 0;
-  String _searchQuery = '';
+class _TabBarDemoPageState extends State<TabBarDemoPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _controller;
+  int _index = 0;
+  bool _useAlternateIcons = false;
 
-  final _items = ['Apple', 'Banana', 'Cherry'];
+  // Label style state
+  int _labelStyleIndex = 0; // 0 = default, 1 = bold+large, 2 = Georgia italic
 
-  List<String> get _filteredItems {
-    if (_searchQuery.isEmpty) return _items;
-    return _items
-        .where(
-          (item) => item.toLowerCase().contains(_searchQuery.toLowerCase()),
-        )
-        .toList();
+  static const _labelStyleOptions = ['Default', 'Bold/Large', 'Georgia'];
+
+  TextStyle? get _labelStyle {
+    switch (_labelStyleIndex) {
+      case 1:
+        return const TextStyle(fontWeight: FontWeight.w300, fontSize: 11);
+      case 2:
+        return const TextStyle(fontFamily: 'Georgia', fontSize: 11);
+      default:
+        return null;
+    }
+  }
+
+  TextStyle? get _activeLabelStyle {
+    switch (_labelStyleIndex) {
+      case 1:
+        return const TextStyle(fontWeight: FontWeight.w700, fontSize: 16);
+      case 2:
+        return const TextStyle(
+          fontFamily: 'Georgia',
+          fontSize: 16,
+          fontStyle: FontStyle.italic,
+        );
+      default:
+        return null;
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    // Wait for first frame before enabling native tab bar
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      _enableNativeTabBar();
+    _controller = TabController(length: 4, vsync: this);
+    _controller.addListener(() {
+      final i = _controller.index;
+      if (i != _index) setState(() => _index = i);
     });
-  }
-
-  Future<void> _enableNativeTabBar() async {
-    await CNTabBarNative.enable(
-      tabs: [
-        CNTab(title: 'Home', sfSymbol: CNSymbol('house.fill')),
-        CNTab(
-          title: 'Search',
-          sfSymbol: CNSymbol('magnifyingglass'),
-          isSearchTab: true,
-        ),
-        CNTab(title: 'Profile', sfSymbol: CNSymbol('person.fill')),
-      ],
-      selectedIndex: 0,
-      onTabSelected: (index) {
-        debugPrint('Tab selected: $index');
-        setState(() => _selectedTab = index);
-      },
-      onSearchChanged: (query) {
-        debugPrint('Native search: $query');
-        setState(() => _searchQuery = query);
-      },
-    );
   }
 
   @override
   void dispose() {
-    CNTabBarNative.disable();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: CupertinoColors.systemGroupedBackground.resolveFrom(context),
-      child: SafeArea(top: true, bottom: false, child: _buildTabContent()),
-    );
-  }
-
-  Widget _buildTabContent() {
-    switch (_selectedTab) {
-      case 0:
-        return _buildHomeTab();
-      case 1:
-        return _buildSearchTab();
-      case 2:
-        return _buildProfileTab();
-      default:
-        return _buildHomeTab();
-    }
-  }
-
-  Widget _buildHomeTab() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            CupertinoIcons.house_fill,
-            size: 64,
-            color: CupertinoColors.systemBlue,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Home Tab',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Tap Search tab to test search',
-            style: TextStyle(color: CupertinoColors.secondaryLabel),
-          ),
-        ],
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Native Tab Bar'),
       ),
-    );
-  }
-
-  Widget _buildSearchTab() {
-    return _filteredItems.isEmpty
-        ? const Center(
-            child: Text(
-              'No results',
-              style: TextStyle(
-                color: CupertinoColors.secondaryLabel,
-                fontSize: 17,
-              ),
+      child: Stack(
+        children: [
+          // Content below
+          Positioned.fill(
+            child: TabBarView(
+              controller: _controller,
+              children: const [
+                _ImageTabPage(asset: 'assets/home.jpg', label: 'Home'),
+                _ImageTabPage(asset: 'assets/profile.jpg', label: 'Profile'),
+                _ImageTabPage(asset: 'assets/settings.jpg', label: 'Settings'),
+                _ImageTabPage(asset: 'assets/search.jpg', label: 'Search'),
+              ],
             ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.only(top: 16, bottom: 100),
-            itemCount: _filteredItems.length,
-            itemBuilder: (context, index) {
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemBackground.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: CupertinoListTile(
-                  title: Text(_filteredItems[index]),
-                  leading: const Icon(
-                    CupertinoIcons.circle_fill,
-                    color: CupertinoColors.systemOrange,
+          ),
+          // Native tab bar overlay
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: CNTabBar(
+              items: _useAlternateIcons
+                  ? [
+                      CNTabBarItem(
+                        label: 'Home',
+                        imageAsset: CNImageAsset.asset(
+                          'assets/icons/profile.svg',
+                        ),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/profile-filled.svg',
+                        ),
+                        badge: '5',
+                      ),
+                      CNTabBarItem(
+                        label: 'Search',
+                        imageAsset: CNImageAsset.asset('assets/icons/chat.svg'),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/chat-filled.svg',
+                        ),
+                        badge: '8',
+                      ),
+                      CNTabBarItem(
+                        label: 'Profile',
+                        imageAsset: CNImageAsset.asset('assets/icons/home.svg'),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/home_filled.svg',
+                        ),
+                      ),
+                      CNTabBarItem(
+                        imageAsset: CNImageAsset.asset(
+                          'assets/icons/search.svg',
+                        ),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/search-filled.svg',
+                        ),
+                      ),
+                    ]
+                  : [
+                      CNTabBarItem(
+                        label: 'Home',
+                        imageAsset: CNImageAsset.asset('assets/icons/home.svg'),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/home_filled.svg',
+                        ),
+                        badge: '3',
+                      ),
+                      CNTabBarItem(
+                        label: 'Search',
+                        imageAsset: CNImageAsset.asset(
+                          'assets/icons/search.svg',
+                        ),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/search-filled.svg',
+                        ),
+                        badge: '12',
+                      ),
+                      CNTabBarItem(
+                        label: 'Profile',
+                        imageAsset: CNImageAsset.asset(
+                          'assets/icons/profile.svg',
+                        ),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/profile-filled.svg',
+                        ),
+                      ),
+                      CNTabBarItem(
+                        imageAsset: CNImageAsset.asset('assets/icons/chat.svg'),
+                        activeImageAsset: CNImageAsset.asset(
+                          'assets/icons/chat-filled.svg',
+                        ),
+                      ),
+                    ],
+              currentIndex: _index,
+              split: true,
+              rightCount: 1,
+              splitSpacing: 8,
+              shrinkCentered: true,
+              tint: Colors.red,
+              labelStyle: _labelStyle,
+              activeLabelStyle: _activeLabelStyle,
+              onTap: (i) {
+                setState(() => _index = i);
+                _controller.animateTo(i);
+              },
+            ),
+          ),
+          // Controls overlay
+          Positioned(
+            top: 100,
+            right: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              spacing: 8,
+              children: [
+                // Toggle icons button
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    setState(() {
+                      _useAlternateIcons = !_useAlternateIcons;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemBlue.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Icon(
+                      _useAlternateIcons
+                          ? CupertinoIcons.refresh
+                          : CupertinoIcons.arrow_2_squarepath,
+                      color: CupertinoColors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
-              );
-            },
-          );
-  }
-
-  Widget _buildProfileTab() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            CupertinoIcons.person_fill,
-            size: 64,
-            color: CupertinoColors.systemPurple,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Profile Tab',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                // Label style picker
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemBackground
+                        .resolveFrom(context)
+                        .withOpacity(0.92),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CupertinoColors.black.withOpacity(0.12),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      const Text(
+                        'Label Style',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: CupertinoColors.secondaryLabel,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      for (int i = 0; i < _labelStyleOptions.length; i++)
+                        GestureDetector(
+                          onTap: () => setState(() => _labelStyleIndex = i),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 6,
+                            children: [
+                              Icon(
+                                _labelStyleIndex == i
+                                    ? CupertinoIcons.checkmark_circle_fill
+                                    : CupertinoIcons.circle,
+                                size: 16,
+                                color: _labelStyleIndex == i
+                                    ? CupertinoColors.systemBlue
+                                    : CupertinoColors.tertiaryLabel,
+                              ),
+                              Text(
+                                _labelStyleOptions[i],
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ImageTabPage extends StatelessWidget {
+  const _ImageTabPage({required this.asset, required this.label});
+  final String asset;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(asset, fit: BoxFit.cover),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: CupertinoColors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.only(top: 12),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                color: CupertinoColors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

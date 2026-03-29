@@ -149,6 +149,8 @@ class CNTabBar extends StatefulWidget {
         12.0, // Apple's recommended spacing for visual separation
     this.searchItem,
     this.searchController,
+    this.labelStyle,
+    this.activeLabelStyle,
   }) : assert(items.length >= 2, 'Tab bar must have at least 2 items'),
        assert(
          items.length <= 5,
@@ -226,6 +228,19 @@ class CNTabBar extends StatefulWidget {
   /// - Listen to search state changes
   final CNTabBarSearchController? searchController;
 
+  /// Text style for unselected tab item labels.
+  ///
+  /// On native iOS, applied via `UITabBarAppearance` title text attributes
+  /// for the normal state. On the Flutter fallback this is passed to [Text.style].
+  final TextStyle? labelStyle;
+
+  /// Text style for the selected tab item label.
+  ///
+  /// On native iOS, applied via `UITabBarAppearance` for the selected state.
+  /// On macOS (NSSegmentedControl-based tab bar), per-state label styling
+  /// is not supported — font is applied to all states.
+  final TextStyle? activeLabelStyle;
+
   @override
   State<CNTabBar> createState() => _CNTabBarState();
 }
@@ -246,6 +261,8 @@ class _CNTabBarState extends State<CNTabBar> {
   bool? _lastSplit;
   int? _lastRightCount;
   double? _lastSplitSpacing;
+  Map<String, dynamic>? _lastLabelStyle;
+  Map<String, dynamic>? _lastActiveLabelStyle;
 
   /// Cached future that resolves to creation params. Reused across rebuilds to
   /// avoid jank. When resolved, we build the platform view in build() so
@@ -429,6 +446,11 @@ class _CNTabBarState extends State<CNTabBar> {
       widget.backgroundColor,
       context,
     );
+    final capturedLabelStyle = encodeTextStyle(widget.labelStyle, context);
+    final capturedActiveLabelStyle = encodeTextStyle(
+      widget.activeLabelStyle,
+      context,
+    );
     // Capture search style params before async operations
     final capturedSearchStyle = _hasSearch
         ? _buildSearchStyleParams(context)
@@ -559,6 +581,9 @@ class _CNTabBarState extends State<CNTabBar> {
         // Style configuration (captured before async operations)
         if (capturedSearchStyle != null) 'searchStyle': capturedSearchStyle,
       },
+      if (capturedLabelStyle != null) 'labelStyle': capturedLabelStyle,
+      if (capturedActiveLabelStyle != null)
+        'activeLabelStyle': capturedActiveLabelStyle,
     };
 
     return creationParams;
@@ -872,6 +897,21 @@ class _CNTabBarState extends State<CNTabBar> {
         _lastSplitSpacing = widget.splitSpacing;
         _requestIntrinsicSize();
       }
+
+      // Label style sync
+      final labelStyleEncoded = encodeTextStyle(widget.labelStyle, context);
+      final activeLabelStyleEncoded = encodeTextStyle(
+        widget.activeLabelStyle,
+        context,
+      );
+      if (_lastLabelStyle != labelStyleEncoded) {
+        await ch.invokeMethod('setLabelStyle', labelStyleEncoded);
+        _lastLabelStyle = labelStyleEncoded;
+      }
+      if (_lastActiveLabelStyle != activeLabelStyleEncoded) {
+        await ch.invokeMethod('setActiveLabelStyle', activeLabelStyleEncoded);
+        _lastActiveLabelStyle = activeLabelStyleEncoded;
+      }
     } catch (e) {
       // Ignore MissingPluginException during hot reload or view recreation
     }
@@ -933,24 +973,26 @@ class _CNTabBarState extends State<CNTabBar> {
     final tintColor = widget.tint ?? ThemeHelper.getPrimaryColor(context);
     final style = widget.searchItem?.style ?? const CNTabBarSearchStyle();
 
-    // If no search item, just return regular CupertinoTabBar
+    // If no search item, just return a tab bar
     if (!_hasSearch) {
+      final barItems = [
+        for (final item in widget.items)
+          BottomNavigationBarItem(
+            icon: _buildTabIcon(item, isActive: false),
+            activeIcon: _buildTabIcon(item, isActive: true),
+            label: item.label,
+          ),
+      ];
       return SizedBox(
         height: widget.height,
         child: CupertinoTabBar(
-          items: [
-            for (final item in widget.items)
-              BottomNavigationBarItem(
-                icon: _buildTabIcon(item, isActive: false),
-                activeIcon: _buildTabIcon(item, isActive: true),
-                label: item.label,
-              ),
-          ],
+          items: barItems,
           currentIndex: widget.currentIndex,
           onTap: widget.onTap,
           backgroundColor: widget.backgroundColor,
-          inactiveColor: CupertinoColors.inactiveGray,
-          activeColor: tintColor,
+          inactiveColor:
+              widget.labelStyle?.color ?? CupertinoColors.inactiveGray,
+          activeColor: widget.activeLabelStyle?.color ?? tintColor,
         ),
       );
     }
@@ -1078,15 +1120,20 @@ class _CNTabBarState extends State<CNTabBar> {
                       const SizedBox(width: 4),
                       Text(
                         widget.items[i].label!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: widget.currentIndex == i
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          color: widget.currentIndex == i
-                              ? tintColor
-                              : CupertinoColors.inactiveGray,
-                        ),
+                        style:
+                            TextStyle(
+                              fontSize: 12,
+                              fontWeight: widget.currentIndex == i
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                              color: widget.currentIndex == i
+                                  ? tintColor
+                                  : CupertinoColors.inactiveGray,
+                            ).merge(
+                              widget.currentIndex == i
+                                  ? widget.activeLabelStyle
+                                  : widget.labelStyle,
+                            ),
                       ),
                     ],
                   ],

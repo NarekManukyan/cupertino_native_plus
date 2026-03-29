@@ -104,6 +104,7 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
 
     super.init()
 
+
     container.backgroundColor = .clear
     if #available(iOS 13.0, *) { container.overrideUserInterfaceStyle = isDark ? .dark : .light }
 
@@ -143,6 +144,41 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
     if !buttonIconPalette.isEmpty { self.btnIconPalette = buttonIconPalette.map { ImageUtils.colorFromARGB($0.intValue) } }
     // Apply content initially
     setButtonContent(title: title, image: makeButtonIconImage(), iconOnly: (title == nil))
+    // Apply label text style from creation params if provided
+    if let ls = (args as? [String: Any])?["labelStyle"] as? [String: Any], let t = title, !t.isEmpty {
+      let lsFontSize = (ls["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+      let lsFontWeight = ls["fontWeight"] as? Int
+      let lsFontFamily = ls["fontFamily"] as? String
+      var lsFont: UIFont? = nil
+      if let sz = lsFontSize {
+        if let fam = lsFontFamily, let cf = UIFont(name: fam, size: sz) { lsFont = cf }
+        else {
+          let w: UIFont.Weight
+          switch lsFontWeight ?? 400 {
+          case 100: w = .ultraLight; case 200: w = .thin; case 300: w = .light; case 400: w = .regular
+          case 500: w = .medium; case 600: w = .semibold; case 700: w = .bold; case 800: w = .heavy; case 900: w = .black
+          default: w = .regular
+          }
+          lsFont = UIFont.systemFont(ofSize: sz, weight: w)
+        }
+      }
+      if (ls["italic"] as? Bool) == true, let f = lsFont {
+        if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+          lsFont = UIFont(descriptor: descriptor, size: f.pointSize)
+        }
+      }
+      if #available(iOS 15.0, *) {
+        var cfg2 = button.configuration ?? .plain()
+        var attrStr = AttributedString(t)
+        if let f = lsFont { attrStr.uiKit.font = f }
+        cfg2.attributedTitle = attrStr
+        button.configuration = cfg2
+      } else {
+        let attrString = NSMutableAttributedString(string: t)
+        if let f = lsFont { attrString.addAttribute(.font, value: f, range: NSRange(location: 0, length: t.count)) }
+        button.setAttributedTitle(attrString, for: .normal)
+      }
+    }
     if #available(iOS 15.0, *), var cfg = button.configuration {
       // Prefer explicit icon mode/color if provided
       if let symCfg = makeButtonSymbolConfiguration() {
@@ -249,6 +285,35 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
           if #available(iOS 13.0, *) { self.container.overrideUserInterfaceStyle = isDark ? .dark : .light }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setTextStyle":
+        if let args = call.arguments as? [String: Any] {
+          let font = parseTextStyle(args)
+          let title = self.button.title(for: .normal) ?? ""
+          if !title.isEmpty {
+            if #available(iOS 15.0, *) {
+              var cfg = self.button.configuration ?? .plain()
+              var attrStr = AttributedString(title)
+              if let font = font { attrStr.uiKit.font = font }
+              cfg.attributedTitle = attrStr
+              self.button.configuration = cfg
+            } else {
+              let attrString = NSMutableAttributedString(string: title)
+              if let font = font { attrString.addAttribute(.font, value: font, range: NSRange(location: 0, length: title.count)) }
+              self.button.setAttributedTitle(attrString, for: .normal)
+            }
+          }
+          result(nil)
+        } else {
+          // nil args → clear custom style
+          if #available(iOS 15.0, *) {
+            var cfg = self.button.configuration ?? .plain()
+            cfg.attributedTitle = nil
+            self.button.configuration = cfg
+          } else {
+            self.button.setAttributedTitle(nil, for: .normal)
+          }
+          result(nil)
+        }
       case "setButtonTitle":
         if let args = call.arguments as? [String: Any], let t = args["title"] as? String {
           self.button.setTitle(t, for: .normal)
@@ -266,6 +331,39 @@ class CupertinoPopupMenuButtonPlatformView: NSObject, FlutterPlatformView {
   }
 
   func view() -> UIView { container }
+
+  private func parseTextStyle(_ dict: [String: Any]) -> UIFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: UIFont? = nil
+    if let size = fontSize {
+      if let family = fontFamily, let customFont = UIFont(name: family, size: size) {
+        font = customFont
+      } else {
+        let weight: UIFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = UIFont.systemFont(ofSize: size, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+        font = UIFont(descriptor: descriptor, size: f.pointSize)
+      }
+    }
+    return font
+  }
 
   private func rebuildMenu(defaultSizes: [Any]? = nil, defaultColors: [Any]? = nil) {
     // iOS 14+ native menu

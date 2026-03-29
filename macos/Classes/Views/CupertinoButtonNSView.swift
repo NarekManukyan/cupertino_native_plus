@@ -90,6 +90,7 @@ class CupertinoButtonNSView: NSView {
       for key in ["labelColor", "themeIconColor", "backgroundColor"] {
         if let n = iconArgs[key] as? NSNumber { themeArgs[key] = n.intValue }
       }
+      if let ls = iconArgs["labelStyle"] as? [String: Any] { themeArgs["labelStyle"] = ls }
 
       setupSwiftUIButton(
         title: title,
