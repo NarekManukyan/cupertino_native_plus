@@ -105,8 +105,7 @@ enum CNToastStyle {
 class CNToast {
   CNToast._();
 
-  static final List<_ToastEntry> _queue = [];
-  static bool _isShowing = false;
+  static final List<_ActiveToastInfo> _activeToasts = [];
 
   /// Shows a toast with the given message.
   static void show({
@@ -120,23 +119,61 @@ class CNToast {
     Color? textColor,
     bool useGlassEffect = true,
   }) {
-    _queue.add(
-      _ToastEntry(
-        context: context,
+    // Push all existing toasts at this position one level deeper.
+    for (final t in _activeToasts.where((t) => t.position == position)) {
+      t.depthNotifier.value++;
+    }
+
+    final depthNotifier = ValueNotifier<int>(0);
+    final autoDismissSignal = _Signal();
+    final info = _ActiveToastInfo(
+      position: position,
+      depthNotifier: depthNotifier,
+      autoDismissSignal: autoDismissSignal,
+    );
+    _activeToasts.add(info);
+
+    final overlay = Overlay.of(context);
+    final shouldUseGlass =
+        PlatformVersion.supportsLiquidGlass && useGlassEffect;
+
+    var dismissed = false;
+    late OverlayEntry overlayEntry;
+
+    void dismiss() {
+      if (dismissed) return;
+      dismissed = true;
+      // Shift toasts that were behind this one back up.
+      final myDepth = depthNotifier.value;
+      _activeToasts.remove(info);
+      for (final t in _activeToasts.where(
+        (t) => t.position == position && t.depthNotifier.value > myDepth,
+      )) {
+        t.depthNotifier.value--;
+      }
+      if (overlayEntry.mounted) overlayEntry.remove();
+    }
+
+    overlayEntry = OverlayEntry(
+      builder: (ctx) => _ToastOverlay(
         message: message,
         icon: icon,
         position: position,
-        duration: duration,
         style: style,
         backgroundColor: backgroundColor,
         textColor: textColor,
-        useGlassEffect: useGlassEffect,
+        useGlassEffect: shouldUseGlass,
+        onDismiss: dismiss,
+        isLoading: false,
+        depthNotifier: depthNotifier,
+        autoDismissSignal: autoDismissSignal,
       ),
     );
 
-    if (!_isShowing) {
-      _showNext();
-    }
+    overlay.insert(overlayEntry);
+    Timer(_getDuration(duration), () {
+      if (!dismissed) autoDismissSignal.fire();
+    });
   }
 
   /// Shows a success toast.
@@ -256,6 +293,8 @@ class CNToast {
           useGlassEffect: shouldUseGlass,
           onDismiss: () {},
           isLoading: true,
+          depthNotifier: ValueNotifier(0),
+          autoDismissSignal: _Signal(),
         );
       },
     );
@@ -264,90 +303,37 @@ class CNToast {
     return handle;
   }
 
-  /// Clears all pending toasts.
+  /// Clears all active toasts.
   static void clear() {
-    _queue.clear();
+    _activeToasts.clear();
   }
 
-  static void _showNext() {
-    if (_queue.isEmpty) {
-      _isShowing = false;
-      return;
-    }
-
-    _isShowing = true;
-    final entry = _queue.removeAt(0);
-
-    final overlay = Overlay.of(entry.context);
-    final shouldUseGlass =
-        PlatformVersion.supportsLiquidGlass && entry.useGlassEffect;
-
-    late OverlayEntry overlayEntry;
-    overlayEntry = OverlayEntry(
-      builder: (context) {
-        return _ToastOverlay(
-          message: entry.message,
-          icon: entry.icon,
-          position: entry.position,
-          style: entry.style,
-          backgroundColor: entry.backgroundColor,
-          textColor: entry.textColor,
-          useGlassEffect: shouldUseGlass,
-          onDismiss: () {
-            overlayEntry.remove();
-            _showNext();
-          },
-          isLoading: false,
-        );
-      },
-    );
-
-    overlay.insert(overlayEntry);
-
-    // Auto dismiss
-    final durationMs = _getDurationMs(entry.duration);
-    Timer(Duration(milliseconds: durationMs), () {
-      if (overlayEntry.mounted) {
-        overlayEntry.remove();
-      }
-      _showNext();
-    });
-  }
-
-  static int _getDurationMs(CNToastDuration duration) {
+  static Duration _getDuration(CNToastDuration duration) {
     switch (duration) {
       case CNToastDuration.short:
-        return 2000;
+        return const Duration(seconds: 2);
       case CNToastDuration.medium:
-        return 3500;
+        return const Duration(milliseconds: 3500);
       case CNToastDuration.long:
-        return 5000;
+        return const Duration(seconds: 5);
     }
   }
 }
 
-class _ToastEntry {
-  _ToastEntry({
-    required this.context,
-    required this.message,
-    this.icon,
+class _Signal extends ChangeNotifier {
+  void fire() => notifyListeners();
+}
+
+class _ActiveToastInfo {
+  _ActiveToastInfo({
     required this.position,
-    required this.duration,
-    required this.style,
-    this.backgroundColor,
-    this.textColor,
-    required this.useGlassEffect,
+    required this.depthNotifier,
+    required this.autoDismissSignal,
   });
 
-  final BuildContext context;
-  final String message;
-  final Widget? icon;
   final CNToastPosition position;
-  final CNToastDuration duration;
-  final CNToastStyle style;
-  final Color? backgroundColor;
-  final Color? textColor;
-  final bool useGlassEffect;
+  final ValueNotifier<int> depthNotifier;
+  final _Signal autoDismissSignal;
 }
 
 /// Handle for dismissing a loading toast.
@@ -374,6 +360,8 @@ class _ToastOverlay extends StatefulWidget {
     required this.useGlassEffect,
     required this.onDismiss,
     required this.isLoading,
+    required this.depthNotifier,
+    required this.autoDismissSignal,
   });
 
   final String message;
@@ -385,51 +373,169 @@ class _ToastOverlay extends StatefulWidget {
   final bool useGlassEffect;
   final VoidCallback onDismiss;
   final bool isLoading;
+  final ValueNotifier<int> depthNotifier;
+  final _Signal autoDismissSignal;
 
   @override
   State<_ToastOverlay> createState() => _ToastOverlayState();
 }
 
 class _ToastOverlayState extends State<_ToastOverlay>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  // Entrance / exit animation.
+  late AnimationController _enterController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+
+  // Depth (card-stack) animation.
+  late AnimationController _depthController;
+  double _visualDepth = 0;
+  double _depthFrom = 0;
+  late Animation<double> _depthAnimation;
+
+  // Swipe state.
+  double _dragOffset = 0;
+  bool _isDismissing = false;
+  AnimationController? _swipeController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
+
+    _enterController = AnimationController(
+      duration: const Duration(milliseconds: 220),
       vsync: this,
     );
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _enterController, curve: Curves.easeOutBack),
+    );
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _enterController, curve: Curves.easeOut));
+    _enterController.forward();
 
-    _controller.forward();
+    _depthController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _depthAnimation = Tween<double>(begin: 0, end: 0).animate(_depthController);
+    _depthController.addListener(() {
+      setState(() => _visualDepth = _depthAnimation.value);
+    });
+
+    widget.depthNotifier.addListener(_onDepthChanged);
+    widget.autoDismissSignal.addListener(_onAutoDismiss);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    widget.depthNotifier.removeListener(_onDepthChanged);
+    widget.autoDismissSignal.removeListener(_onAutoDismiss);
+    _swipeController?.dispose();
+    _depthController.dispose();
+    _enterController.dispose();
     super.dispose();
+  }
+
+  void _onDepthChanged() {
+    final target = widget.depthNotifier.value.toDouble();
+    _depthFrom = _visualDepth;
+    _depthAnimation = Tween<double>(
+      begin: _depthFrom,
+      end: target,
+    ).animate(CurvedAnimation(parent: _depthController, curve: Curves.easeOut));
+    _depthController.forward(from: 0);
+  }
+
+  void _onAutoDismiss() {
+    if (_isDismissing) return;
+    _isDismissing = true;
+    _enterController.reverse().then((_) {
+      if (mounted) widget.onDismiss();
+    });
+  }
+
+  // ── Swipe ──────────────────────────────────────────────────────────────────
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    if (_isDismissing) return;
+    _swipeController?.stop();
+    setState(() => _dragOffset += details.delta.dy);
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    if (_isDismissing) return;
+    final velocity = details.primaryVelocity ?? 0;
+    if (_dragOffset.abs() > 60 || velocity.abs() > 500) {
+      _flyOut(velocity);
+    } else {
+      _snapBack();
+    }
+  }
+
+  void _flyOut(double velocity) {
+    _isDismissing = true;
+    _swipeController?.dispose();
+    _swipeController = AnimationController(
+      duration: const Duration(milliseconds: 220),
+      vsync: this,
+    );
+    final direction = (_dragOffset != 0 ? _dragOffset : velocity) >= 0 ? 1 : -1;
+    final flyTarget = direction * 500.0;
+    final flyAnim = Tween<double>(
+      begin: _dragOffset,
+      end: flyTarget,
+    ).animate(CurvedAnimation(parent: _swipeController!, curve: Curves.easeIn));
+    _swipeController!.addListener(
+      () => setState(() => _dragOffset = flyAnim.value),
+    );
+    _enterController.reverse();
+    _swipeController!.forward().then((_) {
+      if (mounted) widget.onDismiss();
+    });
+  }
+
+  void _snapBack() {
+    _swipeController?.dispose();
+    _swipeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    final snapAnim = Tween<double>(begin: _dragOffset, end: 0.0).animate(
+      CurvedAnimation(parent: _swipeController!, curve: Curves.elasticOut),
+    );
+    _swipeController!.addListener(
+      () => setState(() => _dragOffset = snapAnim.value),
+    );
+    _swipeController!.forward();
+  }
+
+  // ── Visual helpers ──────────────────────────────────────────────────────────
+
+  // depth 0 = front (newest); depth 1 peeks behind, depth 2+ hidden.
+  double get _depthScale => 1.0 - _visualDepth * 0.08;
+
+  double get _depthOpacity =>
+      (_visualDepth >= 2 ? 0.0 : 1.0 - _visualDepth * 0.35).clamp(0.0, 1.0);
+
+  // Peek direction: older toasts peek *toward* the screen center.
+  double get _depthYOffset {
+    switch (widget.position) {
+      case CNToastPosition.top:
+        return _visualDepth * 10; // peek downward (away from edge)
+      case CNToastPosition.center:
+        return _visualDepth * 10;
+      case CNToastPosition.bottom:
+        return -_visualDepth * 10; // peek upward (away from edge)
+    }
   }
 
   Color _getBackgroundColor(BuildContext context) {
     if (widget.backgroundColor != null) return widget.backgroundColor!;
-
     final brightness =
         CupertinoTheme.of(context).brightness ?? Brightness.light;
     final isDark = brightness == Brightness.dark;
-
     switch (widget.style) {
       case CNToastStyle.normal:
         return isDark ? const Color(0xE6333333) : const Color(0xE6FFFFFF);
@@ -446,7 +552,6 @@ class _ToastOverlayState extends State<_ToastOverlay>
 
   Color _getTextColor(BuildContext context) {
     if (widget.textColor != null) return widget.textColor!;
-
     return CupertinoColors.label.resolveFrom(context);
   }
 
@@ -502,46 +607,60 @@ class _ToastOverlayState extends State<_ToastOverlay>
       );
     }
 
-    // Position the toast
-    double? top;
-    double? bottom;
-    Alignment alignment;
-
     final topPadding = MediaQuery.of(context).viewPadding.top;
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
-    switch (widget.position) {
-      case CNToastPosition.top:
-        top = topPadding + 60;
-        alignment = Alignment.topCenter;
-        break;
-      case CNToastPosition.center:
-        alignment = Alignment.center;
-        break;
-      case CNToastPosition.bottom:
-        bottom = bottomPadding + 100;
-        alignment = Alignment.bottomCenter;
-        break;
-    }
+    final dragOpacity = (1.0 - _dragOffset.abs() / 150).clamp(0.0, 1.0);
 
-    return Positioned.fill(
-      top: top,
-      bottom: bottom,
-      child: IgnorePointer(
-        child: Align(
-          alignment: alignment,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: content,
+    // Only the front toast (depth ≈ 0) should receive gestures.
+    // Back toasts share the same screen region and would otherwise all fire
+    // simultaneously on a single swipe.
+    final toast = IgnorePointer(
+      ignoring: _visualDepth > 0.3,
+      child: GestureDetector(
+        onVerticalDragUpdate: widget.isLoading ? null : _onDragUpdate,
+        onVerticalDragEnd: widget.isLoading ? null : _onDragEnd,
+        child: Transform.translate(
+          offset: Offset(0, _depthYOffset + _dragOffset),
+          child: Transform.scale(
+            scale: _depthScale,
+            child: Opacity(
+              opacity: (_depthOpacity * dragOpacity).clamp(0.0, 1.0),
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: content,
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ),
     );
+
+    switch (widget.position) {
+      case CNToastPosition.top:
+        return Positioned(
+          top: topPadding + 60,
+          left: 0,
+          right: 0,
+          child: Align(alignment: Alignment.topCenter, child: toast),
+        );
+      case CNToastPosition.center:
+        return Positioned.fill(
+          child: Align(alignment: Alignment.center, child: toast),
+        );
+      case CNToastPosition.bottom:
+        return Positioned(
+          bottom: bottomPadding + 16,
+          left: 0,
+          right: 0,
+          child: Align(alignment: Alignment.bottomCenter, child: toast),
+        );
+    }
   }
 }
