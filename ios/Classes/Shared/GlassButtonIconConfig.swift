@@ -39,13 +39,13 @@ enum CNImageSource {
   }
 }
 
-// MARK: - CNImageAsset (Swift)
+// MARK: - CNIcon (Swift)
 
 /// Swift image asset: source + optional per-asset color override.
 ///
 /// Call `resolve(width:height:scale:)` to get the platform image.
 /// For `.symbol`, resolve returns `(nil, symbolName)` so SwiftUI can render it.
-struct CNImageAsset {
+struct CNIcon {
   let source: CNImageSource
   let color: PlatformImage?  // non-nil when a per-asset tint was specified
 
@@ -83,32 +83,32 @@ struct CNImageAsset {
 
   // MARK: Parsing
 
-  /// Parses a pre-processed Flutter channel dict → `CNImageAsset`.
+  /// Parses a pre-processed Flutter channel dict → `CNIcon`.
   ///
   /// **Important**: `imageBytes` must be pre-converted to `Data` by the caller
   /// (callers that import Flutter can extract `.data` from `FlutterStandardTypedData`).
   ///
   /// Priority: xcasset > assetPath > imageBytes > iconName (SF Symbol).
-  static func from(dict: [String: Any]) -> CNImageAsset? {
+  static func from(dict: [String: Any]) -> CNIcon? {
     let assetColor: PlatformImage? = nil  // color stored separately; callers set it
 
     if let name = dict["xcassetName"] as? String, !name.isEmpty {
-      return CNImageAsset(source: .xcasset(name: name), color: assetColor)
+      return CNIcon(source: .xcasset(name: name), color: assetColor)
     }
     if let path = dict["assetPath"] as? String, !path.isEmpty {
       let format = dict["imageFormat"] as? String
-      return CNImageAsset(source: .asset(path: path, format: format), color: assetColor)
+      return CNIcon(source: .asset(path: path, format: format), color: assetColor)
     }
     if let data = dict["imageBytes"] as? Data {
       let format = (dict["imageFormat"] as? String) ?? "png"
       switch format {
-      case "svg": return CNImageAsset(source: .svg(data: data), color: assetColor)
-      case "jpg", "jpeg": return CNImageAsset(source: .jpg(data: data), color: assetColor)
-      default: return CNImageAsset(source: .png(data: data), color: assetColor)
+      case "svg": return CNIcon(source: .svg(data: data), color: assetColor)
+      case "jpg", "jpeg": return CNIcon(source: .jpg(data: data), color: assetColor)
+      default: return CNIcon(source: .png(data: data), color: assetColor)
       }
     }
     if let name = dict["iconName"] as? String, !name.isEmpty {
-      return CNImageAsset(source: .symbol(name: name), color: assetColor)
+      return CNIcon(source: .symbol(name: name), color: assetColor)
     }
     return nil
   }
@@ -154,7 +154,7 @@ extension SwiftUI.ContentMode {
 
 @available(iOS 26.0, macOS 26.0, *)
 struct IconConfig {
-  let asset: CNImageAsset?
+  let asset: CNIcon?
   let width: CGFloat
   let height: CGFloat
   let contentMode: SwiftUI.ContentMode
@@ -180,14 +180,14 @@ struct IconConfig {
     let contentMode = ContentMode.from(boxFit: boxFit)
 
     // Try plain-key dict, then translate button-prefixed keys.
-    let asset = CNImageAsset.from(dict: dict)
-      ?? CNImageAsset.from(dict: _buttonPrefixedToPlain(dict))
+    let asset = CNIcon.from(dict: dict)
+      ?? CNIcon.from(dict: _buttonPrefixedToPlain(dict))
 
     return IconConfig(asset: asset, width: width, height: height, contentMode: contentMode)
   }
 }
 
-/// Translates `button`-prefixed keys to plain keys so `CNImageAsset.from(dict:)` can parse them.
+/// Translates `button`-prefixed keys to plain keys so `CNIcon.from(dict:)` can parse them.
 private func _buttonPrefixedToPlain(_ dict: [String: Any]) -> [String: Any] {
   let keyMap: [String: String] = [
     "buttonIconName":    "iconName",

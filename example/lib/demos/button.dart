@@ -86,7 +86,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Glass Chat',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/chat.svg',
                     size: Size(18, 18),
                   ),
@@ -125,68 +125,44 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Gray'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Tinted'),
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Bordered'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon BorderedProminent'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.borderedProminent,
                   ),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Filled'),
                   config: const CNButtonConfig(style: CNButtonStyle.filled),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Glass'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon ProminentGlass'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.prominentGlass,
@@ -211,45 +187,30 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'house.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
                   onPressed: () => _set('Themed Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'house.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
                   tint: CupertinoColors.systemBlue,
                   onPressed: () => _set('Themed Blue'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'house.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
                   tint: CupertinoColors.systemGreen,
                   onPressed: () => _set('Themed Green'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'house.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
                   tint: CupertinoColors.systemRed,
                   onPressed: () => _set('Themed Red'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'house.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
                   tint: CupertinoColors.systemOrange,
                   onPressed: () => _set('Themed Orange'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
@@ -276,10 +237,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 // tint: both label and icon follow the tint
                 CNButton(
                   label: 'Tint',
-                  icon: const CNImageAsset.symbol(
-                    'star.fill',
-                    size: Size(16, 16),
-                  ),
+                  icon: const CNIcon.symbol('star.fill', size: Size(16, 16)),
                   onPressed: () => _set('CNButtonTheme tint'),
                   theme: const CNButtonTheme(tint: CupertinoColors.systemBlue),
                   config: const CNButtonConfig(
@@ -302,10 +260,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 // iconColor: icon tint only, label is unaffected
                 CNButton(
                   label: 'Icon color',
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(16, 16),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(16, 16)),
                   onPressed: () => _set('CNButtonTheme iconColor'),
                   theme: const CNButtonTheme(
                     iconColor: CupertinoColors.systemRed,
@@ -317,10 +272,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 // glassMaterial inside CNButtonTheme
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'waveform',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('waveform', size: Size(18, 18)),
                   onPressed: () => _set('CNButtonTheme glassMaterial'),
                   theme: const CNButtonTheme(
                     tint: CupertinoColors.systemGreen,
@@ -371,7 +323,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/home.svg',
@@ -381,7 +333,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/search.svg',
@@ -391,7 +343,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/home.svg'
                         : 'assets/icons/profile.svg',
@@ -401,7 +353,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/search.svg'
                         : 'assets/icons/chat.svg',
@@ -411,7 +363,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/home.svg',
@@ -422,7 +374,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: CNImageAsset.asset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/search.svg',
@@ -453,7 +405,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(18, 18),
                   ),
@@ -461,7 +413,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock.png',
                     size: Size(18, 18),
                   ),
@@ -469,7 +421,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock_filled.png',
                     size: Size(18, 18),
                   ),
@@ -477,7 +429,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/close.png',
                     size: Size(18, 18),
                   ),
@@ -485,7 +437,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/coins.png',
                     size: Size(18, 18),
                   ),
@@ -493,7 +445,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(18, 18),
                     color: CupertinoColors.systemGreen,
@@ -503,7 +455,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'PNG with Text',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(16, 16),
                     color: CupertinoColors.activeGreen,
@@ -536,50 +488,32 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(12, 12),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(12, 12)),
                   onPressed: () => _set('12px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(16, 16),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(16, 16)),
                   onPressed: () => _set('16px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(20, 20),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(20, 20)),
                   onPressed: () => _set('20px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(24, 24),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(24, 24)),
                   onPressed: () => _set('24px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(28, 28),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(28, 28)),
                   onPressed: () => _set('28px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
-                    'heart.fill',
-                    size: Size(32, 32),
-                  ),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(32, 32)),
                   onPressed: () => _set('32px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
@@ -592,7 +526,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(12, 12),
                   ),
@@ -600,7 +534,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(16, 16),
                   ),
@@ -608,7 +542,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(20, 20),
                   ),
@@ -616,7 +550,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(24, 24),
                   ),
@@ -624,7 +558,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(28, 28),
                   ),
@@ -632,7 +566,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(32, 32),
                   ),
@@ -673,10 +607,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNImageAsset.symbol(
-                      'star.fill',
-                      size: Size(18, 18),
-                    ),
+                    icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                     onPressed: () => _set('Light BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -708,10 +639,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNImageAsset.symbol(
-                      'star.fill',
-                      size: Size(18, 18),
-                    ),
+                    icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                     onPressed: () => _set('Dark BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -745,7 +673,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNImageAsset.symbol(
+                          icon: const CNIcon.symbol(
                             'heart.fill',
                             size: Size(18, 18),
                           ),
@@ -780,7 +708,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNImageAsset.symbol(
+                          icon: const CNIcon.symbol(
                             'heart.fill',
                             size: Size(18, 18),
                           ),
@@ -815,7 +743,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNImageAsset.symbol(
+                          icon: const CNIcon.symbol(
                             'heart.fill',
                             size: Size(18, 18),
                           ),
@@ -860,10 +788,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNImageAsset.symbol(
-                      'sparkles',
-                      size: Size(18, 18),
-                    ),
+                    icon: const CNIcon.symbol('sparkles', size: Size(18, 18)),
                     onPressed: () => _set('Gradient BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -882,7 +807,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               children: [
                 CNButton(
                   label: 'Leading',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/home.svg',
                     size: Size(16, 16),
                   ),
@@ -896,7 +821,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Trailing',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/search.svg',
                     size: Size(16, 16),
                   ),
@@ -910,7 +835,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Top',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
                     size: Size(16, 16),
                   ),
@@ -924,7 +849,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Bottom',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/chat.svg',
                     size: Size(16, 16),
                   ),
@@ -938,7 +863,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Top',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
                     size: Size(16, 16),
                   ),
@@ -961,7 +886,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               children: [
                 CNButton(
                   label: 'No Padding',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/home.svg',
                     size: Size(16, 16),
                   ),
@@ -973,7 +898,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'With Padding',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/search.svg',
                     size: Size(16, 16),
                   ),
@@ -1044,7 +969,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               buttons: [
                 CNButtonData(
                   label: 'Home',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/home.svg',
                     size: Size(16, 16),
                   ),
@@ -1057,7 +982,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButtonData(
                   label: 'Search',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/search.svg',
                     size: Size(16, 16),
                   ),
@@ -1070,7 +995,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButtonData(
                   label: 'Profile',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
                     size: Size(16, 16),
                   ),
@@ -1100,7 +1025,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacingForGlass: 40.0,
               buttons: [
                 CNButtonData.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
                     size: Size(18, 18),
                     color: CupertinoColors.systemGreen,
@@ -1113,7 +1038,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButtonData.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock.png',
                     size: Size(18, 18),
                     color: CupertinoColors.systemBlue,
@@ -1126,7 +1051,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButtonData.icon(
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/coins.png',
                     size: Size(18, 18),
                     color: CupertinoColors.systemYellow,
@@ -1208,7 +1133,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               buttons: [
                 CNButtonData(
                   label: 'Morph Button 1',
-                  icon: const CNImageAsset.asset(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock.png',
                     size: Size(18, 18),
                   ),
@@ -1220,10 +1145,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButtonData(
                   label: 'Morph Button 2',
-                  icon: const CNImageAsset.symbol(
-                    'star.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                   onPressed: () => _set('Morph Button 2'),
                   config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
@@ -1232,7 +1154,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButtonData(
                   label: 'Morph Button 3',
-                  icon: const CNImageAsset.symbol(
+                  icon: const CNIcon.symbol(
                     'bookmark.fill',
                     size: Size(18, 18),
                   ),
@@ -1270,7 +1192,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButton.icon(
-                  icon: const CNImageAsset.symbol(
+                  icon: const CNIcon.symbol(
                     'hand.tap.fill',
                     size: Size(18, 18),
                   ),
@@ -1309,10 +1231,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacingForGlass: 40.0,
               buttons: [
                 CNButtonData.icon(
-                  icon: const CNImageAsset.symbol(
-                    'play.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('play.fill', size: Size(18, 18)),
                   onPressed: () => _set('Play'),
                   config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
@@ -1322,10 +1241,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButtonData.icon(
-                  icon: const CNImageAsset.symbol(
-                    'pause.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('pause.fill', size: Size(18, 18)),
                   onPressed: () => _set('Pause'),
                   config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
@@ -1335,10 +1251,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButtonData.icon(
-                  icon: const CNImageAsset.symbol(
-                    'stop.fill',
-                    size: Size(18, 18),
-                  ),
+                  icon: const CNIcon.symbol('stop.fill', size: Size(18, 18)),
                   onPressed: () => _set('Stop'),
                   config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
@@ -1542,7 +1455,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                 children: [
                   // SF Symbol version
                   CNButton.icon(
-                    icon: CNImageAsset.symbol(
+                    icon: CNIcon.symbol(
                       _isFavorited ? 'heart.fill' : 'heart',
                       size: const Size(20, 20),
                       color: _isFavorited
@@ -1554,7 +1467,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                   ),
                   // Image asset version
                   CNButton.icon(
-                    icon: CNImageAsset.asset(
+                    icon: CNIcon.asset(
                       _isFavorited
                           ? 'assets/icons/checkcircle.png'
                           : 'assets/icons/clock.png',
@@ -1568,7 +1481,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                   ),
                   // Tinted symbol version
                   CNButton.icon(
-                    icon: CNImageAsset.symbol(
+                    icon: CNIcon.symbol(
                       _isFavorited ? 'bookmark.fill' : 'bookmark',
                       size: const Size(20, 20),
                     ),
@@ -1608,7 +1521,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    icon: CNImageAsset.asset(
+                    icon: CNIcon.asset(
                       _imagePaths[_currentImageIndex],
                       size: const Size(20, 20),
                     ),
@@ -1654,7 +1567,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    icon: CNImageAsset.asset(
+                    icon: CNIcon.asset(
                       _pngPaths[_currentPngIndex],
                       size: const Size(20, 20),
                       color: [
@@ -1710,7 +1623,7 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    icon: CNImageAsset.symbol(
+                    icon: CNIcon.symbol(
                       _iconNames[_currentIconIndex],
                       size: const Size(20, 20),
                     ),
@@ -1844,7 +1757,7 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
         buttons.add(
           CNButtonData(
             label: buttonData['label'] as String,
-            icon: CNImageAsset.asset(
+            icon: CNIcon.asset(
               buttonData['path'] as String,
               size: const Size(16, 16),
               color: isFavorited ? CupertinoColors.systemRed : null,
@@ -1862,7 +1775,7 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
         buttons.add(
           CNButtonData(
             label: buttonData['label'] as String,
-            icon: CNImageAsset.symbol(
+            icon: CNIcon.symbol(
               buttonData['symbol'] as String,
               size: const Size(16, 16),
               color: isFavorited ? CupertinoColors.systemRed : null,

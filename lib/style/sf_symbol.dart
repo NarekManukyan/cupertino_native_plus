@@ -29,21 +29,21 @@ enum CNSymbolRenderingMode {
 enum _CNSourceType { symbol, xcasset, asset, bytes }
 
 // ---------------------------------------------------------------------------
-// CNImageAsset
+// CNIcon
 // ---------------------------------------------------------------------------
 
 /// Describes an image or icon asset for native rendering.
 ///
 /// Use the named constructors to create assets from different sources:
-/// - [CNImageAsset.symbol] — SF Symbol (system icon)
-/// - [CNImageAsset.xcasset] — Image from the app's asset catalog
-/// - [CNImageAsset.asset] — Flutter asset path (svg/png/jpg auto-detected)
-/// - [CNImageAsset.svg] — SVG bytes
-/// - [CNImageAsset.png] — PNG bytes
-/// - [CNImageAsset.jpg] — JPG bytes
-/// - [CNImageAsset.data] — Generic bytes with explicit format
-class CNImageAsset extends Equatable {
-  const CNImageAsset._({
+/// - [CNIcon.symbol] — SF Symbol (system icon)
+/// - [CNIcon.xcasset] — Image from the app's asset catalog
+/// - [CNIcon.asset] — Flutter asset path (svg/png/jpg auto-detected)
+/// - [CNIcon.svg] — SVG bytes
+/// - [CNIcon.png] — PNG bytes
+/// - [CNIcon.jpg] — JPG bytes
+/// - [CNIcon.data] — Generic bytes with explicit format
+class CNIcon extends Equatable {
+  const CNIcon._({
     required _CNSourceType type,
     String? name,
     String? path,
@@ -86,7 +86,7 @@ class CNImageAsset extends Equatable {
   // -------------------------------------------------------------------------
 
   /// SF Symbol — renders via `Image(systemName:)` in SwiftUI.
-  const CNImageAsset.symbol(
+  const CNIcon.symbol(
     String name, {
     Size size = const Size(24, 24),
     Color? color,
@@ -102,7 +102,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// xcasset image from the app bundle — loaded via `UIImage(named:)`.
-  const CNImageAsset.xcasset(
+  const CNIcon.xcasset(
     String name, {
     Size size = const Size(24, 24),
     Color? color,
@@ -116,7 +116,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// Flutter asset path — format is auto-detected from the file extension.
-  const CNImageAsset.asset(
+  const CNIcon.asset(
     String path, {
     Size size = const Size(24, 24),
     Color? color,
@@ -132,7 +132,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// SVG bytes.
-  const CNImageAsset.svg(
+  const CNIcon.svg(
     Uint8List data, {
     Size size = const Size(24, 24),
     Color? color,
@@ -147,7 +147,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// PNG bytes.
-  const CNImageAsset.png(
+  const CNIcon.png(
     Uint8List data, {
     Size size = const Size(24, 24),
     Color? color,
@@ -162,7 +162,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// JPG bytes.
-  const CNImageAsset.jpg(
+  const CNIcon.jpg(
     Uint8List data, {
     Size size = const Size(24, 24),
     Color? color,
@@ -177,7 +177,7 @@ class CNImageAsset extends Equatable {
        );
 
   /// Generic bytes with an explicit format string (e.g. `'png'`, `'svg'`).
-  const CNImageAsset.data(
+  const CNIcon.data(
     Uint8List bytes,
     String format, {
     Size size = const Size(24, 24),
@@ -223,10 +223,10 @@ class CNImageAsset extends Equatable {
   // Backward-compat accessors (used by CNIcon, CNTabBar, CNPopupMenuButton)
   // -------------------------------------------------------------------------
 
-  /// Flutter asset path for [CNImageAsset.asset] sources. Empty string otherwise.
+  /// Flutter asset path for [CNIcon.asset] sources. Empty string otherwise.
   String get assetPath => _path ?? '';
 
-  /// xcasset catalog name for [CNImageAsset.xcasset] sources. Null otherwise.
+  /// xcasset catalog name for [CNIcon.xcasset] sources. Null otherwise.
   String? get xcassetName => _type == _CNSourceType.xcasset ? _name : null;
 
   /// Raw bytes for bytes-based sources. Null otherwise.
@@ -258,7 +258,7 @@ class CNImageAsset extends Equatable {
 
 /// Describes an SF Symbol to render natively.
 ///
-/// Prefer [CNImageAsset.symbol] for new code.
+/// Prefer [CNIcon.symbol] for new code.
 class CNSymbol extends Equatable {
   /// The SF Symbol name, e.g. `chevron.down`.
   final String name;

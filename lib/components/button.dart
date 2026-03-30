@@ -154,10 +154,10 @@ class CNButton extends StatefulWidget {
   /// Button text (null in icon-only mode).
   final String? label;
 
-  /// Icon/image asset for the button. Use [CNImageAsset.symbol], [CNImageAsset.xcasset],
-  /// [CNImageAsset.asset], [CNImageAsset.png], [CNImageAsset.svg], etc.
+  /// Icon/image asset for the button. Use [CNIcon.symbol], [CNIcon.xcasset],
+  /// [CNIcon.asset], [CNIcon.png], [CNIcon.svg], etc.
   /// Priority: xcasset > asset/bytes > symbol.
-  final CNImageAsset? icon;
+  final CNIcon? icon;
 
   /// Callback when pressed.
   final VoidCallback? onPressed;

@@ -2,13 +2,13 @@
 
 ## Migrating to 0.0.7
 
-Version 0.0.7 unifies all icon and image handling under a single `CNImageAsset` type. The old `CNSymbol` class, the positional `CNImageAsset(path, size:)` constructor, and the `customIcon: IconData` parameter are all removed.
+Version 0.0.7 unifies all icon and image handling under a single `CNIcon` type. The old `CNSymbol` class, the positional `CNIcon(path, size:)` constructor, and the `customIcon: IconData` parameter are all removed.
 
 ---
 
-### 1. `CNSymbol` → `CNImageAsset.symbol()`
+### 1. `CNSymbol` → `CNIcon.symbol()`
 
-`CNSymbol` no longer exists. Replace every usage with `CNImageAsset.symbol()`.
+`CNSymbol` no longer exists. Replace every usage with `CNIcon.symbol()`.
 
 **Before:**
 ```dart
@@ -25,7 +25,7 @@ CNButton(
 ```dart
 CNButton(
   label: 'Home',
-  icon: const CNImageAsset.symbol('house.fill', size: Size(20, 20)),
+  icon: const CNIcon.symbol('house.fill', size: Size(20, 20)),
   onPressed: () {},
 )
 ```
@@ -39,14 +39,14 @@ Key differences:
 
 | Old | New |
 |---|---|
-| `CNSymbol('name')` | `CNImageAsset.symbol('name')` |
-| `CNSymbol('name', size: 24)` | `CNImageAsset.symbol('name', size: Size(24, 24))` |
-| `CNSymbol('name', color: Colors.red)` | `CNImageAsset.symbol('name', color: Colors.red)` |
-| `CNSymbol('name', mode: CNSymbolRenderingMode.multicolor)` | `CNImageAsset.symbol('name', mode: CNSymbolRenderingMode.multicolor)` |
+| `CNSymbol('name')` | `CNIcon.symbol('name')` |
+| `CNSymbol('name', size: 24)` | `CNIcon.symbol('name', size: Size(24, 24))` |
+| `CNSymbol('name', color: Colors.red)` | `CNIcon.symbol('name', color: Colors.red)` |
+| `CNSymbol('name', mode: CNSymbolRenderingMode.multicolor)` | `CNIcon.symbol('name', mode: CNSymbolRenderingMode.multicolor)` |
 
 ---
 
-### 2. `CNImageAsset(path, size:)` → `CNImageAsset.asset()`
+### 2. `CNIcon(path, size:)` → `CNIcon.asset()`
 
 The old positional constructor is gone. Use the named `.asset()` constructor.
 
@@ -54,7 +54,7 @@ The old positional constructor is gone. Use the named `.asset()` constructor.
 ```dart
 CNButton(
   label: 'Custom',
-  imageAsset: CNImageAsset('assets/icons/logo.svg', size: 24),
+  imageAsset: CNIcon('assets/icons/logo.svg', size: 24),
   onPressed: () {},
 )
 ```
@@ -63,7 +63,7 @@ CNButton(
 ```dart
 CNButton(
   label: 'Custom',
-  icon: const CNImageAsset.asset('assets/icons/logo.svg', size: Size(24, 24)),
+  icon: const CNIcon.asset('assets/icons/logo.svg', size: Size(24, 24)),
   onPressed: () {},
 )
 ```
@@ -91,18 +91,18 @@ CNButton(
 // After
 CNButton(
   label: 'Favorite',
-  icon: const CNImageAsset.symbol('heart.fill', size: Size(20, 20)),
+  icon: const CNIcon.symbol('heart.fill', size: Size(20, 20)),
   tint: Colors.red,
   onPressed: () {},
 )
 ```
 
-**Option B — Render your Flutter icon to PNG bytes and use `CNImageAsset.png()`:**
+**Option B — Render your Flutter icon to PNG bytes and use `CNIcon.png()`:**
 ```dart
 // Render IconData to bytes first, then:
 CNButton(
   label: 'Favorite',
-  icon: CNImageAsset.png(iconBytes, size: Size(20, 20)),
+  icon: CNIcon.png(iconBytes, size: Size(20, 20)),
   onPressed: () {},
 )
 ```
@@ -119,7 +119,7 @@ CNButtonData(
   label: 'Save',
   icon: CNSymbol('checkmark'),        // was CNSymbol?
   customIcon: CupertinoIcons.check_mark, // removed
-  imageAsset: CNImageAsset('path'),    // removed
+  imageAsset: CNIcon('path'),    // removed
   enabled: true,
 )
 ```
@@ -128,7 +128,7 @@ CNButtonData(
 ```dart
 CNButtonData(
   label: 'Save',
-  icon: const CNImageAsset.symbol('checkmark'), // unified CNImageAsset?
+  icon: const CNIcon.symbol('checkmark'), // unified CNIcon?
   enabled: true,
 )
 ```
@@ -201,7 +201,7 @@ Color priority: `tint`/`tintDark` > `labelColor`/`iconColor` > system default.
 
 ### 7. Tab Bar icons
 
-`CNTabBarItem`, `CNTab`, and segmented control icons all accept `CNImageAsset` instead of `CNSymbol`.
+`CNTabBarItem`, `CNTab`, and segmented control icons all accept `CNIcon` instead of `CNSymbol`.
 
 **Before:**
 ```dart
@@ -216,8 +216,8 @@ CNTabBarItem(
 ```dart
 CNTabBarItem(
   label: 'Home',
-  icon: const CNImageAsset.symbol('house'),
-  activeIcon: const CNImageAsset.symbol('house.fill'),
+  icon: const CNIcon.symbol('house'),
+  activeIcon: const CNIcon.symbol('house.fill'),
 )
 ```
 
@@ -232,7 +232,7 @@ CNIcon(symbol: CNSymbol('star.fill', size: 32, color: Colors.amber))
 
 **After:**
 ```dart
-CNIcon(asset: const CNImageAsset.symbol('star.fill', size: Size(32, 32), color: Colors.amber))
+CNIcon(asset: const CNIcon.symbol('star.fill', size: Size(32, 32), color: Colors.amber))
 ```
 
 ---
@@ -246,7 +246,7 @@ CNPopupMenuItem(label: 'Edit', icon: CNSymbol('pencil'))
 
 **After:**
 ```dart
-CNPopupMenuItem(label: 'Edit', icon: const CNImageAsset.symbol('pencil'))
+CNPopupMenuItem(label: 'Edit', icon: const CNIcon.symbol('pencil'))
 ```
 
 ---
@@ -257,17 +257,17 @@ Beyond the migration, 0.0.7 unlocks new icon sources that were not previously av
 
 ```dart
 // xcasset from your app's asset catalog
-icon: const CNImageAsset.xcasset('MyAppLogo', size: Size(24, 24))
+icon: const CNIcon.xcasset('MyAppLogo', size: Size(24, 24))
 
 // SVG bytes (loaded from network, file, etc.)
-icon: CNImageAsset.svg(svgBytes, size: Size(24, 24))
+icon: CNIcon.svg(svgBytes, size: Size(24, 24))
 
 // PNG bytes
-icon: CNImageAsset.png(pngBytes, size: Size(24, 24))
+icon: CNIcon.png(pngBytes, size: Size(24, 24))
 
 // JPG bytes
-icon: CNImageAsset.jpg(jpgBytes, size: Size(24, 24))
+icon: CNIcon.jpg(jpgBytes, size: Size(24, 24))
 
 // BoxFit for scaling behavior
-icon: const CNImageAsset.asset('assets/logo.png', size: Size(40, 40), fit: BoxFit.cover)
+icon: const CNIcon.asset('assets/logo.png', size: Size(40, 40), fit: BoxFit.cover)
 ```

@@ -31,16 +31,16 @@ import 'button.dart';
 /// CNGlassButtonGroup(
 ///   buttons: [
 ///     CNButtonData.icon(
-///       icon: CNImageAsset.symbol('house'),
+///       icon: CNIcon.symbol('house'),
 ///       onPressed: () => print('Home'),
 ///     ),
 ///     CNButtonData.icon(
-///       icon: CNImageAsset.symbol('gear'),
+///       icon: CNIcon.symbol('gear'),
 ///       onPressed: () => print('Settings'),
 ///     ),
 ///     CNButtonData(
 ///       label: 'More',
-///       icon: CNImageAsset.symbol('ellipsis'),
+///       icon: CNIcon.symbol('ellipsis'),
 ///       onPressed: () => print('More'),
 ///     ),
 ///   ],
@@ -410,9 +410,9 @@ class _CNGlassButtonGroupState extends State<CNGlassButtonGroup> {
     };
   }
 
-  /// Resolves [CNImageAsset] into a flat dict ready for the native layer.
+  /// Resolves [CNIcon] into a flat dict ready for the native layer.
   Future<Map<String, dynamic>> _resolveIconMap(
-    CNImageAsset? icon,
+    CNIcon? icon,
     BuildContext context,
   ) async {
     if (icon == null) return {};

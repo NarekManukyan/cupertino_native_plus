@@ -16,11 +16,11 @@ import 'image_placement.dart';
 /// CNGlassButtonGroup(
 ///   buttons: [
 ///     CNButtonData.icon(
-///       icon: CNImageAsset.symbol('house'),
+///       icon: CNIcon.symbol('house'),
 ///       onPressed: () => print('Home'),
 ///     ),
 ///     CNButtonData.icon(
-///       icon: CNImageAsset.symbol('gear'),
+///       icon: CNIcon.symbol('gear'),
 ///       onPressed: () => print('Settings'),
 ///     ),
 ///   ],
@@ -50,9 +50,9 @@ class CNButtonData {
   /// The text label for the button. Null for icon-only buttons.
   final String? label;
 
-  /// Image/icon asset to display. Use [CNImageAsset.symbol], [CNImageAsset.xcasset],
-  /// [CNImageAsset.asset], [CNImageAsset.png], [CNImageAsset.svg], etc.
-  final CNImageAsset? icon;
+  /// Image/icon asset to display. Use [CNIcon.symbol], [CNIcon.xcasset],
+  /// [CNIcon.asset], [CNIcon.png], [CNIcon.svg], etc.
+  final CNIcon? icon;
 
   /// Callback when the button is pressed.
   final VoidCallback? onPressed;
@@ -72,7 +72,7 @@ class CNButtonData {
   /// Creates a copy of this data with the given fields replaced.
   CNButtonData copyWith({
     String? label,
-    CNImageAsset? icon,
+    CNIcon? icon,
     VoidCallback? onPressed,
     bool? enabled,
     CNButtonTheme? theme,

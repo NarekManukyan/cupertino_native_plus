@@ -267,8 +267,8 @@ void main() {
           home: Scaffold(
             body: CNGlassButtonGroup(
               buttons: [
-                CNButtonData.icon(icon: CNImageAsset.symbol('house')),
-                CNButtonData.icon(icon: CNImageAsset.symbol('gearshape')),
+                CNButtonData.icon(icon: CNIcon.symbol('house')),
+                CNButtonData.icon(icon: CNIcon.symbol('gearshape')),
               ],
             ),
           ),
@@ -749,8 +749,8 @@ void main() {
     });
 
     test('creates item with image asset', () {
-      final asset = CNImageAsset.asset('assets/icon.png');
-      final activeAsset = CNImageAsset.asset('assets/icon_active.png');
+      final asset = CNIcon.asset('assets/icon.png');
+      final activeAsset = CNIcon.asset('assets/icon_active.png');
       final item = CNTabBarItem(
         label: 'Custom',
         imageAsset: asset,

@@ -225,7 +225,7 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
   // MARK: - Parsing helpers
 
   /// Pre-converts any `FlutterStandardTypedData` values to `Data` in the dict
-  /// so that `IconConfig.from(dict:)` and `CNImageAsset.from(dict:)` can read them.
+  /// so that `IconConfig.from(dict:)` and `CNIcon.from(dict:)` can read them.
   private static func preprocessDict(_ dict: [String: Any]) -> [String: Any] {
     var out = dict
     for (key, value) in dict {

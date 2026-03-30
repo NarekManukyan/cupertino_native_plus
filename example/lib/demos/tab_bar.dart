@@ -90,34 +90,30 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
                   ? [
                       CNTabBarItem(
                         label: 'Home',
-                        imageAsset: CNImageAsset.asset(
-                          'assets/icons/profile.svg',
-                        ),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/profile.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/profile-filled.svg',
                         ),
                         badge: '5',
                       ),
                       CNTabBarItem(
                         label: 'Search',
-                        imageAsset: CNImageAsset.asset('assets/icons/chat.svg'),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/chat.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/chat-filled.svg',
                         ),
                         badge: '8',
                       ),
                       CNTabBarItem(
                         label: 'Profile',
-                        imageAsset: CNImageAsset.asset('assets/icons/home.svg'),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/home.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/home_filled.svg',
                         ),
                       ),
                       CNTabBarItem(
-                        imageAsset: CNImageAsset.asset(
-                          'assets/icons/search.svg',
-                        ),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/search.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/search-filled.svg',
                         ),
                       ),
@@ -125,34 +121,30 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
                   : [
                       CNTabBarItem(
                         label: 'Home',
-                        imageAsset: CNImageAsset.asset('assets/icons/home.svg'),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/home.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/home_filled.svg',
                         ),
                         badge: '3',
                       ),
                       CNTabBarItem(
                         label: 'Search',
-                        imageAsset: CNImageAsset.asset(
-                          'assets/icons/search.svg',
-                        ),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/search.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/search-filled.svg',
                         ),
                         badge: '12',
                       ),
                       CNTabBarItem(
                         label: 'Profile',
-                        imageAsset: CNImageAsset.asset(
-                          'assets/icons/profile.svg',
-                        ),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/profile.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/profile-filled.svg',
                         ),
                       ),
                       CNTabBarItem(
-                        imageAsset: CNImageAsset.asset('assets/icons/chat.svg'),
-                        activeImageAsset: CNImageAsset.asset(
+                        icon: CNIcon.asset('assets/icons/chat.svg'),
+                        activeIcon: CNIcon.asset(
                           'assets/icons/chat-filled.svg',
                         ),
                       ),

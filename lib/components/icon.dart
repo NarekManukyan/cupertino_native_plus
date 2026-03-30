@@ -36,7 +36,7 @@ class CNIcon extends StatefulWidget {
 
   /// Custom image asset (SVG, PNG, etc.) to render.
   /// If provided, this takes precedence over [symbol] and [customIcon].
-  final CNImageAsset? imageAsset;
+  final CNIcon? imageAsset;
 
   /// Optional custom icon from CupertinoIcons, Icons, or any IconData.
   /// If provided, this takes precedence over [symbol] but not [imageAsset].
@@ -118,8 +118,8 @@ class _CNIconState extends State<CNIcon> {
               height: widget.height ?? defaultSize,
             );
           }
-          // Create a new CNImageAsset with resolved path
-          final resolvedImageAsset = CNImageAsset.asset(
+          // Create a new CNIcon with resolved path
+          final resolvedImageAsset = CNIcon.asset(
             snapshot.data!,
             size: widget.imageAsset!.size,
             color: widget.imageAsset!.color,
@@ -151,7 +151,7 @@ class _CNIconState extends State<CNIcon> {
   Widget _buildNativeIcon(
     BuildContext context, {
     Uint8List? customIconBytes,
-    CNImageAsset? imageAsset,
+    CNIcon? imageAsset,
   }) {
     const viewType = ViewTypes.cupertinoNativeIcon;
 

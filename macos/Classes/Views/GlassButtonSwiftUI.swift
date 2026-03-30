@@ -110,7 +110,7 @@ struct GlassButtonSwiftUI: View {
   }
 
   @ViewBuilder
-  private func resolvedIconView(ic: IconConfig, asset: CNImageAsset) -> some View {
+  private func resolvedIconView(ic: IconConfig, asset: CNIcon) -> some View {
     let scale = NSScreen.main?.backingScaleFactor ?? 2.0
     let resolved = asset.resolve(width: ic.width, height: ic.height, scale: scale)
     if let image = resolved.0 {

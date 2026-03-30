@@ -26,7 +26,7 @@
 ///
 /// ## Styles & Configuration
 /// - [CNButtonStyle], [CNButtonConfig], [CNButtonTheme], [CNButtonData]
-/// - [CNImageAsset], [CNSymbol], [CNSymbolRenderingMode]
+/// - [CNIcon], [CNSymbol], [CNSymbolRenderingMode]
 /// - [CNImagePlacement], [CNGlassEffect], [CNGlassEffectShape]
 /// - [CNButtonGlassMaterial], [LiquidGlassConfig]
 /// - [CNSpotlightMode], [CNTabBarSearchItem], [CNTabBarSearchStyle]

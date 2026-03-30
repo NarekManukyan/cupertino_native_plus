@@ -94,7 +94,7 @@ struct GlassButtonSwiftUI: View {
   }
 
   @ViewBuilder
-  private func resolvedIconView(ic: IconConfig, asset: CNImageAsset) -> some View {
+  private func resolvedIconView(ic: IconConfig, asset: CNIcon) -> some View {
     let resolved = asset.resolve(
       width: ic.width, height: ic.height, scale: UIScreen.main.scale)
     if let image = resolved.0 {

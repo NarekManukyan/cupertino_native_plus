@@ -98,12 +98,8 @@ class CupertinoTabBarPlatformView: NSObject, FlutterPlatformView, UITabBarDelega
           appearance.inlineLayoutAppearance,
           appearance.compactInlineLayoutAppearance,
         ] {
-          if let attrs = buildAttrs(labelStyleDict) {
-            layoutAppearance.normal.titleTextAttributes = attrs
-          }
-          if let attrs = buildAttrs(activeLabelStyleDict) {
-            layoutAppearance.selected.titleTextAttributes = attrs
-          }
+          layoutAppearance.normal.titleTextAttributes = buildAttrs(labelStyleDict) ?? [:]
+          layoutAppearance.selected.titleTextAttributes = buildAttrs(activeLabelStyleDict) ?? [:]
         }
         bar.standardAppearance = appearance
         if #available(iOS 15.0, *) {

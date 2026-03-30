@@ -55,7 +55,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'CNImageAsset Examples',
+                'CNIcon Examples',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -78,25 +78,19 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
               Row(
                 children: [
                   const CNIcon(
-                    imageAsset: CNImageAsset('assets/icons/home.svg', size: 32),
+                    imageAsset: CNIcon('assets/icons/home.svg', size: 32),
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
-                      'assets/icons/search.svg',
-                      size: 32,
-                    ),
+                    imageAsset: CNIcon('assets/icons/search.svg', size: 32),
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
-                      'assets/icons/profile.svg',
-                      size: 32,
-                    ),
+                    imageAsset: CNIcon('assets/icons/profile.svg', size: 32),
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset('assets/icons/chat.svg', size: 32),
+                    imageAsset: CNIcon('assets/icons/chat.svg', size: 32),
                   ),
                 ],
               ),
@@ -110,7 +104,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
                 ),
                 const SizedBox(height: 8),
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNIcon(
                     'assets/icons/home.svg', // fallback path
                     imageData: _svgData!,
                     imageFormat: 'svg',
@@ -128,7 +122,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
                 ),
                 const SizedBox(height: 8),
                 CNIcon(
-                  imageAsset: CNImageAsset(
+                  imageAsset: CNIcon(
                     'assets/icons/search.svg', // fallback path
                     imageData: _pngData!,
                     imageFormat: 'svg',
@@ -147,7 +141,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
               Row(
                 children: [
                   const CNIcon(
-                    imageAsset: CNImageAsset(
+                    imageAsset: CNIcon(
                       'assets/icons/home.svg',
                       size: 32,
                       color: CupertinoColors.systemBlue,
@@ -156,7 +150,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
+                    imageAsset: CNIcon(
                       'assets/icons/search.svg',
                       size: 32,
                       color: CupertinoColors.systemRed,
@@ -165,7 +159,7 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
+                    imageAsset: CNIcon(
                       'assets/icons/profile.svg',
                       size: 32,
                       color: CupertinoColors.systemGreen,
@@ -185,29 +179,26 @@ class _ImageAssetDemoState extends State<ImageAssetDemo> {
               Row(
                 children: [
                   const CNIcon(
-                    imageAsset: CNImageAsset('assets/icons/home.svg', size: 32),
+                    imageAsset: CNIcon('assets/icons/home.svg', size: 32),
                   ),
                   const SizedBox(width: 8),
                   const Text('vs', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
+                    imageAsset: CNIcon(
                       'assets/icons/home_filled.svg',
                       size: 32,
                     ),
                   ),
                   const SizedBox(width: 16),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
-                      'assets/icons/search.svg',
-                      size: 32,
-                    ),
+                    imageAsset: CNIcon('assets/icons/search.svg', size: 32),
                   ),
                   const SizedBox(width: 8),
                   const Text('vs', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   const CNIcon(
-                    imageAsset: CNImageAsset(
+                    imageAsset: CNIcon(
                       'assets/icons/search-filled.svg',
                       size: 32,
                     ),

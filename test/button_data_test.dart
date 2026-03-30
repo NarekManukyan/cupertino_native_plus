@@ -25,7 +25,7 @@ void main() {
     });
 
     test('creates button with SF Symbol icon', () {
-      const icon = CNImageAsset.symbol('star.fill', size: Size(24, 24));
+      const icon = CNIcon.symbol('star.fill', size: Size(24, 24));
       final button = CNButtonData.icon(icon: icon);
 
       expect(button.icon, isNotNull);
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('creates icon button with Flutter asset', () {
-      const icon = CNImageAsset.asset('assets/star.png');
+      const icon = CNIcon.asset('assets/star.png');
       final button = CNButtonData.icon(icon: icon);
 
       expect(button.icon!.assetPath, 'assets/star.png');
@@ -91,12 +91,8 @@ void main() {
       });
 
       test('copies icon button with new icon', () {
-        final original = CNButtonData.icon(
-          icon: const CNImageAsset.symbol('star'),
-        );
-        final copy = original.copyWith(
-          icon: const CNImageAsset.symbol('heart'),
-        );
+        final original = CNButtonData.icon(icon: const CNIcon.symbol('star'));
+        final copy = original.copyWith(icon: const CNIcon.symbol('heart'));
 
         expect(copy.icon!.toMap()['iconName'], 'heart');
         expect(copy.isIcon, true);
@@ -243,9 +239,9 @@ void main() {
     });
   });
 
-  group('CNImageAsset', () {
+  group('CNIcon', () {
     test('creates image asset with asset path', () {
-      const asset = CNImageAsset.asset('assets/icon.png');
+      const asset = CNIcon.asset('assets/icon.png');
 
       expect(asset.assetPath, 'assets/icon.png');
       expect(asset.size, const Size(24, 24));
@@ -255,7 +251,7 @@ void main() {
     });
 
     test('creates image asset with all parameters', () {
-      final asset = CNImageAsset.asset(
+      final asset = CNIcon.asset(
         'assets/icon.svg',
         size: const Size(24, 24),
         color: Colors.blue,

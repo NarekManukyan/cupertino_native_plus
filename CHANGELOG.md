@@ -329,7 +329,7 @@ Special thanks to [gunumdogdu](https://github.com/gunumdogdu) for the improvemen
 
 - **Added**: Comprehensive widget tests for CNSearchBar, CNFloatingIsland, CNGlassButtonGroup
 - **Added**: Controller tests for CNSearchBarController, CNFloatingIslandController, CNSliderController
-- **Added**: Data model tests for CNButtonData, CNButtonDataConfig, CNSymbol, CNImageAsset
+- **Added**: Data model tests for CNButtonData, CNButtonDataConfig, CNSymbol, CNIcon
 - **Updated**: Platform and method channel tests with error handling and null response tests
 - **Updated**: Enum tests for all new enums (CNGlassEffect, CNGlassEffectShape, CNSpotlightMode, etc.)
 - **Total**: 82 tests covering all major components and APIs

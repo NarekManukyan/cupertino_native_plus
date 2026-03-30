@@ -62,7 +62,12 @@ class CupertinoTabBarNSView: NSView {
   /// Uses `control.font` for uniform font; activeLabelStyle color is a no-op.
   private func applyLabelStyles() {
     let dict = labelStyleDict ?? activeLabelStyleDict
-    guard let dict = dict else { return }
+    guard let dict = dict else {
+      control.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+      control.needsLayout = true
+      control.needsDisplay = true
+      return
+    }
     let font = parseTextStyle(dict)
     if let font = font {
       control.font = font

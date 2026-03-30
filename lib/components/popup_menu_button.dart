@@ -45,7 +45,7 @@ class CNPopupMenuItem extends CNPopupMenuEntry {
 
   /// Optional image asset (SVG, PNG, etc.) shown before the label.
   /// If provided, this takes precedence over [icon] and [customIcon].
-  final CNImageAsset? imageAsset;
+  final CNIcon? imageAsset;
 
   /// Optional color for custom icons. This applies a tint color to the custom icon.
   /// For SF Symbols, use the [icon]'s color parameter instead.
@@ -138,7 +138,7 @@ class CNPopupMenuButton extends StatefulWidget {
 
   /// Image asset (SVG, PNG, etc.) for the button icon.
   /// Takes precedence over both [buttonIcon] and [buttonCustomIcon].
-  final CNImageAsset? buttonImageAsset;
+  final CNIcon? buttonImageAsset;
 
   /// Fixed width. In icon mode this equals the button diameter.
   final double? width;
