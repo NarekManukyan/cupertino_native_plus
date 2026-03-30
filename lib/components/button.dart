@@ -667,7 +667,7 @@ class _CNButtonState extends State<CNButton> {
     final w = (map['iconWidth'] as double?) ?? 20.0;
 
     if (symbolName != null) {
-      return CNIcon(
+      return CNIconView(
         symbol: CNSymbol(
           symbolName,
           size: w,

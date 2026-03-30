@@ -223,7 +223,9 @@ CNTabBarItem(
 
 ---
 
-### 8. `CNIcon` widget
+### 8. `CNIcon` widget → `CNIconView`
+
+The platform icon widget is now `CNIconView`. The unified icon model is `CNIcon` (constructors such as `CNIcon.symbol`, `CNIcon.asset`).
 
 **Before:**
 ```dart
@@ -232,7 +234,17 @@ CNIcon(symbol: CNSymbol('star.fill', size: 32, color: Colors.amber))
 
 **After:**
 ```dart
-CNIcon(asset: const CNIcon.symbol('star.fill', size: Size(32, 32), color: Colors.amber))
+CNIconView(
+  symbol: const CNSymbol('star.fill', size: 32, color: Colors.amber),
+)
+```
+
+Or pass a `CNIcon` as `imageAsset` when using the unified model:
+
+```dart
+CNIconView(
+  imageAsset: const CNIcon.symbol('star.fill', size: Size(32, 32), color: Colors.amber),
+)
 ```
 
 ---

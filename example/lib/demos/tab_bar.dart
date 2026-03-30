@@ -182,7 +182,7 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: CupertinoColors.systemBlue.withOpacity(0.8),
+                      color: CupertinoColors.systemBlue.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: Icon(
@@ -203,7 +203,7 @@ class _TabBarDemoPageState extends State<TabBarDemoPage>
                   decoration: BoxDecoration(
                     color: CupertinoColors.systemBackground
                         .resolveFrom(context)
-                        .withOpacity(0.92),
+                        .withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(

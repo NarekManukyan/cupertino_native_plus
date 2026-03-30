@@ -1007,7 +1007,7 @@ class _CNTabBarState extends State<CNTabBar> {
           color: CupertinoColors.systemGrey6.resolveFrom(context),
           borderRadius: BorderRadius.circular(buttonSize / 2),
         ),
-        child: CNIcon(
+        child: CNIconView(
           symbol: CNSymbol(collapsedIcon),
           size: iconSize,
           color: style.activeIconColor ?? tintColor,
@@ -1106,7 +1106,7 @@ class _CNTabBarState extends State<CNTabBar> {
           color: CupertinoColors.systemGrey6.resolveFrom(context),
           borderRadius: BorderRadius.circular(buttonSize / 2),
         ),
-        child: CNIcon(
+        child: CNIconView(
           symbol: CNSymbol(searchSymbol),
           size: iconSize,
           color: style.iconColor ?? CupertinoColors.secondaryLabel,
@@ -1139,7 +1139,7 @@ class _CNTabBarState extends State<CNTabBar> {
         padding: padding,
         child: Row(
           children: [
-            CNIcon(
+            CNIconView(
               symbol: CNSymbol(searchSymbol),
               size: (style.iconSize ?? 20) * 0.8,
               color:
@@ -1196,6 +1196,6 @@ class _CNTabBarState extends State<CNTabBar> {
     if (asset == null) {
       return const Icon(CupertinoIcons.circle, size: 25.0);
     }
-    return CNIcon(imageAsset: asset, size: asset.size.width);
+    return CNIconView(imageAsset: asset, size: asset.size.width);
   }
 }

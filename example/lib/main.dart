@@ -138,7 +138,7 @@ class HomePage extends StatelessWidget {
             children: [
               CupertinoListTile(
                 title: Text('Slider'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('slider.horizontal.3', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -150,7 +150,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Switch'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('switch.2', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -162,7 +162,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Segmented Control'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('rectangle.split.3x1', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -176,7 +176,9 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Icon'),
-                leading: CNIcon(symbol: CNSymbol('app', color: accentColor)),
+                leading: CNIconView(
+                  symbol: CNSymbol('app', color: accentColor),
+                ),
                 trailing: CupertinoListTileChevron(),
                 onTap: () {
                   Navigator.of(context).push(
@@ -186,7 +188,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Popup Menu Button'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('ellipsis.circle', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -200,7 +202,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Button'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('hand.tap', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -217,7 +219,7 @@ class HomePage extends StatelessWidget {
             children: [
               CupertinoListTile(
                 title: Text('Native Tab Bar (iOS 26)'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('dock.rectangle', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -231,7 +233,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Tab Bar'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('square.grid.2x2', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -243,7 +245,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Glass container'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol(
                     'rectangle.topthird.inset',
                     color: accentColor,
@@ -263,7 +265,7 @@ class HomePage extends StatelessWidget {
             children: [
               CupertinoListTile(
                 title: Text('Toast'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('bell.badge', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -275,7 +277,9 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Floating Island'),
-                leading: CNIcon(symbol: CNSymbol('oval', color: accentColor)),
+                leading: CNIconView(
+                  symbol: CNSymbol('oval', color: accentColor),
+                ),
                 trailing: CupertinoListTileChevron(),
                 onTap: () {
                   Navigator.of(context).push(
@@ -287,7 +291,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Liquid Text'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('textformat.alt', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -301,7 +305,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Search Bar'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('magnifyingglass', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -320,7 +324,7 @@ class HomePage extends StatelessWidget {
             children: [
               CupertinoListTile(
                 title: Text('Overlay Test'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol('square.stack.3d.up', color: accentColor),
                 ),
                 trailing: CupertinoListTileChevron(),
@@ -332,7 +336,7 @@ class HomePage extends StatelessWidget {
               ),
               CupertinoListTile(
                 title: Text('Issues Test'),
-                leading: CNIcon(
+                leading: CNIconView(
                   symbol: CNSymbol(
                     'exclamationmark.triangle',
                     color: accentColor,

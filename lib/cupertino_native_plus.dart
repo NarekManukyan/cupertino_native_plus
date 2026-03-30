@@ -7,7 +7,7 @@
 ///
 /// ## Components
 /// - [CNButton] — native push button with Liquid Glass support
-/// - [CNIcon] — native SF Symbol / custom image renderer
+/// - [CNIconView] — native SF Symbol / custom image renderer
 /// - [CNSlider] — native UISlider / NSSlider
 /// - [CNSwitch] — native UISwitch / NSSwitch
 /// - [CNTabBar] — native tab bar with optional search tab
@@ -25,8 +25,8 @@
 /// - [CNGlassCard] — EXPERIMENTAL glass card with spotlight
 ///
 /// ## Styles & Configuration
-/// - [CNButtonStyle], [CNButtonConfig], [CNButtonTheme], [CNButtonData]
-/// - [CNIcon], [CNSymbol], [CNSymbolRenderingMode]
+/// - [CNButtonStyle], [CNButtonConfig], [CNButtonTheme] (`labelStyle` for typography), [CNButtonData]
+/// - [CNIcon] (icon model), [CNIconView] (widget), [CNSymbol], [CNSymbolRenderingMode]
 /// - [CNImagePlacement], [CNGlassEffect], [CNGlassEffectShape]
 /// - [CNButtonGlassMaterial], [LiquidGlassConfig]
 /// - [CNSpotlightMode], [CNTabBarSearchItem], [CNTabBarSearchStyle]

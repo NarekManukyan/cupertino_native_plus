@@ -632,8 +632,14 @@ void main() {
               height: 60,
               child: CNTabBar(
                 items: [
-                  CNTabBarItem(label: 'Home', icon: CNSymbol('house')),
-                  CNTabBarItem(label: 'Settings', icon: CNSymbol('gear')),
+                  CNTabBarItem(
+                    label: 'Home',
+                    icon: const CNIcon.symbol('house'),
+                  ),
+                  CNTabBarItem(
+                    label: 'Settings',
+                    icon: const CNIcon.symbol('gear'),
+                  ),
                 ],
                 currentIndex: 0,
                 onTap: (_) {},
@@ -662,9 +668,15 @@ void main() {
           home: Scaffold(
             body: CNTabBar(
               items: [
-                CNTabBarItem(label: 'Home', icon: CNSymbol('house')),
-                CNTabBarItem(label: 'Profile', icon: CNSymbol('person')),
-                CNTabBarItem(label: 'Settings', icon: CNSymbol('gear')),
+                CNTabBarItem(label: 'Home', icon: const CNIcon.symbol('house')),
+                CNTabBarItem(
+                  label: 'Profile',
+                  icon: const CNIcon.symbol('person'),
+                ),
+                CNTabBarItem(
+                  label: 'Settings',
+                  icon: const CNIcon.symbol('gear'),
+                ),
               ],
               currentIndex: 0,
               onTap: (_) {},
@@ -686,8 +698,11 @@ void main() {
           home: Scaffold(
             body: CNTabBar(
               items: [
-                CNTabBarItem(label: 'Home', icon: CNSymbol('house')),
-                CNTabBarItem(label: 'Settings', icon: CNSymbol('gear')),
+                CNTabBarItem(label: 'Home', icon: const CNIcon.symbol('house')),
+                CNTabBarItem(
+                  label: 'Settings',
+                  icon: const CNIcon.symbol('gear'),
+                ),
               ],
               currentIndex: selectedIndex,
               onTap: (index) => selectedIndex = index,
@@ -705,7 +720,7 @@ void main() {
 
   group('CNTabBarItem', () {
     test('creates item with SF Symbol', () {
-      const icon = CNSymbol('house');
+      const icon = CNIcon.symbol('house');
       const item = CNTabBarItem(label: 'Home', icon: icon);
 
       expect(item.label, 'Home');
@@ -716,7 +731,7 @@ void main() {
     test('creates item with badge', () {
       const item = CNTabBarItem(
         label: 'Messages',
-        icon: CNSymbol('message'),
+        icon: CNIcon.symbol('message'),
         badge: '5',
       );
 
@@ -727,7 +742,7 @@ void main() {
     test('creates item with dot badge', () {
       const item = CNTabBarItem(
         label: 'Alerts',
-        icon: CNSymbol('bell'),
+        icon: CNIcon.symbol('bell'),
         badge: CNTabBarItem.badgeDot,
       );
 
@@ -736,8 +751,8 @@ void main() {
     });
 
     test('creates item with active icon', () {
-      const icon = CNSymbol('house');
-      const activeIcon = CNSymbol('house.fill');
+      const icon = CNIcon.symbol('house');
+      const activeIcon = CNIcon.symbol('house.fill');
       const item = CNTabBarItem(
         label: 'Home',
         icon: icon,
@@ -753,23 +768,12 @@ void main() {
       final activeAsset = CNIcon.asset('assets/icon_active.png');
       final item = CNTabBarItem(
         label: 'Custom',
-        imageAsset: asset,
-        activeImageAsset: activeAsset,
+        icon: asset,
+        activeIcon: activeAsset,
       );
 
-      expect(item.imageAsset, asset);
-      expect(item.activeImageAsset, activeAsset);
-    });
-
-    test('creates item with custom IconData', () {
-      const item = CNTabBarItem(
-        label: 'Custom',
-        customIcon: Icons.home,
-        activeCustomIcon: Icons.home_filled,
-      );
-
-      expect(item.customIcon, Icons.home);
-      expect(item.activeCustomIcon, Icons.home_filled);
+      expect(item.icon, asset);
+      expect(item.activeIcon, activeAsset);
     });
   });
 }

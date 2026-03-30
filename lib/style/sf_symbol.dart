@@ -220,7 +220,7 @@ class CNIcon extends Equatable {
   }
 
   // -------------------------------------------------------------------------
-  // Backward-compat accessors (used by CNIcon, CNTabBar, CNPopupMenuButton)
+  // Backward-compat accessors (used by CNIconView, CNTabBar, CNPopupMenuButton)
   // -------------------------------------------------------------------------
 
   /// Flutter asset path for [CNIcon.asset] sources. Empty string otherwise.

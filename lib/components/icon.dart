@@ -13,9 +13,9 @@ import '../utils/version_detector.dart';
 ///
 /// Renders an `SFSymbol` on iOS/macOS using native APIs for best fidelity,
 /// displays a custom image asset, or renders IconData.
-class CNIcon extends StatefulWidget {
+class CNIconView extends StatefulWidget {
   /// Creates a platform-rendered SF Symbol icon.
-  const CNIcon({
+  const CNIconView({
     super.key,
     this.symbol,
     this.imageAsset,
@@ -58,10 +58,10 @@ class CNIcon extends StatefulWidget {
   final double? height;
 
   @override
-  State<CNIcon> createState() => _CNIconState();
+  State<CNIconView> createState() => _CNIconViewState();
 }
 
-class _CNIconState extends State<CNIcon> {
+class _CNIconViewState extends State<CNIconView> {
   MethodChannel? _channel;
   bool? _lastIsDark;
   String? _lastName;
@@ -80,7 +80,7 @@ class _CNIconState extends State<CNIcon> {
   }
 
   @override
-  void didUpdateWidget(covariant CNIcon oldWidget) {
+  void didUpdateWidget(covariant CNIconView oldWidget) {
     super.didUpdateWidget(oldWidget);
     _syncPropsToNativeIfNeeded();
   }

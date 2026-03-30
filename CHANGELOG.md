@@ -1,473 +1,100 @@
-## 1.0.0
+## 0.0.7
 
-**Major Release - Complete iOS Fallback Fixes and New Features**
+**cupertino_native_plus** — native Liquid Glass and Cupertino-style controls for iOS and macOS via platform views. This release ships the current public API, unified icon handling, and documentation. See [MIGRATION.md](MIGRATION.md) for breaking changes.
 
-This release consolidates all improvements and fixes, including enhanced version detection, new components, and comprehensive bug fixes.
+### Breaking changes
 
-### New Features
+- **`CNImageAsset` → `CNIcon`**: Shared icon/image values use **`CNIcon`** with named constructors (`CNIcon.symbol`, `CNIcon.asset`, `CNIcon.xcasset`, `CNIcon.svg`, `CNIcon.png`, `CNIcon.jpg`, `CNIcon.data`).
+- **Platform icon widget → `CNIconView`**: The native `StatefulWidget` that draws symbols and assets is **`CNIconView`** (not `CNIcon`, which is the model type).
+- **`CNTabBarItem`**: Icons are only **`icon`** / **`activeIcon`** as `CNIcon?`. Fields such as `imageAsset` / `activeImageAsset` and `customIcon` / `activeCustomIcon` are removed in favor of `CNIcon` sources.
+- **Buttons & menus**: `CNButton`, `CNButtonData`, glass button groups, and related APIs use **`CNIcon?`** for icon slots.
 
-- **Added**: `CNTabBarNative` - Native iOS 26 Tab Bar with full UITabBarController integration
-  - Uses native `UITabBarController` + `UISearchController` for authentic iOS 26 liquid glass effects
-  - `CNTabBarNative.enable()` / `CNTabBarNative.disable()` for app-level tab bar management
-  - `CNTab` class for tab configuration with SF Symbols and search tab support
-  - Callbacks: `onTabSelected`, `onSearchChanged`, `onSearchSubmitted`, `onSearchCancelled`, `onSearchActiveChanged`
-  - Full badge count support and dynamic styling
+### Features
 
-- **Added**: `CNSearchScaffold` - Native search scaffold controller for standalone search UI
-
-- **Added**: `CNToast` - Toast notification widget with Liquid Glass effects
-  - Static methods: `show()`, `success()`, `error()`, `warning()`, `info()`, `loading()`
-  - Duration presets: short (2s), medium (3.5s), long (5s)
-  - Position options: top, center, bottom
-  - Auto-dismiss with queue management
-  - `CNLoadingToastHandle` for dismissing loading toasts
-
-- **Added**: `CNSearchBar` - Expandable search bar with animations
-
-- **Added**: `CNFloatingIsland` - Floating island widget for iOS 26+
-
-- **Added**: `CNGlassCard` - Experimental pre-styled card with optional breathing glow animation
-
-- **Added**: iOS 26 Search Tab Feature for CNTabBar with animated Liquid Glass expansion
-  - Native `UISearchTab`-style search integration that follows Apple's iOS 26 design
-  - Search button expands into a full search bar with smooth spring animation
-  - Tabs collapse to icon-only mode when search is active
-  - Full Flutter fallback for iOS < 26 with identical behavior
-
-- **Added**: `CNTabBarSearchItem` configuration class for search tab customization
-  - `placeholder`: Custom placeholder text for the search field
-  - `onSearchChanged`: Callback for live filtering as user types
-  - `onSearchSubmit`: Callback when user submits search
-  - `onSearchActiveChanged`: Callback for expand/collapse state changes
-  - `automaticallyActivatesSearch`: Control keyboard auto-activation behavior
-  - `label` property for customizing the search tab label
-
-- **Added**: `CNTabBarSearchStyle` for visual customization
-  - Icon sizes, colors, and active states
-  - Search bar dimensions, padding, and border radius
-  - Animation duration control
-  - Clear button visibility toggle
-
-- **Added**: `CNTabBarSearchController` for programmatic search control
-  - `activateSearch()` / `deactivateSearch()`: Expand/collapse search programmatically
-  - `text` property: Get/set search text
-  - `clear()`: Clear search text with optional deactivation
-  - Listener support for reactive state management
-
-- **Added**: `preserveTopToBottomOrder` property to `CNPopupMenuButton`
-  - When `true`, menu items maintain top-to-bottom order (1,2,3,4) regardless of menu direction
-  - Default `false` preserves native iOS behavior where item 1 stays closest to the button
-  - Uses `UIDeferredMenuElement.uncached` for dynamic position detection
-
-- **Added**: Lightweight `setBadges` method for CNTabBar to update badge values without rebuilding the entire tab bar
-  - Previously, badge updates required recreating all tab bar items which caused visible flicker
-  - New implementation only updates `badgeValue` on existing UITabBarItems for smooth, instant badge changes
-  - Automatically detected when only badges changed (not labels, icons, or symbols) and uses fast path
+- **Buttons & glass**: `CNButton`, `CNButton.icon`, `CNGlassButtonGroup`, `CNButtonData`, glass styles (`CNButtonStyle.glass`, `prominentGlass`, …), glass effect unioning (`glassEffectUnionId`), `LiquidGlassContainer`, `CNLiquidText`, experimental `CNGlassCard`.
+- **Icons**: `CNIcon` model and `CNIconView` widget; SF Symbols, xcassets, Flutter asset paths, and raw bytes (SVG/PNG/JPG); `CNSymbol` + `CNSymbolRenderingMode` for legacy/symbol flows.
+- **Tab bar**: `CNTabBar` with split mode, badges, lightweight native **`setBadges`** when only badges change; iOS 26-style **search tab** (`CNTabBarSearchItem`, `CNTabBarSearchStyle`, `CNTabBarSearchController`); **`CNTabBarNative`** (UITabBarController integration) and **`CNSearchScaffold`**.
+- **Other controls**: `CNSlider`, `CNSwitch`, `CNSegmentedControl`, `CNPopupMenuButton` (including `preserveTopToBottomOrder`), `CNPopupGesture`, `CNSearchBar`, `CNToast`, `CNFloatingIsland`.
+- **Platform version**: **`PlatformVersion`** auto-initializes; uses **`Platform.operatingSystemVersion`** parsing (reliable in release); **`supportsSFSymbols`** (iOS 13+, macOS 11+); Liquid Glass vs SF Symbol capability split (iOS 26+ vs iOS 13+).
+- **Images on native**: Resolution-aware asset loading (`@2x`/`@3x`), shared **`ImageUtils`** on iOS/macOS; PNG/SVG/JPG pipelines and tinting.
 
 ### Improvements
 
-- **Enhanced**: `PlatformVersion` now auto-initializes on first access
-  - No longer need to call `await PlatformVersion.initialize()` in `main()`
-  - Just use `PlatformVersion.isIOS26OrLater` directly
-  - Old `initialize()` method kept for backwards compatibility (marked deprecated)
+- **Label styles (typography on native)**: `TextStyle` on **`CNButtonTheme.labelStyle`**, **`CNTabBar`** (`labelStyle` / `activeLabelStyle`), **`CNSegmentedControl`**, **`CNPopupMenuButton`** — `fontSize`, `fontWeight` (100–900), italic, `fontFamily` via `encodeTextStyle`; label **color** uses theme/tint/labelColor on native, not `TextStyle.color` in the channel map.
+- **Glass & theme**: Clearer glass material and **`CNButtonTheme`** (tint, `labelColor`, `iconColor`, `backgroundColor`, `labelStyle`).
+- **Native loading order**: Glass buttons and related paths prefer **xcasset** names, then Flutter asset paths.
+- **Tab bar**: Split tab bar constraint fixes; unified `CNIcon` pipeline for items.
+- **Swift**: `GlassButtonIconConfig` / `CNIcon` decoding aligned with Dart.
 
-- **Enhanced**: Reliable version detection using `Platform.operatingSystemVersion` parsing
-  - Works correctly in both debug and release builds
-  - No longer relies on platform channels that could fail in release builds
-  - Example: "Version 26.1 (Build 23B82)" -> 26
+### Bug fixes (highlights)
 
-- **Added**: New helper properties to `PlatformVersion`:
-  - `isIOS`, `isMacOS`, `isAndroid`, `isApple`
-  - `isIOSVersionInRange(min, max)`, `isMacOSVersionInRange(min, max)`
-  - `supportsSFSymbols` for checking SF Symbol availability (iOS 13+, macOS 11+)
-
-- **Enhanced**: Comprehensive icon support with unified priority system
-  - Image Assets (highest priority) - PNG, SVG, JPG with automatic resolution selection (1x-4x)
-  - Custom Icons - Any `IconData` (CupertinoIcons, Icons, custom)
-  - SF Symbols - Native Apple SF Symbols with rendering modes
-
-- **Enhanced**: Automatic asset resolution based on device pixel ratio
-  - Automatically selects appropriate resolution-specific asset (e.g., `assets/icons/3.0x/checkcircle.png` for @3x devices)
-  - Falls back to closest bigger size if exact resolution not available
-
-- **Enhanced**: Dark mode support with automatic theme synchronization
-  - LiquidGlassContainer automatically adapts to Flutter's theme changes
-  - Brightness synchronization for icons and other components
-
-- **Optimized**: CNTabBar now detects badge-only updates and uses lightweight native `setBadges` method instead of full `setItems` rebuild
-  - Badge updates are now instant with no view recreation or animation interruption
-
-- **Enhanced**: `automaticallyActivatesSearch` now properly controls keyboard behavior
-  - When `false`: Search bar expands but keyboard only opens when user taps the text field
-  - When `true` (default): Keyboard opens automatically when search expands
-  - Mirrors `UISearchTab.automaticallyActivatesSearch` from UIKit
-
-### Bug Fixes
-
-- **Fixed**: Critical version detection bug in release builds
-  - Previously used platform channels which failed with "Null check operator used on a null value" in release builds
-  - Now uses direct `Platform.operatingSystemVersion` parsing for reliable detection
-
-- **Fixed**: CNButton label disappearing when buttons had both icon AND label (iOS < 26)
-  - Buttons with both icon AND label now correctly display both elements in fallback mode
-  - Changed fallback check to only treat truly icon-only buttons as icon-only
-
-- **Fixed**: CNTabBar icons not showing (iOS < 26)
-  - Tab bar icons now render correctly using CNIcon instead of empty placeholder circles
-  - Added `_buildTabIcon()` helper that properly handles all icon types with correct priority
-
-- **Fixed**: CNIcon/CNButton/CNPopupMenuButton showing "..." (iOS < 26)
-  - All CN components now properly render SF Symbols on older iOS versions
-  - Components now check `supportsSFSymbols` (iOS 13+) instead of `shouldUseNativeGlass` (iOS 26+) for SF Symbol support
-
-- **Fixed**: `CNPopupMenuButton.icon` now respects the order defined in items
-  - Added `preserveTopToBottomOrder` parameter to control item ordering behavior
-  - Native iOS behavior keeps first item closest to button; set `preserveTopToBottomOrder: true` for consistent top-to-bottom order
-
-- **Fixed**: Tab bar shadow artifact appearing over modals and bottom sheets
-  - Changed `configureWithDefaultBackground()` to `configureWithTransparentBackground()`
-  - Added explicit shadow removal: `shadowColor = .clear`, `shadowImage = UIImage()`
-  - Added `container.clipsToBounds = true` and `layer.shadowOpacity = 0`
-
-- **Fixed**: Search bar keyboard auto-opening behavior
-  - `automaticallyActivatesSearch: false` now properly prevents keyboard from auto-opening
-  - This is native iOS behavior - the search bar expands but keyboard only opens on text field tap
-
-- **Fixed**: `MissingPluginException` errors during hot reload for `setItems` and `refresh` methods
-  - Added try-catch error handling to prevent crashes during development
-  - Search view now handles all expected method channel calls
-
-- **Fixed**: Split mode tab selection bug where the wrong tab appeared selected on first load
-  - When using `split: true` in CNTabBar, the right bar would incorrectly appear selected even when the left bar tab was actually selected
-  - Fixed by correctly restoring the original selection state
-
-- **Fixed**: CNButton tap detection in CupertinoButton fallback mode (iOS < 26)
-  - Buttons showed press animation but `onPressed` didn't fire consistently
-  - Added `minSize: 0` to prevent CupertinoButton's internal minimum size from conflicting with SizedBox constraints
-  - Added explicit `borderRadius` and `pressedOpacity` for better hit testing and visual feedback
-
-- **Fixed**: Gesture handling in LiquidGlassContainer
-  - Fixed gesture handling by wrapping platform views in IgnorePointer
-  - Prevents the native view from intercepting touch events and allows child widgets to receive gestures properly
-
-- **Fixed**: PNG image rendering issues in buttons and glass button groups
-- **Fixed**: Image orientation issues for both PNG and SVG images when colors are applied
-- **Fixed**: Glass effect appearance synchronization with Flutter's theme mode to prevent dark-to-light transitions on initial render
+- Version detection no longer relies on fragile platform channels in release builds.
+- **SF Symbols** on iOS **13+** via `supportsSFSymbols` (not gated on iOS 26).
+- Tab bar fallbacks, badge-only updates, split-mode selection, search keyboard behavior, popup menu ordering, modal shadow artifacts, **`MissingPluginException`** guards on hot reload, **`LiquidGlassContainer`** gestures (`IgnorePointer` where needed), dark mode / glass sync, PNG/SVG orientation and tinting, **CNButton** tap targets in Cupertino fallback.
 
 ### Documentation
 
-- Complete documentation overhaul with real iOS 26 screenshots
-- Comprehensive code examples for all widgets
-- Migration guide and feature comparison
-- Complete dartdoc documentation for all public APIs
-
-### Credits
-
-Special thanks to [gunumdogdu](https://github.com/gunumdogdu) for the improvements and fixes contributed through [cupertino_native_better](https://github.com/gunumdogdu/cupertino_native_better), including enhanced version detection, improved icon support, and various bug fixes.
+- [README.md](README.md): Icon model vs **`CNIconView`**, **Label styles**, migration quick reference, `^0.0.7` snippet.
+- [MIGRATION.md](MIGRATION.md): Step-by-step migration for 0.0.7.
 
 ---
-
-## 1.2.0
-
-### New Features
-
-- **Added**: iOS 26 Search Tab Feature for CNTabBar with animated Liquid Glass expansion
-  - Native `UISearchTab`-style search integration that follows Apple's iOS 26 design
-  - Search button expands into a full search bar with smooth spring animation
-  - Tabs collapse to icon-only mode when search is active
-  - Full Flutter fallback for iOS < 26 with identical behavior
-
-- **Added**: `CNTabBarSearchItem` configuration class for search tab customization
-  - `placeholder`: Custom placeholder text for the search field
-  - `onSearchChanged`: Callback for live filtering as user types
-  - `onSearchSubmit`: Callback when user submits search
-  - `onSearchActiveChanged`: Callback for expand/collapse state changes
-  - `automaticallyActivatesSearch`: Control keyboard auto-activation behavior
-
-- **Added**: `CNTabBarSearchStyle` for visual customization
-  - Icon sizes, colors, and active states
-  - Search bar dimensions, padding, and border radius
-  - Animation duration control
-  - Clear button visibility toggle
-
-- **Added**: `CNTabBarSearchController` for programmatic search control
-  - `activateSearch()` / `deactivateSearch()`: Expand/collapse search programmatically
-  - `text` property: Get/set search text
-  - `clear()`: Clear search text with optional deactivation
-  - Listener support for reactive state management
-
-### Improvements
-
-- **Enhanced**: `automaticallyActivatesSearch` now properly controls keyboard behavior
-  - When `false`: Search bar expands but keyboard only opens when user taps the text field
-  - When `true` (default): Keyboard opens automatically when search expands
-  - Mirrors `UISearchTab.automaticallyActivatesSearch` from UIKit
-
-### Bug Fixes
-
-- **Fixed**: `MissingPluginException` errors during hot reload for `setItems` and `refresh` methods
-  - Added try-catch error handling to prevent crashes during development
-  - Search view now handles all expected method channel calls
-
----
-
-## 1.1.9
-
-### New Features
-
-- **Added**: Lightweight `setBadges` method for CNTabBar to update badge values without rebuilding the entire tab bar
-  - Previously, badge updates required recreating all tab bar items which caused visible flicker
-  - New implementation only updates `badgeValue` on existing UITabBarItems for smooth, instant badge changes
-  - Automatically detected when only badges changed (not labels, icons, or symbols) and uses fast path
-
-### Improvements
-
-- **Optimized**: CNTabBar now detects badge-only updates in `_syncPropsToNativeIfNeeded()` and calls lightweight native `setBadges` method instead of full `setItems` rebuild
-- **Performance**: Badge updates are now instant with no view recreation or animation interruption
-
----
-
-## 1.1.8
-
-### Fixes
-
-- **Fixed**: Visual update - minor bug fixes and improvements
-
----
-
-## 1.1.7
-
-### Fixes
-
-- **Fixed**: Split mode tab selection bug where the wrong tab appeared selected on first load
-  - **Issue**: When using `split: true` in CNTabBar, the right bar (e.g., Rewards tab) would incorrectly appear selected even when the left bar tab (e.g., Discover) was actually selected
-  - **Root Cause**: In the `refresh` method, when restoring selection after cycling through tabs for label rendering, the code was incorrectly setting `right.selectedItem = rightItems.first` when `rightOriginal` was nil
-  - **Solution**: Changed to restore the original selection directly (`right.selectedItem = rightOriginal`), which correctly keeps the right bar unselected when a left bar tab is active
-
-- **Fixed**: Added `setSelectedIndex` call after `refresh` in Flutter widget to ensure correct selection state after view initialization
-
----
-
-## 1.1.6
-
-### Fixes
-
-- **Fixed**: Attempted fix for split mode tab selection (superseded by 1.1.7)
-
----
-
-## 1.1.5
-
-### Breaking Changes
-
-- **iOS Minimum Version**: Raised iOS deployment target from 13.0 to **15.0**
-  - Required for `@FocusState` and other iOS 15+ SwiftUI features
-  - Most production apps already target iOS 15+ (released September 2021)
-
-### Fixes
-
-- **Fixed**: Swift compiler error `'FocusState' is only available in iOS 15.0 or newer`
-- **Fixed**: Swift compiler error `'self' used before 'super.init' call` in CNSearchBar
-- **Fixed**: Pod installation issues when used in projects with iOS 15+ deployment target
-
----
-
-## 1.1.4
-
-### Fixes
-
-- **Fixed**: Minor internal improvements
-
----
-
-## 1.1.3
-
-### Fixes
-
-- **Fixed**: Full 50/50 pub.dev static analysis score (160/160 pana points)
-- **Fixed**: All remaining lint and formatting issues
-
----
-
-## 1.1.2
-
-### Fixes
-
-- **Fixed**: Dart formatter compliance
-
----
-
-## 1.1.1
-
-### Fixes
-
-- **Fixed**: Resolved `use_build_context_synchronously` lint warnings
-
----
-
-## 1.1.0
-
-### Documentation Overhaul
-
-- **Added**: Complete documentation for all widgets with real iOS 26 screenshots
-- **Added**: CNSwitch documentation with controller examples
-- **Added**: CNPopupMenuButton documentation with text and icon variants
-- **Added**: CNSegmentedControl documentation with SF Symbols support
-- **Added**: Button Styles Gallery showcasing multiple button styles
-- **Added**: Popup menu opened state preview image
-- **Enhanced**: Features table with Controller column
-- **Enhanced**: All images now use centered alignment for better presentation
-
-### New Screenshots
-
-- Real iOS 26 Liquid Glass component screenshots (replacing AI-generated placeholders)
-- Button styles gallery (4 preview images)
-- Switch, Slider, Popup Menu, Segmented Control, Tab Bar previews
-- Popup menu opened state preview
-
-### Test Suite Updates
-
-- **Added**: Comprehensive widget tests for CNSearchBar, CNFloatingIsland, CNGlassButtonGroup
-- **Added**: Controller tests for CNSearchBarController, CNFloatingIslandController, CNSliderController
-- **Added**: Data model tests for CNButtonData, CNButtonDataConfig, CNSymbol, CNIcon
-- **Updated**: Platform and method channel tests with error handling and null response tests
-- **Updated**: Enum tests for all new enums (CNGlassEffect, CNGlassEffectShape, CNSpotlightMode, etc.)
-- **Total**: 82 tests covering all major components and APIs
-
----
-
-## 1.0.6
-
-### Improvements
-
-- **Fixed**: Dart formatting issues to achieve full 50/50 static analysis score on pub.dev
-- **Added**: Preview image for pub.dev package page
-
----
-
-## 1.0.5
-
-### Improvements
-
-#### Static Analysis Cleanup
-- **Fixed**: All `use_build_context_synchronously` warnings by capturing context-derived values before async gaps
-- **Fixed**: `dangling_library_doc_comments` warning
-- **Fixed**: `unnecessary_library_name` and `unnecessary_import` warnings
-- **Improved**: Pub points score (static analysis section)
-
----
-
-## 1.0.4
-
-### Bug Fixes
-
-#### CNButton Tap Detection (iOS < 26 Fallback)
-- **Fixed**: Unreliable tap detection in CupertinoButton fallback mode
-- **Issue**: Buttons showed press animation but `onPressed` didn't fire consistently
-- **Solution**: Added `minSize: 0` to prevent CupertinoButton's internal minimum size from conflicting with SizedBox constraints
-- **Added**: Explicit `borderRadius` and `pressedOpacity` for better hit testing and visual feedback
-
----
-
-## 1.0.3
-
-### Bug Fixes
-
-#### Critical: iOS 18 Crash Fix
-- **Fixed**: Reverted GestureDetector overlay that caused crash on iOS 18
-- **Error**: `unrecognized selector sent to instance 'onTap:'`
-- **Solution**: Removed Stack/GestureDetector approach, kept simple CupertinoButton
-
-#### Icon Button Padding (kept from 1.0.2)
-- **Fixed**: Increased default padding for icon buttons from 4 to 8 pixels
-
----
-
-## 1.0.2 (BROKEN - DO NOT USE)
-
-### Bug Fixes
-
-#### CNButton Tap Detection (iOS < 26 Fallback)
-- **BROKEN**: Added GestureDetector overlay that crashed on iOS 18
-- Use 1.0.3 instead
-
-#### Icon Button Padding
-- **Fixed**: Increased default padding for icon buttons from 4 to 8 pixels
-- Icons now have proper breathing room from the button border
-
----
-
-## 1.0.1
-
-* **Pub Points Improvement**: Addressed static analysis issues to improve package score.
-* **Fix**: Resolved `use_build_context_synchronously` warnings across multiple components.
-* **Fix**: Replaced deprecated `Color.value` and `withOpacity` usages with modern alternatives.
-* **Documentation**: Added missing documentation for public members.
-
-
-## 0.0.9
-
-* Package preparation for public release
-* Updated repository URLs
-
-## 0.0.8
-
-* Fixed SF Symbol rendering in fallback mode for CNButton
-* Fixed SF Symbol rendering in fallback mode for CNPopupMenuButton
-* Added proper imports for CNIcon in button and popup components
-
-## 0.0.7
-
-* Added `supportsSFSymbols` getter to PlatformVersion
-* SF Symbols now render natively on all iOS versions (13+), not just iOS 26+
-* Separated Liquid Glass support (iOS 26+) from SF Symbol support (iOS 13+)
 
 ## 0.0.6
 
-* **Dark Mode Support for LiquidGlassContainer**: Added automatic dark mode detection and synchronization for LiquidGlassContainer, ensuring the glass effect correctly adapts to Flutter's theme changes
-* **Gesture Detection Fixes**: Fixed gesture handling in LiquidGlassContainer by wrapping platform views in IgnorePointer, preventing the native view from intercepting touch events and allowing child widgets to receive gestures properly
-* **Brightness Syncing Improvements**: Enhanced brightness synchronization for icons and other components, ensuring they automatically update when the system theme changes
+- **Dark Mode Support for LiquidGlassContainer**: Added automatic dark mode detection and synchronization for LiquidGlassContainer, ensuring the glass effect correctly adapts to Flutter's theme changes
+- **Gesture Detection Fixes**: Fixed gesture handling in LiquidGlassContainer by wrapping platform views in IgnorePointer, preventing the native view from intercepting touch events and allowing child widgets to receive gestures properly
+- **Brightness Syncing Improvements**: Enhanced brightness synchronization for icons and other components, ensuring they automatically update when the system theme changes
+
+---
 
 ## 0.0.5
 
-* **Performance Improvements**: Added method channel updates for button groups to prevent full rebuilds and eliminate freezes when updating button parameters
-* **Preserved Animations**: Button groups now update smoothly without losing native animations when button properties change (icon, color, image asset, etc.)
-* **Efficient Updates**: Implemented granular updates for individual buttons in groups, only updating changed buttons instead of rebuilding the entire group
-* **Reactive SwiftUI Updates**: Converted button group SwiftUI views to use ObservableObject pattern for efficient reactive updates
-* **Button Parameter Updates**: Individual buttons in groups can now be updated dynamically via method channels without full view rebuilds
+- **Performance Improvements**: Added method channel updates for button groups to prevent full rebuilds and eliminate freezes when updating button parameters
+- **Preserved Animations**: Button groups now update smoothly without losing native animations when button properties change (icon, color, image asset, etc.)
+- **Efficient Updates**: Implemented granular updates for individual buttons in groups, only updating changed buttons instead of rebuilding the entire group
+- **Reactive SwiftUI Updates**: Converted button group SwiftUI views to use ObservableObject pattern for efficient reactive updates
+- **Button Parameter Updates**: Individual buttons in groups can now be updated dynamically via method channels without full view rebuilds
+
+---
 
 ## 0.0.4
 
-* **PNG Image Support**: Added full support for PNG images in all components (buttons, icons, popup menus, tab bars, glass button groups)
-* **Automatic Asset Resolution**: Implemented automatic asset resolution based on device pixel ratio, similar to Flutter's automatic asset selection. The system now automatically selects the appropriate resolution-specific asset (e.g., `assets/icons/3.0x/checkcircle.png` for @3x devices) or falls back to the closest bigger size
-* **ImageUtils Consolidation**: Consolidated all image loading, format detection, scaling, and tinting logic into a shared `ImageUtils.swift` class for better code maintainability and consistency
-* **Fixed PNG Rendering**: Fixed PNG image rendering issues in buttons and glass button groups
-* **Fixed Image Orientation**: Fixed image flipping issues for both PNG and SVG images when colors are applied
-* **Made buttonIcon Optional**: Made `buttonIcon` parameter optional in `CNPopupMenuButton.icon` constructor, allowing developers to use only `buttonImageAsset` or `buttonCustomIcon`
-* **Improved Glass Effect Appearance**: Fixed glass effect appearance synchronization with Flutter's theme mode to prevent dark-to-light transitions on initial render
-* **Enhanced Image Format Detection**: Improved automatic image format detection from file extensions and magic bytes
-* **Better Fallback Handling**: Improved fallback behavior when asset paths fail to load, ensuring images still render from provided image bytes
+- **PNG Image Support**: Added full support for PNG images in all components (buttons, icons, popup menus, tab bars, glass button groups)
+- **Automatic Asset Resolution**: Implemented automatic asset resolution based on device pixel ratio, similar to Flutter's automatic asset selection. The system now automatically selects the appropriate resolution-specific asset (e.g., `assets/icons/3.0x/checkcircle.png` for @3x devices) or falls back to the closest bigger size
+- **ImageUtils Consolidation**: Consolidated all image loading, format detection, scaling, and tinting logic into a shared `ImageUtils.swift` class for better code maintainability and consistency
+- **Fixed PNG Rendering**: Fixed PNG image rendering issues in buttons and glass button groups
+- **Fixed Image Orientation**: Fixed image flipping issues for both PNG and SVG images when colors are applied
+- **Made buttonIcon Optional**: Made `buttonIcon` parameter optional in `CNPopupMenuButton.icon` constructor, allowing developers to use only `buttonImageAsset` or `buttonCustomIcon`
+- **Improved Glass Effect Appearance**: Fixed glass effect appearance synchronization with Flutter's theme mode to prevent dark-to-light transitions on initial render
+- **Enhanced Image Format Detection**: Improved automatic image format detection from file extensions and magic bytes
+- **Better Fallback Handling**: Improved fallback behavior when asset paths fail to load, ensuring images still render from provided image bytes
+
+---
 
 ## 0.0.3
 
-* Updated README to showcase all icon types (SVG assets, custom icons, and SF Symbols)
-* Added comprehensive examples for all icon types in Button, Icon, Popup Menu Button, and Tab Bar sections
-* Added icon support overview at the beginning of "What's in the package" section
-* Clarified that all components support multiple icon types with unified priority system
+- Updated README to showcase all icon types (SVG assets, custom icons, and SF Symbols)
+- Added comprehensive examples for all icon types in Button, Icon, Popup Menu Button, and Tab Bar sections
+- Added icon support overview at the beginning of "What's in the package" section
+- Clarified that all components support multiple icon types with unified priority system
+
+---
 
 ## 0.0.2
 
-* Updated README with corrected version requirements and improved documentation
-* Fixed iOS minimum version requirement (13.0 instead of 14.0)
-* Removed incorrect Xcode 26 beta requirement
-* Added Contributing and License sections
-* Improved package description and introduction
+- Updated README with corrected version requirements and improved documentation
+- Fixed iOS minimum version requirement (13.0 instead of 14.0)
+- Removed incorrect Xcode 26 beta requirement
+- Added Contributing and License sections
+- Improved package description and introduction
+
+---
 
 ## 0.0.1
 
-* Initial release
-* Fixed iOS 26+ version detection using Platform.operatingSystemVersion parsing
-* Native Liquid Glass widgets for iOS and macOS
-* Support for CNButton, CNIcon, CNSlider, CNSwitch, CNTabBar, CNPopupMenuButton, CNSegmentedControl
-* Glass effect unioning for grouped buttons
-* LiquidGlassContainer for applying glass effects to any widget
+- Initial release
+- Fixed iOS 26+ version detection using Platform.operatingSystemVersion parsing
+- Native Liquid Glass widgets for iOS and macOS
+- Support for CNButton, native icon widget, CNSlider, CNSwitch, CNTabBar, CNPopupMenuButton, CNSegmentedControl
+- Glass effect unioning for grouped buttons
+- LiquidGlassContainer for applying glass effects to any widget

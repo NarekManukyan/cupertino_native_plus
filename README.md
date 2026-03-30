@@ -42,7 +42,8 @@ void main() {
 - **Reliable Version Detection**: Uses `Platform.operatingSystemVersion` parsing instead of platform channels, ensuring accurate version detection in both debug and release builds
 - **Native Rendering**: All widgets use native platform views for authentic iOS/macOS appearance
 - **Comprehensive Fallbacks**: Every widget gracefully degrades on older OS versions
-- **Multiple Icon Types**: Unified `CNIcon` supports SF Symbols, xcassets, Flutter asset paths, and raw bytes (SVG/PNG/JPG)
+- **Multiple Icon Types**: The **`CNIcon`** value type covers SF Symbols, xcassets, Flutter asset paths, and raw bytes (SVG/PNG/JPG). The **`CNIconView`** widget renders those sources natively on iOS/macOS (see [Icon Support](#icon-support)).
+- **Label Typography**: **`TextStyle`**-based label styling on buttons, tab bars, segmented controls, and popup menus—**font size, weight, italic, and font family** are applied on native iOS/macOS, not just in Flutter fallbacks (see [Label styles](#label-styles)).
 - **Dark Mode Support**: Automatic theme synchronization with system preferences
 - **Glass Effect Unioning**: Multiple buttons can share unified glass effects
 
@@ -54,7 +55,7 @@ void main() {
 |--------|-------------|:----------:|
 | `CNButton` | Native push button with Liquid Glass effects, SF Symbols, and image assets | - |
 | `CNButton.icon` | Circular icon-only button variant | - |
-| `CNIcon` | Platform-rendered SF Symbols, custom IconData, or image assets | - |
+| `CNIconView` | Platform-rendered SF Symbols, custom IconData, or image assets | - |
 | `CNTabBar` | Native tab bar with split mode for scroll-aware layouts | - |
 | `CNSlider` | Native slider with min/max range and step support | `CNSliderController` |
 | `CNSwitch` | Native toggle switch with animated state changes | `CNSwitchController` |
@@ -69,7 +70,9 @@ void main() {
 
 ### Icon Support
 
-All widgets use `CNIcon` as the single unified icon type. Choose the named constructor that matches your source:
+**`CNIcon`** is the single immutable description of an icon (SF Symbol, catalog image, Flutter asset, or bytes). **Pass it to APIs** such as `CNButton.icon`, `CNTabBarItem.icon`, or `CNPopupMenuButton` image fields.
+
+**`CNIconView`** is the **widget** that draws a `CNSymbol`, `CNIcon`, or `IconData` using native views when available. Do not confuse it with the `CNIcon` type.
 
 | Constructor | Source |
 |---|---|
@@ -108,6 +111,11 @@ CNButton.icon(
   tint: Colors.blue,
   onPressed: () {},
 )
+
+// Native icon widget (SF Symbol or imageAsset: CNIcon.asset(...))
+CNIconView(
+  symbol: const CNSymbol('star.fill', size: 24),
+)
 ```
 
 ### Button Styles
@@ -121,6 +129,50 @@ CNButtonStyle.borderedProminent // Accent-colored border
 CNButtonStyle.filled          // Solid filled background
 CNButtonStyle.glass           // Liquid Glass effect (iOS 26+)
 CNButtonStyle.prominentGlass  // Prominent glass effect (iOS 26+)
+```
+
+### Label styles
+
+Several widgets accept **`TextStyle`** so you can match your app’s typography on the native layer. The following fields are encoded to iOS/macOS: **`fontSize`**, **`fontWeight`** (maps to CSS-style 100–900), **`fontStyle: FontStyle.italic`**, and **`fontFamily`**.
+
+**Label color** on native controls uses the widget’s theme or tint APIs (for example `CNButtonTheme.labelColor`, `CNButtonTheme.tint`, tab bar tint, or segment tint)—not the `TextStyle.color` field in the channel payload. You can still set `color` on `TextStyle` for **Flutter fallback** paths; for consistent native appearance, set **`labelColor`** / **`tint`** on `CNButtonTheme` (or the relevant widget) alongside `labelStyle`.
+
+| API | Where to set |
+|-----|----------------|
+| `CNButtonTheme.labelStyle` | `CNButton`, `CNButton.icon` (`theme:`), and `CNButtonData` / `CNGlassButtonGroup` via each button’s `theme` |
+| `CNTabBar.labelStyle` / `activeLabelStyle` | Normal vs selected tab item titles |
+| `CNSegmentedControl.labelStyle` / `activeLabelStyle` | Unselected vs selected segment titles |
+| `CNPopupMenuButton.labelStyle` | Primary button label (and styling hooks for the native menu where supported) |
+
+```dart
+CNButton(
+  label: 'Continue',
+  theme: CNButtonTheme(
+    tint: CupertinoColors.activeBlue,
+    labelStyle: TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w600,
+      fontFamily: '.SF Pro Text',
+    ),
+  ),
+  onPressed: () {},
+)
+
+CNTabBar(
+  labelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+  activeLabelStyle: const TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+  ),
+  items: const [
+    CNTabBarItem(
+      label: 'Home',
+      icon: CNIcon.symbol('house.fill'),
+    ),
+  ],
+  currentIndex: 0,
+  onTap: (_) {},
+)
 ```
 
 ### Glass Effect Unioning
@@ -319,10 +371,10 @@ CNButton.icon(
 </p>
 
 ```dart
-CNIcon(
-  asset: const CNIcon.symbol(
+CNIconView(
+  symbol: const CNSymbol(
     'star.fill',
-    size: Size(32, 32),
+    size: 32,
     color: Colors.amber,
     mode: CNSymbolRenderingMode.multicolor,
   ),
@@ -488,9 +540,9 @@ CNGlassCard(
 | Platform | Liquid Glass | SF Symbols | Other Widgets |
 |----------|:------------:|:----------:|:-------------:|
 | iOS 26+ | Native | Native | Native |
-| iOS 13-25 | CupertinoButton | Native via CNIcon | CupertinoWidgets |
+| iOS 13-25 | CupertinoButton | Native via CNIconView | CupertinoWidgets |
 | macOS 26+ | Native | Native | Native |
-| macOS 11-25 | CupertinoButton | Native via CNIcon | CupertinoWidgets |
+| macOS 11-25 | CupertinoButton | Native via CNIconView | CupertinoWidgets |
 | Android/Web/etc | Material fallback | Flutter Icon | Material fallback |
 
 ## Version Detection
@@ -505,7 +557,7 @@ if (PlatformVersion.shouldUseNativeGlass) {
 
 // Check if SF Symbols are available (iOS 13+, macOS 11+)
 if (PlatformVersion.supportsSFSymbols) {
-  // Use CNIcon for native rendering
+  // Use CNIconView for native rendering
 }
 
 // Get specific version
@@ -529,7 +581,9 @@ Version 0.0.7 introduces **breaking changes** to the icon/image API. See [MIGRAT
 | Before | After |
 |---|---|
 | `CNSymbol('house', size: 20)` | `CNIcon.symbol('house', size: Size(20, 20))` |
-| `CNIcon('path', size: 20)` | `CNIcon.asset('path', size: Size(20, 20))` |
+| `CNIcon('path', size: 20)` (old positional / asset) | `CNIcon.asset('path', size: Size(20, 20))` |
+| `CNImageAsset` / `CNImageAsset.symbol(...)` | `CNIcon` / `CNIcon.symbol(...)` |
+| `CNIcon(...)` widget (native SF Symbol view) | `CNIconView(...)` |
 | `customIcon: CupertinoIcons.home` | `icon: CNIcon.symbol('house.fill'), tint: color` |
 | `CNButtonData(icon: CNSymbol(...))` | `CNButtonData(icon: CNIcon.symbol(...))` |
 | `CNButtonDataConfig(glassMaterial: ...)` | `CNButtonData(theme: CNButtonTheme(glassMaterial: ...))` |

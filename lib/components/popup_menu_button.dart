@@ -898,7 +898,7 @@ class _CNPopupMenuButtonState extends State<CNPopupMenuButton> {
         },
         child: widget.isIconButton
             ? (widget.buttonIcon != null
-                  ? CNIcon(
+                  ? CNIconView(
                       symbol: widget.buttonIcon,
                       size: widget.buttonIcon!.size,
                       color: widget.buttonIcon!.color,

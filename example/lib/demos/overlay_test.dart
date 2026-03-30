@@ -119,7 +119,9 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
             const SizedBox(height: 16),
             const Text('Icon in Dialog:'),
             const SizedBox(height: 8),
-            const CNIcon(symbol: CNSymbol('checkmark.circle.fill', size: 32)),
+            const CNIconView(
+              symbol: CNSymbol('checkmark.circle.fill', size: 32),
+            ),
             const SizedBox(height: 16),
             const Text(
               'Note: CNButton uses LayoutBuilder which conflicts with dialog layout constraints. Use CupertinoButton in dialogs instead.',
@@ -267,7 +269,7 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
             const SizedBox(height: 16),
             const Text('Icon:'),
             const SizedBox(height: 8),
-            const CNIcon(symbol: CNSymbol('star.fill', size: 32)),
+            const CNIconView(symbol: CNSymbol('star.fill', size: 32)),
             const SizedBox(height: 16),
             const Text('Popup Menu Button:'),
             const SizedBox(height: 8),

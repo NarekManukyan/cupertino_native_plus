@@ -274,10 +274,12 @@ class _PopupMenuButtonDemoPageState extends State<PopupMenuButtonDemoPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: CupertinoColors.systemBlue.withOpacity(0.1),
+                      color: CupertinoColors.systemBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: CupertinoColors.systemBlue.withOpacity(0.3),
+                        color: CupertinoColors.systemBlue.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                     child: Text(

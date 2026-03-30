@@ -24,11 +24,11 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(symbol: CNSymbol('heart'), size: 24),
-                CNIcon(symbol: CNSymbol('star'), size: 24),
-                CNIcon(symbol: CNSymbol('bell'), size: 24),
-                CNIcon(symbol: CNSymbol('figure.walk'), size: 24),
-                CNIcon(symbol: CNSymbol('paperplane'), size: 24),
+                CNIconView(symbol: CNSymbol('heart'), size: 24),
+                CNIconView(symbol: CNSymbol('star'), size: 24),
+                CNIconView(symbol: CNSymbol('bell'), size: 24),
+                CNIconView(symbol: CNSymbol('figure.walk'), size: 24),
+                CNIconView(symbol: CNSymbol('paperplane'), size: 24),
               ],
             ),
 
@@ -39,11 +39,11 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(symbol: CNSymbol('heart'), size: 12),
-                CNIcon(symbol: CNSymbol('star'), size: 16),
-                CNIcon(symbol: CNSymbol('bell'), size: 24),
-                CNIcon(symbol: CNSymbol('figure.walk'), size: 32),
-                CNIcon(symbol: CNSymbol('paperplane'), size: 40),
+                CNIconView(symbol: CNSymbol('heart'), size: 12),
+                CNIconView(symbol: CNSymbol('star'), size: 16),
+                CNIconView(symbol: CNSymbol('bell'), size: 24),
+                CNIconView(symbol: CNSymbol('figure.walk'), size: 32),
+                CNIconView(symbol: CNSymbol('paperplane'), size: 40),
               ],
             ),
 
@@ -54,27 +54,27 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('star.fill'),
                   color: CupertinoColors.systemPink,
                   mode: CNSymbolRenderingMode.monochrome,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('star.fill'),
                   color: CupertinoColors.systemBlue,
                   mode: CNSymbolRenderingMode.monochrome,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('star.fill'),
                   color: CupertinoColors.systemGreen,
                   mode: CNSymbolRenderingMode.monochrome,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('star.fill'),
                   color: CupertinoColors.systemOrange,
                   mode: CNSymbolRenderingMode.monochrome,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('star.fill'),
                   color: CupertinoColors.systemPurple,
                   mode: CNSymbolRenderingMode.monochrome,
@@ -87,31 +87,31 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('rectangle.and.pencil.and.ellipsis'),
                   size: 32,
                   color: CupertinoColors.systemBlue,
                   mode: CNSymbolRenderingMode.hierarchical,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('person.3.sequence'),
                   size: 32,
                   color: CupertinoColors.systemBlue,
                   mode: CNSymbolRenderingMode.hierarchical,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('speaker.wave.2.bubble'),
                   size: 32,
                   color: CupertinoColors.systemBlue,
                   mode: CNSymbolRenderingMode.hierarchical,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('ear.badge.waveform'),
                   size: 32,
                   color: CupertinoColors.systemBlue,
                   mode: CNSymbolRenderingMode.hierarchical,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('square.stack.3d.up'),
                   size: 32,
                   color: CupertinoColors.systemBlue,
@@ -125,27 +125,27 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('paintpalette.fill'),
                   size: 28,
                   mode: CNSymbolRenderingMode.multicolor,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('sun.rain.fill'),
                   size: 28,
                   mode: CNSymbolRenderingMode.multicolor,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('rainbow'),
                   size: 28,
                   mode: CNSymbolRenderingMode.multicolor,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('pc'),
                   size: 28,
                   mode: CNSymbolRenderingMode.multicolor,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('lightspectrum.horizontal'),
                   size: 28,
                   mode: CNSymbolRenderingMode.multicolor,
@@ -169,10 +169,12 @@ class _IconDemoPageState extends State<IconDemoPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: CupertinoColors.systemBlue.withOpacity(0.1),
+                      color: CupertinoColors.systemBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: CupertinoColors.systemBlue.withOpacity(0.3),
+                        color: CupertinoColors.systemBlue.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -190,7 +192,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                CNIcon(
+                CNIconView(
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
@@ -198,7 +200,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   ),
                   size: 24,
                 ),
-                CNIcon(
+                CNIconView(
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
@@ -206,7 +208,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   ),
                   size: 32,
                 ),
-                CNIcon(
+                CNIconView(
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/home.svg'
@@ -214,7 +216,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   ),
                   size: 40,
                 ),
-                CNIcon(
+                CNIconView(
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/search.svg'
@@ -233,7 +235,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                CNIcon(
+                CNIconView(
                   symbol: const CNSymbol('house.fill'),
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
@@ -243,7 +245,7 @@ class _IconDemoPageState extends State<IconDemoPage> {
                   size: 24,
                 ),
                 const SizedBox(width: 16),
-                CNIcon(
+                CNIconView(
                   symbol: const CNSymbol('magnifyingglass'),
                   imageAsset: CNIcon.asset(
                     _useAlternateSvgIcons
@@ -260,22 +262,22 @@ class _IconDemoPageState extends State<IconDemoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: const [
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('house.fill'), // Fallback if not provided
                   customIcon: CupertinoIcons.home, // Custom IconData!
                   size: 24,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('house.fill'),
                   customIcon: CupertinoIcons.home,
                   size: 32,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('house.fill'),
                   customIcon: CupertinoIcons.home,
                   size: 40,
                 ),
-                CNIcon(
+                CNIconView(
                   symbol: CNSymbol('house.fill'),
                   customIcon: CupertinoIcons.home,
                   size: 48,
