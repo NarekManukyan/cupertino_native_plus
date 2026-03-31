@@ -12,9 +12,68 @@ class CupertinoSegmentedControlNSView: NSView {
   private var perSymbolGradientEnabled: [NSNumber?] = []
   private var defaultIconRenderingMode: String? = nil
   private var defaultIconGradientEnabled: Bool = false
+  private var pendingLabelStyle: [String: Any]? = nil
+  private var pendingActiveLabelStyle: [String: Any]? = nil
+
+  // MARK: - Text style helpers
+
+  private func parseTextStyle(_ dict: [String: Any]) -> NSFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: NSFont? = nil
+    if let fontSize = fontSize {
+      if let fontFamily = fontFamily, let customFont = NSFont(name: fontFamily, size: fontSize) {
+        font = customFont
+      } else {
+        let weight: NSFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = NSFont.systemFont(ofSize: fontSize, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      let descriptor = f.fontDescriptor.withSymbolicTraits(.italic)
+      font = NSFont(descriptor: descriptor, size: f.pointSize) ?? font
+    }
+    return font
+  }
+
+  /// Applies font from a text style dict to all segment labels.
+  /// Note: NSSegmentedControl does not support per-state label styling.
+  /// Both labelStyle and activeLabelStyle share the same font; color
+  /// differentiation for active state is handled by the tint mechanism.
+  private func applyLabelStyleToAllSegments(_ dict: [String: Any]?) {
+    let font: NSFont? = dict.flatMap { parseTextStyle($0) }
+    for i in 0..<control.segmentCount {
+      let label = control.label(forSegment: i) ?? ""
+      var attrs: [NSAttributedString.Key: Any] = [:]
+      if let font = font { attrs[.font] = font }
+      if attrs.isEmpty {
+        control.setLabel(label, forSegment: i)
+      } else {
+        let attrStr = NSAttributedString(string: label, attributes: attrs)
+        // NSSegmentedControl does not have setAttributedLabel; re-set via label
+        // and apply font/color via NSCell attributed string workaround.
+        if let cell = control.cell as? NSSegmentedCell {
+          cell.setLabel(attrStr.string, forSegment: i)
+        }
+      }
+    }
+  }
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeSegmentedControl_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSegmentedControl)_\(viewId)", binaryMessenger: messenger)
     self.control = NSSegmentedControl(labels: [], trackingMode: .selectOne, target: nil, action: nil)
 
     var labels: [String] = []
@@ -32,6 +91,12 @@ class CupertinoSegmentedControlNSView: NSView {
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["enabled"] as? NSNumber { enabled = v.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
+      if let labelStyleDict = dict["labelStyle"] as? [String: Any] {
+        self.pendingLabelStyle = labelStyleDict
+      }
+      if let activeLabelStyleDict = dict["activeLabelStyle"] as? [String: Any] {
+        self.pendingActiveLabelStyle = activeLabelStyleDict
+      }
       if let style = dict["style"] as? [String: Any] {
         if let s = style["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }
         if let mode = style["iconRenderingMode"] as? String { self.defaultIconRenderingMode = mode }
@@ -53,6 +118,9 @@ class CupertinoSegmentedControlNSView: NSView {
 
     control.target = self
     control.action = #selector(onChanged(_:))
+
+    // Apply label style from creation params (macOS: single-state only)
+    if let style = pendingLabelStyle { applyLabelStyleToAllSegments(style) }
 
     addSubview(control)
     control.translatesAutoresizingMaskIntoConstraints = false
@@ -90,6 +158,13 @@ class CupertinoSegmentedControlNSView: NSView {
           self.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setLabelStyle":
+        // macOS: no per-state label styling; applies font to all segments
+        self.applyLabelStyleToAllSegments(call.arguments as? [String: Any])
+        result(nil)
+      case "setActiveLabelStyle":
+        // macOS: NSSegmentedControl has no selected-state label API; no-op
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -144,11 +219,4 @@ class CupertinoSegmentedControlNSView: NSView {
     channel.invokeMethod("valueChanged", arguments: ["index": sender.selectedSegment])
   }
 
-  private static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
-  }
 }

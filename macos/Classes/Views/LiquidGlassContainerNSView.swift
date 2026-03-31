@@ -9,61 +9,28 @@ class LiquidGlassContainerNSView: NSObject, FlutterPlatformView {
   private let channel: FlutterMethodChannel
   
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeLiquidGlassContainer_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeLiquidGlassContainer)_\(viewId)", binaryMessenger: messenger)
     self.container = NSView(frame: frame)
     self.container.wantsLayer = true
     self.container.layer?.backgroundColor = NSColor.clear.cgColor
-    
-    // Parse arguments
-    var effect: String = "regular"
-    var shape: String = "capsule"
-    var cornerRadius: CGFloat? = nil
-    var tint: NSColor? = nil
-    var interactive: Bool = false
-    var isDark: Bool = false
-    
-    if let dict = args as? [String: Any] {
-      if let effectStr = dict["effect"] as? String {
-        effect = effectStr
-      }
-      if let shapeStr = dict["shape"] as? String {
-        shape = shapeStr
-      }
-      if let radius = dict["cornerRadius"] as? CGFloat {
-        cornerRadius = radius
-      }
-      if let tintInt = dict["tint"] as? Int {
-        tint = NSColor(
-          red: CGFloat((tintInt >> 16) & 0xFF) / 255.0,
-          green: CGFloat((tintInt >> 8) & 0xFF) / 255.0,
-          blue: CGFloat(tintInt & 0xFF) / 255.0,
-          alpha: CGFloat((tintInt >> 24) & 0xFF) / 255.0
-        )
-      }
-      if let interactiveBool = dict["interactive"] as? Bool {
-        interactive = interactiveBool
-      }
-      if let isDarkBool = dict["isDark"] as? Bool {
-        isDark = isDarkBool
-      }
-    }
-    
-    print("LiquidGlassContainer init - isDark: \(isDark)")
-    
-    // Create SwiftUI view
+    self.container.layer?.masksToBounds = false
+
+    let config = LiquidGlassContainerConfig.parse(from: args)
+    let tint = config.tintARGB.map { ImageUtils.colorFromARGB($0) }
+
     let glassView = LiquidGlassContainerSwiftUI(
-      effect: effect,
-      shape: shape,
-      cornerRadius: cornerRadius,
+      effect: config.effect,
+      shape: config.shape,
+      cornerRadius: config.cornerRadius,
       tint: tint,
-      interactive: interactive
+      interactive: config.interactive
     )
     
     self.hostingController = NSHostingController(rootView: glassView)
     self.hostingController.view.wantsLayer = true
     self.hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
-    self.hostingController.view.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
-    
+    self.hostingController.view.appearance = NSAppearance(named: config.isDark ? .darkAqua : .aqua)
+
     super.init()
     
     // Add hosting controller as child
@@ -78,7 +45,7 @@ class LiquidGlassContainerNSView: NSObject, FlutterPlatformView {
     
     // Set up method channel handler
     channel.setMethodCallHandler { [weak self] (call, result) in
-      if call.method == "updateConfig" {
+      if call.method == ChannelConstants.methodUpdateConfig {
         self?.updateConfig(args: call.arguments)
         result(nil)
       } else {
@@ -88,52 +55,17 @@ class LiquidGlassContainerNSView: NSObject, FlutterPlatformView {
   }
   
   private func updateConfig(args: Any?) {
-    guard let dict = args as? [String: Any] else { return }
-    
-    var effect: String = "regular"
-    var shape: String = "capsule"
-    var cornerRadius: CGFloat? = nil
-    var tint: NSColor? = nil
-    var interactive: Bool = false
-    var isDark: Bool = false
-    
-    if let effectStr = dict["effect"] as? String {
-      effect = effectStr
-    }
-    if let shapeStr = dict["shape"] as? String {
-      shape = shapeStr
-    }
-    if let radius = dict["cornerRadius"] as? CGFloat {
-      cornerRadius = radius
-    }
-    if let tintInt = dict["tint"] as? Int {
-      tint = NSColor(
-        red: CGFloat((tintInt >> 16) & 0xFF) / 255.0,
-        green: CGFloat((tintInt >> 8) & 0xFF) / 255.0,
-        blue: CGFloat(tintInt & 0xFF) / 255.0,
-        alpha: CGFloat((tintInt >> 24) & 0xFF) / 255.0
-      )
-    }
-    if let interactiveBool = dict["interactive"] as? Bool {
-      interactive = interactiveBool
-    }
-    if let isDarkBool = dict["isDark"] as? Bool {
-      isDark = isDarkBool
-    }
-    
-    print("LiquidGlassContainer updateConfig - isDark: \(isDark)")
-    
-    // Update the SwiftUI view
+    let config = LiquidGlassContainerConfig.parse(from: args)
+    let tint = config.tintARGB.map { ImageUtils.colorFromARGB($0) }
     let newGlassView = LiquidGlassContainerSwiftUI(
-      effect: effect,
-      shape: shape,
-      cornerRadius: cornerRadius,
+      effect: config.effect,
+      shape: config.shape,
+      cornerRadius: config.cornerRadius,
       tint: tint,
-      interactive: interactive
+      interactive: config.interactive
     )
-    
     hostingController.rootView = newGlassView
-    hostingController.view.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+    hostingController.view.appearance = NSAppearance(named: config.isDark ? .darkAqua : .aqua)
   }
   
   func view() -> NSView {
@@ -154,7 +86,7 @@ struct LiquidGlassContainerSwiftUI: View {
       shapeForConfig()
         .fill(Color.clear)
         .contentShape(shapeForConfig())
-        .allowsHitTesting(false)
+        .allowsHitTesting(interactive)  // Only intercept touches when interactive glass is enabled
         .glassEffect(glassEffectForConfig(), in: shapeForConfig())
         .frame(width: geometry.size.width, height: geometry.size.height)
     }

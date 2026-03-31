@@ -17,9 +17,57 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
   private var defaultIconPalette: [UIColor] = []
   private var defaultIconRenderingMode: String? = nil
   private var defaultIconGradientEnabled: Bool = false
+  private var pendingLabelStyle: [String: Any]? = nil
+  private var pendingActiveLabelStyle: [String: Any]? = nil
+
+  // MARK: - Text style helpers
+
+  private func parseTextStyle(_ dict: [String: Any]) -> UIFont? {
+    let fontSize = (dict["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
+    let fontWeight = dict["fontWeight"] as? Int
+    let fontFamily = dict["fontFamily"] as? String
+    var font: UIFont? = nil
+    if let fontSize = fontSize {
+      if let fontFamily = fontFamily, let customFont = UIFont(name: fontFamily, size: fontSize) {
+        font = customFont
+      } else {
+        let weight: UIFont.Weight
+        switch fontWeight ?? 400 {
+        case 100: weight = .ultraLight
+        case 200: weight = .thin
+        case 300: weight = .light
+        case 400: weight = .regular
+        case 500: weight = .medium
+        case 600: weight = .semibold
+        case 700: weight = .bold
+        case 800: weight = .heavy
+        case 900: weight = .black
+        default:  weight = .regular
+        }
+        font = UIFont.systemFont(ofSize: fontSize, weight: weight)
+      }
+    }
+    if (dict["italic"] as? Bool) == true, let f = font {
+      if let descriptor = f.fontDescriptor.withSymbolicTraits(.traitItalic) {
+        font = UIFont(descriptor: descriptor, size: f.pointSize)
+      }
+    }
+    return font
+  }
+
+  private func applyLabelStyle(_ dict: [String: Any]?, forState state: UIControl.State) {
+    guard let dict = dict else {
+      control.setTitleTextAttributes(nil, for: state)
+      return
+    }
+    let font = parseTextStyle(dict)
+    var attrs: [NSAttributedString.Key: Any] = [:]
+    if let font = font { attrs[.font] = font }
+    control.setTitleTextAttributes(attrs, for: state)
+  }
 
   init(frame: CGRect, viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeSegmentedControl_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeSegmentedControl)_\(viewId)", binaryMessenger: messenger)
     self.container = UIView(frame: frame)
     self.control = UISegmentedControl(items: [])
 
@@ -37,10 +85,10 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
         self.perSymbolSizes = sizes.map { CGFloat(truncating: $0) }
       }
       if let colors = dict["sfSymbolColors"] as? [NSNumber] {
-        self.perSymbolColors = colors.map { Self.colorFromARGB($0.intValue) }
+        self.perSymbolColors = colors.map { ImageUtils.colorFromARGB($0.intValue) }
       }
       if let palettes = dict["sfSymbolPaletteColors"] as? [[NSNumber]] {
-        self.perSymbolPalettes = palettes.map { $0.map { Self.colorFromARGB($0.intValue) } }
+        self.perSymbolPalettes = palettes.map { $0.map { ImageUtils.colorFromARGB($0.intValue) } }
       }
       if let modes = dict["sfSymbolRenderingModes"] as? [String?] {
         self.perSymbolModes = modes
@@ -51,11 +99,17 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
       if let v = dict["selectedIndex"] as? NSNumber { selectedIndex = v.intValue }
       if let v = dict["enabled"] as? NSNumber { enabled = v.boolValue }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
+      if let labelStyleDict = dict["labelStyle"] as? [String: Any] {
+        self.pendingLabelStyle = labelStyleDict
+      }
+      if let activeLabelStyleDict = dict["activeLabelStyle"] as? [String: Any] {
+        self.pendingActiveLabelStyle = activeLabelStyleDict
+      }
       if let style = dict["style"] as? [String: Any] {
-        if let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
-        if let n = style["iconColor"] as? NSNumber { self.defaultIconColor = Self.colorFromARGB(n.intValue) }
+        if let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
+        if let n = style["iconColor"] as? NSNumber { self.defaultIconColor = ImageUtils.colorFromARGB(n.intValue) }
         if let s = style["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }
-        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.defaultIconPalette = arr.map { Self.colorFromARGB($0.intValue) } }
+        if let arr = style["iconPaletteColors"] as? [NSNumber] { self.defaultIconPalette = arr.map { ImageUtils.colorFromARGB($0.intValue) } }
         if let mode = style["iconRenderingMode"] as? String { self.defaultIconRenderingMode = mode }
         if let g = style["iconGradientEnabled"] as? NSNumber { self.defaultIconGradientEnabled = g.boolValue }
       }
@@ -86,28 +140,44 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
 
     control.addTarget(self, action: #selector(onChanged(_:)), for: .valueChanged)
 
+    // Apply label styles from creation params
+    if let labelStyle = pendingLabelStyle { applyLabelStyle(labelStyle, forState: .normal) }
+    if let activeLabelStyle = pendingActiveLabelStyle { applyLabelStyle(activeLabelStyle, forState: .selected) }
+
     channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { result(nil); return }
       switch call.method {
       case "getIntrinsicSize":
-        let size = self.control.intrinsicContentSize
-        result(["width": Double(size.width), "height": Double(size.height)])
+        // Defer result until after layout so Flutter gets size only when native has finished layout.
+        DispatchQueue.main.async { [weak self] in
+          guard let self = self else { return }
+          self.view().layoutIfNeeded()
+          let size = self.control.intrinsicContentSize
+          result(["width": Double(size.width), "height": Double(size.height)])
+        }
       case "setSelectedIndex":
         if let args = call.arguments as? [String: Any], let idx = (args["index"] as? NSNumber)?.intValue {
-          self.control.selectedSegmentIndex = idx
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            self.control.selectedSegmentIndex = idx
+          }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing index", details: nil)) }
       case "setEnabled":
         if let args = call.arguments as? [String: Any], let e = (args["enabled"] as? NSNumber)?.boolValue {
-          self.control.isEnabled = e
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            self.control.isEnabled = e
+            self.control.alpha = e ? 1.0 : 0.5
+          }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing enabled", details: nil)) }
       case "setStyle":
         if let args = call.arguments as? [String: Any] {
-          if #available(iOS 13.0, *), let n = args["tint"] as? NSNumber {
-            self.control.selectedSegmentTintColor = Self.colorFromARGB(n.intValue)
+          UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+            if #available(iOS 13.0, *), let n = args["tint"] as? NSNumber {
+              self.control.selectedSegmentTintColor = ImageUtils.colorFromARGB(n.intValue)
+            }
           }
-          if let n = args["iconColor"] as? NSNumber { self.defaultIconColor = Self.colorFromARGB(n.intValue) }
+          if let n = args["iconColor"] as? NSNumber { self.defaultIconColor = ImageUtils.colorFromARGB(n.intValue) }
           if let s = args["iconSize"] as? NSNumber { self.defaultIconSize = CGFloat(truncating: s) }
           self.rebuildSegments()
           result(nil)
@@ -119,6 +189,12 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
           }
           result(nil)
         } else { result(FlutterError(code: "bad_args", message: "Missing isDark", details: nil)) }
+      case "setLabelStyle":
+        self.applyLabelStyle(call.arguments as? [String: Any], forState: .normal)
+        result(nil)
+      case "setActiveLabelStyle":
+        self.applyLabelStyle(call.arguments as? [String: Any], forState: .selected)
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -132,9 +208,6 @@ class CupertinoSegmentedControlPlatformView: NSObject, FlutterPlatformView {
   }
 
   // Use shared utility functions
-  private static func colorFromARGB(_ argb: Int) -> UIColor {
-    return ImageUtils.colorFromARGB(argb)
-  }
 
   private func rebuildSegments() {
     control.removeAllSegments()

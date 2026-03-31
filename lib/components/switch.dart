@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import '../channel/params.dart';
+import '../channel/view_types.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/version_detector.dart';
 import '../utils/theme_helper.dart';
 
@@ -141,12 +143,12 @@ class _CNSwitchState extends State<CNSwitch> {
         child: CupertinoSwitch(
           value: widget.value,
           onChanged: widget.enabled ? widget.onChanged : null,
-          activeColor: _effectiveColor,
+          activeTrackColor: _effectiveColor,
         ),
       );
     }
 
-    const viewType = 'CupertinoNativeSwitch';
+    const viewType = ViewTypes.cupertinoNativeSwitch;
     // Platform views expand to the biggest size in unconstrained axes.
     // When placed in a Row, width can be unconstrained which would cause
     // the platform view to try to expand to Infinity. Provide a finite
@@ -166,50 +168,28 @@ class _CNSwitchState extends State<CNSwitch> {
       'style': encodeStyle(context, tint: _effectiveColor),
     };
 
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return ClipRect(
-        child: SizedBox(
-          height: widget.height,
-          width: width,
-          child: UiKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-            gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-              Factory<HorizontalDragGestureRecognizer>(
-                () => HorizontalDragGestureRecognizer(),
-              ),
-              Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-            },
-          ),
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+        Factory<HorizontalDragGestureRecognizer>(
+          () => HorizontalDragGestureRecognizer(),
         ),
-      );
-    }
-
-    // macOS
+        Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+      },
+    );
     return ClipRect(
-      child: SizedBox(
-        height: widget.height,
-        width: width,
-        child: AppKitView(
-          viewType: viewType,
-          creationParamsCodec: const StandardMessageCodec(),
-          creationParams: creationParams,
-          onPlatformViewCreated: _onPlatformViewCreated,
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-            Factory<HorizontalDragGestureRecognizer>(
-              () => HorizontalDragGestureRecognizer(),
-            ),
-            Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-          },
-        ),
-      ),
+      child: SizedBox(height: widget.height, width: width, child: platformView),
     );
   }
 
   void _onPlatformViewCreated(int id) {
-    final channel = MethodChannel('CupertinoNativeSwitch_$id');
+    final channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeSwitch,
+      id,
+    );
     _channel = channel;
     _controller._attach(channel);
     channel.setMethodCallHandler(_onMethodCall);

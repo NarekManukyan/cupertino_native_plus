@@ -1,4 +1,4 @@
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 import 'package:flutter/cupertino.dart';
 
 /// Test page to verify that platform views don't overlay app bars, modals, bottom sheets, or dialogs.
@@ -119,7 +119,9 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
             const SizedBox(height: 16),
             const Text('Icon in Dialog:'),
             const SizedBox(height: 8),
-            const CNIcon(symbol: CNSymbol('checkmark.circle.fill', size: 32)),
+            const CNIconView(
+              symbol: CNSymbol('checkmark.circle.fill', size: 32),
+            ),
             const SizedBox(height: 16),
             const Text(
               'Note: CNButton uses LayoutBuilder which conflicts with dialog layout constraints. Use CupertinoButton in dialogs instead.',
@@ -143,11 +145,11 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
       navigationBar: CupertinoNavigationBar(
         middle: const Text('Overlay Test'),
         leading: CNButton.icon(
-          icon: const CNSymbol('arrow.left', size: 18),
+          icon: const CNIcon.symbol('arrow.left', size: Size(18, 18)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         trailing: CNButton.icon(
-          icon: const CNSymbol('info.circle', size: 18),
+          icon: const CNIcon.symbol('info.circle', size: Size(18, 18)),
           onPressed: () {
             showCupertinoDialog(
               context: context,
@@ -267,7 +269,7 @@ class _OverlayTestPageState extends State<OverlayTestPage> {
             const SizedBox(height: 16),
             const Text('Icon:'),
             const SizedBox(height: 8),
-            const CNIcon(symbol: CNSymbol('star.fill', size: 32)),
+            const CNIconView(symbol: CNSymbol('star.fill', size: 32)),
             const SizedBox(height: 16),
             const Text('Popup Menu Button:'),
             const SizedBox(height: 8),

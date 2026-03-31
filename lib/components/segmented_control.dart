@@ -3,7 +3,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/version_detector.dart';
 import '../utils/theme_helper.dart';
 
@@ -28,6 +30,8 @@ class CNSegmentedControl extends StatefulWidget {
     this.iconPaletteColors,
     this.iconGradientEnabled,
     this.iconRenderingMode,
+    this.labelStyle,
+    this.activeLabelStyle,
   });
 
   /// Segment labels to display, in order.
@@ -69,6 +73,18 @@ class CNSegmentedControl extends StatefulWidget {
   /// Global icon rendering mode.
   final CNSymbolRenderingMode? iconRenderingMode;
 
+  /// Text style for unselected segment labels.
+  ///
+  /// On iOS, applied via `UISegmentedControl.setTitleTextAttributes(_:for: .normal)`.
+  /// On macOS, font applies to all states (no per-state attributed label API).
+  final TextStyle? labelStyle;
+
+  /// Text style for the selected segment label.
+  ///
+  /// On iOS, applied via `UISegmentedControl.setTitleTextAttributes(_:for: .selected)`.
+  /// On macOS, same limitation as [labelStyle] — color differentiation uses tint.
+  final TextStyle? activeLabelStyle;
+
   @override
   State<CNSegmentedControl> createState() => _CNSegmentedControlState();
 }
@@ -81,6 +97,8 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
   bool? _lastIsDark;
   int? _lastTint;
   double? _intrinsicWidth;
+  Map<String, dynamic>? _lastLabelStyle;
+  Map<String, dynamic>? _lastActiveLabelStyle;
 
   bool get _isDark => ThemeHelper.isDark(context);
 
@@ -119,7 +137,12 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
         child: CupertinoSegmentedControl<int>(
           children: {
             for (var i = 0; i < widget.labels.length; i++)
-              i: Text(widget.labels[i]),
+              i: Text(
+                widget.labels[i],
+                style: widget.selectedIndex == i
+                    ? widget.activeLabelStyle
+                    : widget.labelStyle,
+              ),
           },
           groupValue: widget.selectedIndex,
           onValueChanged: widget.enabled
@@ -129,7 +152,7 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
       );
     }
 
-    const viewType = 'CupertinoNativeSegmentedControl';
+    const viewType = ViewTypes.cupertinoNativeSegmentedControl;
     final creationParams = <String, dynamic>{
       'labels': widget.labels,
       'selectedIndex': widget.selectedIndex,
@@ -173,24 +196,18 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
         'sfSymbolGradientEnabled': widget.sfSymbols!
             .map((e) => e.gradient)
             .toList(),
+      if (widget.labelStyle != null)
+        'labelStyle': encodeTextStyle(widget.labelStyle, context),
+      if (widget.activeLabelStyle != null)
+        'activeLabelStyle': encodeTextStyle(widget.activeLabelStyle, context),
     };
 
-    Widget platformView;
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      platformView = UiKitView(
-        viewType: viewType,
-        creationParamsCodec: const StandardMessageCodec(),
-        creationParams: creationParams,
-        onPlatformViewCreated: _onPlatformViewCreated,
-      );
-    } else {
-      platformView = AppKitView(
-        viewType: viewType,
-        creationParamsCodec: const StandardMessageCodec(),
-        creationParams: creationParams,
-        onPlatformViewCreated: _onPlatformViewCreated,
-      );
-    }
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     if (widget.shrinkWrap) {
       final width = _intrinsicWidth;
@@ -211,7 +228,10 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
   }
 
   void _onPlatformViewCreated(int id) {
-    final channel = MethodChannel('CupertinoNativeSegmentedControl_$id');
+    final channel = ViewTypes.methodChannelFor(
+      ViewTypes.cupertinoNativeSegmentedControl,
+      id,
+    );
     _channel = channel;
     channel.setMethodCallHandler(_onMethodCall);
     _cacheCurrentProps();
@@ -257,6 +277,22 @@ class _CNSegmentedControlState extends State<CNSegmentedControl> {
     if (_lastTint != tint && tint != null) {
       await channel.invokeMethod('setStyle', {'tint': tint});
       _lastTint = tint;
+    }
+    final labelStyleEncoded = encodeTextStyle(widget.labelStyle, context);
+    final activeLabelStyleEncoded = encodeTextStyle(
+      widget.activeLabelStyle,
+      context,
+    );
+    if (_lastLabelStyle != labelStyleEncoded) {
+      await channel.invokeMethod('setLabelStyle', labelStyleEncoded);
+      _lastLabelStyle = labelStyleEncoded;
+    }
+    if (_lastActiveLabelStyle != activeLabelStyleEncoded) {
+      await channel.invokeMethod(
+        'setActiveLabelStyle',
+        activeLabelStyleEncoded,
+      );
+      _lastActiveLabelStyle = activeLabelStyleEncoded;
     }
   }
 

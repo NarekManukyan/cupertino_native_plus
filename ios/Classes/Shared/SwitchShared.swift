@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if os(iOS)
 struct CupertinoSwitchView: View {
   @ObservedObject var model: SwitchModel
 
@@ -39,6 +40,26 @@ struct CupertinoSwitchView: View {
     }
   }
 }
+#elseif os(macOS)
+struct CupertinoSwitchView: View {
+  @ObservedObject var model: SwitchModel
+
+  var body: some View {
+    let base = Toggle("", isOn: $model.value)
+      .labelsHidden()
+      .disabled(!model.enabled)
+      .onChange(of: model.value) { newValue in
+        model.onChange(newValue)
+      }
+
+    if #available(macOS 12.0, *) {
+      base.tint(model.tintColor)
+    } else {
+      base.accentColor(model.tintColor)
+    }
+  }
+}
+#endif
 
 class SwitchModel: ObservableObject {
   @Published var value: Bool

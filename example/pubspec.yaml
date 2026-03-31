@@ -1,4 +1,4 @@
-name: cupertino_native_example
+name: cupertino_native_plus_example
 description: "Demonstrates how to use the cupertino_native_plus plugin."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

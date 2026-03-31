@@ -1,4 +1,16 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+
+/// Shared types and encoding for platform view creation params.
+///
+/// Common param keys sent to native (keep in sync with Swift ChannelConstants / view parsers):
+/// - **Style (ARGB ints):** `tint`, `thumbTint`, `trackTint`, `trackBackgroundTint`, `iconColor`, `backgroundColor`
+/// - **Layout:** `cornerRadius`, `effect`, `shape`, `interactive`, `isDark`
+/// - **Control state:** `value`, `min`, `max`, `enabled`, `step`, `selectedIndex`
+/// Use [encodeStyle] and [resolveColorToArgb] for style maps so keys stay consistent.
+
+/// Codec used for platform view creation params. Use with [UiKitView] / [AppKitView].
+const StandardMessageCodec creationParamsCodec = StandardMessageCodec();
 
 /// Converts a [Color] to ARGB int (0xAARRGGBB). Private helper.
 int? _argbFromColor(Color? color) {
@@ -20,6 +32,25 @@ int? resolveColorToArgb(Color? color, BuildContext context) {
     return _argbFromColor(resolved);
   }
   return _argbFromColor(color);
+}
+
+/// Encodes a [TextStyle] into a map suitable for platform view method channel calls.
+///
+/// Returns `null` if [style] is null (signals "clear style" on the native side).
+/// Keys: `fontSize` (double), `fontWeight` (CSS 100-900 int), `italic` (bool),
+/// `fontFamily` (string). Only non-null fields are included.
+/// Color is intentionally excluded — use dedicated tint/labelColor/iconColor params.
+Map<String, dynamic>? encodeTextStyle(TextStyle? style, BuildContext context) {
+  if (style == null) return null;
+  final map = <String, dynamic>{};
+  if (style.fontSize != null) map['fontSize'] = style.fontSize;
+  if (style.fontWeight != null) {
+    // FontWeight.index is 0-based (w100=0 … w900=8); CSS scale is 100-900.
+    map['fontWeight'] = (style.fontWeight!.index + 1) * 100;
+  }
+  if (style.fontStyle == FontStyle.italic) map['italic'] = true;
+  if (style.fontFamily != null) map['fontFamily'] = style.fontFamily;
+  return map;
 }
 
 /// Creates a unified style map for platform views.

@@ -1,685 +1,615 @@
-# Liquid Glass for Flutter
+# cupertino_native_plus
 
-Native Liquid Glass widgets for iOS and macOS in Flutter with pixel‑perfect fidelity.
+[![Pub Version](https://img.shields.io/pub/v/cupertino_native_plus)](https://pub.dev/packages/cupertino_native_plus)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%7C%20macOS-lightgrey)](https://flutter.dev)
 
-This package provides native iOS and macOS widgets with Liquid Glass effects for Flutter applications. It uses Platform Views to embed real UIKit/AppKit controls inside Flutter, ensuring pixel-perfect fidelity with native look and feel while still fitting naturally into Flutter code.
+Native iOS 26+ **Liquid Glass** widgets for Flutter with pixel-perfect fidelity. This package renders authentic Apple UI components using native platform views, providing the genuine iOS/macOS look and feel that Flutter's built-in widgets cannot achieve.
 
-## About This Package
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/preview.jpg" alt="Preview" width="600"/>
+</p>
 
-This package (`cupertino_native_plus`) is based on the original [`cupertino_native`](https://github.com/serverpod/cupertino_native) package. It was created as a fork to provide continued development and support, as the original package's maintainer does not accept contributions and has stopped actively supporting the library. This package aims to maintain compatibility while providing ongoing improvements and bug fixes.
+## Quick Start
 
-## Installation
-
-Add the dependency in your app’s `pubspec.yaml`:
-
-```bash
-flutter pub add cupertino_native_plus
-```
-
-Then run `flutter pub get`.
-
-Ensure your platform minimums are compatible:
-
-- iOS `platform :ios, '13.0'`
-- macOS 11.0+
-
-**Note:** This package includes SVGKit dependency for native SVG rendering support.
-
-**Liquid Glass Effects:** Native Liquid Glass effects require iOS 26+ or macOS 26+. On older versions, the package falls back to standard button styles and effects.
-
-### Initialization
-
-For Liquid Glass effects to work properly, initialize platform version detection early in your app:
+No initialization required! Just import and use:
 
 ```dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Initialize platform version detection early
-  await PlatformVersion.initialize();
-  runApp(const MyApp());
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
+
+void main() {
+  runApp(MyApp());
 }
 ```
 
-This ensures proper version detection for conditional Liquid Glass feature availability.
+> **Note:** `PlatformVersion` auto-initializes on first access. No need to call `initialize()` anymore!
 
-## What's in the package
+## Performance Best Practices
 
-This package ships a handful of native Liquid Glass widgets. Each widget exposes a simple, Flutter‑friendly API and falls back to a reasonable Flutter implementation on non‑Apple platforms.
+### ⚠️ LiquidGlassContainer & Lists
 
-**Icon Support:** All components that display icons support three types with a unified priority system:
-- **Image Assets** (highest priority) - Custom SVG or PNG icons from your app's assets with automatic resolution selection
-- **Custom Icons** (medium priority) - Flutter `IconData` (CupertinoIcons, Material Icons, etc.)
-- **SF Symbols** (lowest priority) - Native Apple SF Symbols
+`LiquidGlassContainer` uses a **Platform View** (`UiKitView` / `AppKitView`) under the hood. While powerful, platform views are more expensive than standard Flutter widgets.
 
-When multiple icon types are provided, the component uses the highest priority one available.
+*   **DO NOT** use `LiquidGlassContainer` inside long scrolling lists (`ListView.builder`, `GridView`) with many items. This will cause significant performance drops (jank).
+*   **DO** use `LiquidGlassContainer` for static elements like Cards, Headers, Navigation Bars, or Floating Action Buttons.
 
-### Slider
+## Why cupertino_native_plus?
 
-![Liquid Glass Slider](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/slider.png)
+**cupertino_native_plus** provides native iOS and macOS widgets with pixel-perfect fidelity. Unlike other packages that rely on Flutter's Cupertino widgets, this package uses native platform views to render authentic Apple UI components.
+
+### Key Advantages
+
+- **Reliable Version Detection**: Uses `Platform.operatingSystemVersion` parsing instead of platform channels, ensuring accurate version detection in both debug and release builds
+- **Native Rendering**: All widgets use native platform views for authentic iOS/macOS appearance
+- **Comprehensive Fallbacks**: Every widget gracefully degrades on older OS versions
+- **Multiple Icon Types**: The **`CNIcon`** value type covers SF Symbols, xcassets, Flutter asset paths, and raw bytes (SVG/PNG/JPG). The **`CNIconView`** widget renders those sources natively on iOS/macOS (see [Icon Support](#icon-support)).
+- **Label Typography**: **`TextStyle`**-based label styling on buttons, tab bars, segmented controls, and popup menus—**font size, weight, italic, and font family** are applied on native iOS/macOS, not just in Flutter fallbacks (see [Label styles](#label-styles)).
+- **Dark Mode Support**: Automatic theme synchronization with system preferences
+- **Glass Effect Unioning**: Multiple buttons can share unified glass effects
+
+## Features
+
+### Widgets
+
+| Widget | Description | Controller |
+|--------|-------------|:----------:|
+| `CNButton` | Native push button with Liquid Glass effects, SF Symbols, and image assets | - |
+| `CNButton.icon` | Circular icon-only button variant | - |
+| `CNIconView` | Platform-rendered SF Symbols, custom IconData, or image assets | - |
+| `CNTabBar` | Native tab bar with split mode for scroll-aware layouts | - |
+| `CNSlider` | Native slider with min/max range and step support | `CNSliderController` |
+| `CNSwitch` | Native toggle switch with animated state changes | `CNSwitchController` |
+| `CNPopupMenuButton` | Native popup menu with dividers, icons, and image assets | - |
+| `CNPopupMenuButton.icon` | Circular icon-only popup menu variant | - |
+| `CNSegmentedControl` | Native segmented control with SF Symbols support | - |
+| `CNGlassButtonGroup` | Grouped buttons with unified glass blending | - |
+| `LiquidGlassContainer` | Apply Liquid Glass effects to any Flutter widget | - |
+| `CNGlassCard` | **(Experimental)** Pre-styled card with optional breathing glow animation | - |
+| `CNTabBarNative` | **iOS 26 Native Tab Bar** with UITabBarController + search | - |
+| `CNToast` | Toast notifications with Liquid Glass effects | - |
+
+### Icon Support
+
+**`CNIcon`** is the single immutable description of an icon (SF Symbol, catalog image, Flutter asset, or bytes). **Pass it to APIs** such as `CNButton.icon`, `CNTabBarItem.icon`, or `CNPopupMenuButton` image fields.
+
+**`CNIconView`** is the **widget** that draws a `CNSymbol`, `CNIcon`, or `IconData` using native views when available. Do not confuse it with the `CNIcon` type.
+
+| Constructor | Source |
+|---|---|
+| `CNIcon.symbol('name')` | SF Symbol (system icon) |
+| `CNIcon.xcasset('name')` | App asset catalog (xcassets) |
+| `CNIcon.asset('path')` | Flutter asset path (SVG/PNG/JPG auto-detected) |
+| `CNIcon.svg(bytes)` | SVG bytes |
+| `CNIcon.png(bytes)` | PNG bytes |
+| `CNIcon.jpg(bytes)` | JPG bytes |
 
 ```dart
-double _value = 50;
+// SF Symbol
+CNButton(
+  label: 'Settings',
+  icon: const CNIcon.symbol('gear', size: Size(20, 20)),
+  onPressed: () {},
+)
 
-CNSlider(
-  value: _value,
-  min: 0,
-  max: 100,
-  onChanged: (v) => setState(() => _value = v),
+// Flutter asset (SVG/PNG/JPG — format auto-detected from extension)
+CNButton(
+  label: 'Custom',
+  icon: const CNIcon.asset('assets/icons/custom.png', size: Size(20, 20)),
+  onPressed: () {},
+)
+
+// App asset catalog (xcassets)
+CNButton(
+  label: 'Logo',
+  icon: const CNIcon.xcasset('AppIcon', size: Size(20, 20)),
+  onPressed: () {},
+)
+
+// Tinted icon
+CNButton.icon(
+  icon: const CNIcon.symbol('house.fill', size: Size(20, 20)),
+  tint: Colors.blue,
+  onPressed: () {},
+)
+
+// Native icon widget (SF Symbol or imageAsset: CNIcon.asset(...))
+CNIconView(
+  symbol: const CNSymbol('star.fill', size: 24),
 )
 ```
 
-### Switch
-
-![Liquid Glass Switch](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/switch.png)
+### Button Styles
 
 ```dart
-bool _on = true;
+CNButtonStyle.plain           // Minimal, text-only
+CNButtonStyle.gray            // Subtle gray background
+CNButtonStyle.tinted          // Tinted text
+CNButtonStyle.bordered        // Bordered outline
+CNButtonStyle.borderedProminent // Accent-colored border
+CNButtonStyle.filled          // Solid filled background
+CNButtonStyle.glass           // Liquid Glass effect (iOS 26+)
+CNButtonStyle.prominentGlass  // Prominent glass effect (iOS 26+)
+```
+
+### Label styles
+
+Several widgets accept **`TextStyle`** so you can match your app’s typography on the native layer. The following fields are encoded to iOS/macOS: **`fontSize`**, **`fontWeight`** (maps to CSS-style 100–900), **`fontStyle: FontStyle.italic`**, and **`fontFamily`**.
+
+**Label color** on native controls uses the widget’s theme or tint APIs (for example `CNButtonTheme.labelColor`, `CNButtonTheme.tint`, tab bar tint, or segment tint)—not the `TextStyle.color` field in the channel payload. You can still set `color` on `TextStyle` for **Flutter fallback** paths; for consistent native appearance, set **`labelColor`** / **`tint`** on `CNButtonTheme` (or the relevant widget) alongside `labelStyle`.
+
+| API | Where to set |
+|-----|----------------|
+| `CNButtonTheme.labelStyle` | `CNButton`, `CNButton.icon` (`theme:`), and `CNButtonData` / `CNGlassButtonGroup` via each button’s `theme` |
+| `CNTabBar.labelStyle` / `activeLabelStyle` | Normal vs selected tab item titles |
+| `CNSegmentedControl.labelStyle` / `activeLabelStyle` | Unselected vs selected segment titles |
+| `CNPopupMenuButton.labelStyle` | Primary button label (and styling hooks for the native menu where supported) |
+
+```dart
+CNButton(
+  label: 'Continue',
+  theme: CNButtonTheme(
+    tint: CupertinoColors.activeBlue,
+    labelStyle: TextStyle(
+      fontSize: 17,
+      fontWeight: FontWeight.w600,
+      fontFamily: '.SF Pro Text',
+    ),
+  ),
+  onPressed: () {},
+)
+
+CNTabBar(
+  labelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+  activeLabelStyle: const TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w600,
+  ),
+  items: const [
+    CNTabBarItem(
+      label: 'Home',
+      icon: CNIcon.symbol('house.fill'),
+    ),
+  ],
+  currentIndex: 0,
+  onTap: (_) {},
+)
+```
+
+### Glass Effect Unioning
+
+Multiple buttons can share a unified glass effect:
+
+```dart
+Row(
+  children: [
+    CNButton(
+      label: 'Left',
+      config: CNButtonConfig(
+        style: CNButtonStyle.glass,
+        glassEffectUnionId: 'toolbar',
+      ),
+      onPressed: () {},
+    ),
+    CNButton(
+      label: 'Right',
+      config: CNButtonConfig(
+        style: CNButtonStyle.glass,
+        glassEffectUnionId: 'toolbar',
+      ),
+      onPressed: () {},
+    ),
+  ],
+)
+```
+
+### Tab Bar with Split Mode
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/tab_bar_preview.png" width="300" alt="Tab Bar Preview"/>
+</p>
+
+```dart
+CNTabBar(
+  items: [
+    CNTabBarItem(
+      label: 'Home',
+      icon: const CNIcon.symbol('house'),
+      activeIcon: const CNIcon.symbol('house.fill'),
+    ),
+    CNTabBarItem(
+      label: 'Profile',
+      icon: const CNIcon.symbol('person.crop.circle'),
+      activeIcon: const CNIcon.symbol('person.crop.circle.fill'),
+    ),
+  ],
+  currentIndex: _selectedIndex,
+  onTap: (index) => setState(() => _selectedIndex = index),
+  split: true, // Separates tabs when scrolling
+  rightCount: 1, // Number of tabs pinned to the right
+)
+```
+
+### Native iOS 26 Tab Bar (CNTabBarNative)
+
+For full iOS 26 liquid glass tab bar experience with native UITabBarController:
+
+```dart
+@override
+void initState() {
+  super.initState();
+  CNTabBarNative.enable(
+    tabs: [
+      CNTab(title: 'Home', sfSymbol: const CNIcon.symbol('house.fill')),
+      CNTab(title: 'Search', sfSymbol: const CNIcon.symbol('magnifyingglass'), isSearchTab: true),
+      CNTab(title: 'Profile', sfSymbol: const CNIcon.symbol('person.fill')),
+    ],
+    onTabSelected: (index) => setState(() => _selectedTab = index),
+    onSearchChanged: (query) => filterResults(query),
+  );
+}
+
+@override
+void dispose() {
+  CNTabBarNative.disable();
+  super.dispose();
+}
+```
+
+### Tab Bar with iOS 26 Search Tab
+
+The `CNTabBar` supports iOS 26's native search tab feature with animated expansion:
+
+```dart
+CNTabBar(
+  items: [
+    CNTabBarItem(
+      label: 'Overview',
+      icon: const CNIcon.symbol('square.grid.2x2.fill'),
+    ),
+    CNTabBarItem(
+      label: 'Projects',
+      icon: const CNIcon.symbol('folder'),
+      activeIcon: const CNIcon.symbol('folder.fill'),
+    ),
+  ],
+  currentIndex: _index,
+  onTap: (i) => setState(() => _index = i),
+  // iOS 26 Search Tab Feature
+  searchItem: CNTabBarSearchItem(
+    placeholder: 'Find customer',
+    // Control keyboard auto-activation
+    automaticallyActivatesSearch: false, // Keyboard only opens on text field tap
+    onSearchChanged: (query) {
+      // Live filtering as user types
+    },
+    onSearchSubmit: (query) {
+      // Handle search submission
+    },
+    onSearchActiveChanged: (isActive) {
+      // React to search expand/collapse
+    },
+    style: const CNTabBarSearchStyle(
+      iconSize: 20,
+      buttonSize: 44,
+      searchBarHeight: 44,
+      animationDuration: Duration(milliseconds: 400),
+      showClearButton: true,
+    ),
+  ),
+  searchController: _searchController, // Optional programmatic control
+)
+```
+
+#### automaticallyActivatesSearch
+
+Controls whether the keyboard opens automatically when the search tab expands:
+
+- `true` (default): Tapping the search button expands the bar AND opens the keyboard
+- `false`: Tapping the search button only expands the bar; keyboard opens when user taps the text field
+
+This mirrors `UISearchTab.automaticallyActivatesSearch` from UIKit.
+
+## Installation
+
+Add to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  cupertino_native_plus: ^0.0.7
+```
+
+## Usage
+
+### Basic Button
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/button_preview.png" width="300" alt="Button Preview"/>
+</p>
+
+```dart
+CNButton(
+  label: 'Get Started',
+  icon: const CNIcon.symbol('arrow.right', size: Size(18, 18)),
+  config: const CNButtonConfig(
+    style: CNButtonStyle.filled,
+    imagePlacement: CNImagePlacement.trailing,
+  ),
+  onPressed: () {
+    // Handle tap
+  },
+)
+```
+
+### Button Styles Gallery
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/button_preview_2.png" width="300" alt="Glass Button Styles"/>
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/button_preview_3.png" width="300" alt="Filled Button Styles"/>
+</p>
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/button_preview_4.png" width="300" alt="More Button Styles"/>
+</p>
+
+### Icon-Only Button
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/icon_button_preview.png" width="300" alt="Icon Button Preview"/>
+</p>
+
+```dart
+CNButton.icon(
+  icon: const CNIcon.symbol('plus', size: Size(24, 24)),
+  config: const CNButtonConfig(style: CNButtonStyle.glass),
+  onPressed: () {},
+)
+```
+
+### Native Icons
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/icon_preview.png" width="300" alt="Icon Preview"/>
+</p>
+
+```dart
+CNIconView(
+  symbol: const CNSymbol(
+    'star.fill',
+    size: 32,
+    color: Colors.amber,
+    mode: CNSymbolRenderingMode.multicolor,
+  ),
+)
+```
+
+### Slider with Controller
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/slider_preview.jpg" width="300" alt="Slider Preview"/>
+</p>
+
+```dart
+final controller = CNSliderController();
+
+CNSlider(
+  value: 0.5,
+  min: 0,
+  max: 1,
+  controller: controller,
+  onChanged: (value) {
+    print('Value: $value');
+  },
+)
+
+// Programmatic update
+controller.setValue(0.75);
+```
+
+### Switch with Controller
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/switch_preview.png" width="300" alt="Switch Preview"/>
+</p>
+
+```dart
+final controller = CNSwitchController();
 
 CNSwitch(
-  value: _on,
-  onChanged: (v) => setState(() => _on = v),
+  value: _isEnabled,
+  onChanged: (value) {
+    setState(() => _isEnabled = value);
+  },
+  controller: controller,
+  color: Colors.green, // Optional tint color
+)
+
+// Programmatic control
+controller.setValue(true, animated: true);
+controller.setEnabled(false); // Disable interaction
+```
+
+### Popup Menu Button
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/popup_menu_preview.png" width="300" alt="Popup Menu Button"/>
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/popup_menu_opened_preview.jpg" width="300" alt="Popup Menu Opened"/>
+</p>
+
+```dart
+// Text-labeled popup menu
+CNPopupMenuButton(
+  buttonLabel: 'Options',
+  buttonStyle: CNButtonStyle.glass,
+  items: [
+    CNPopupMenuItem(
+      label: 'Edit',
+      icon: const CNIcon.symbol('pencil'),
+    ),
+    CNPopupMenuItem(
+      label: 'Share',
+      icon: const CNIcon.symbol('square.and.arrow.up'),
+    ),
+    const CNPopupMenuDivider(), // Visual separator
+    CNPopupMenuItem(
+      label: 'Delete',
+      icon: const CNIcon.symbol('trash', color: Colors.red),
+      enabled: true,
+    ),
+  ],
+  onSelected: (index) {
+    print('Selected item at index: $index');
+  },
+)
+
+// Icon-only popup menu (circular glass button)
+CNPopupMenuButton.icon(
+  buttonIcon: const CNIcon.symbol('ellipsis.circle', size: Size(24, 24)),
+  buttonStyle: CNButtonStyle.glass,
+  items: [
+    CNPopupMenuItem(label: 'Option 1', icon: const CNIcon.symbol('star')),
+    CNPopupMenuItem(label: 'Option 2', icon: const CNIcon.symbol('heart')),
+  ],
+  onSelected: (index) {},
 )
 ```
 
 ### Segmented Control
 
-![Liquid Glass Segmented Control](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/segmented-control.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/segmented_control_preview.png" width="300" alt="Segmented Control Preview"/>
+</p>
 
 ```dart
-int _index = 0;
-
+// Text-only segments
 CNSegmentedControl(
-  labels: const ['One', 'Two', 'Three'],
-  selectedIndex: _index,
-  onValueChanged: (i) => setState(() => _index = i),
-)
-```
-
-### Button
-
-![Liquid Glass Button](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/button.png)
-
-```dart
-CNButton(
-  label: 'Press me',
-  onPressed: () {},
-)
-
-// Icon button with SF Symbol
-CNButton.icon(
-  icon: const CNSymbol('heart.fill'),
-  onPressed: () {},
-)
-
-// Icon button with custom icon (IconData)
-CNButton.icon(
-  customIcon: CupertinoIcons.heart_fill,
-  onPressed: () {},
-)
-
-// Icon button with SVG asset
-CNButton.icon(
-  imageAsset: const CNImageAsset('assets/icons/heart.svg', size: 18),
-  onPressed: () {},
-)
-
-// Button with image and custom placement
-CNButton(
-  label: 'Settings',
-  imageAsset: CNImageAsset('assets/icons/settings.svg', size: 16),
-  imagePlacement: CNImagePlacement.leading,
-  imagePadding: 8.0,
-  horizontalPadding: 16.0,
-  onPressed: () {},
-)
-
-// Button with top image placement
-CNButton(
-  label: 'Profile',
-  imageAsset: CNImageAsset('assets/icons/profile.svg', size: 16),
-  imagePlacement: CNImagePlacement.top,
-  onPressed: () {},
-)
-```
-
-**Button Features:**
-- Multiple button styles: `plain`, `gray`, `tinted`, `bordered`, `borderedProminent`, `filled`, `glass`, `prominentGlass`
-- Image placement options: `leading`, `trailing`, `top`, `bottom` (for buttons with both image and label)
-- Customizable image padding (spacing between image and text)
-- Customizable horizontal padding (internal button spacing)
-- Supports SVG assets, custom icons (IconData), and SF Symbols with unified priority system
-- Liquid Glass effects with union IDs, effect IDs, and interactive effects (iOS 26+ and macOS 26+)
-
-### Icon
-
-![Liquid Glass Icon](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/icon.png)
-
-The `CNIcon` widget supports three types of icons with a unified priority system: **SVG Assets** > **Custom Icons** > **SF Symbols**.
-
-```dart
-// SF Symbol (default)
-const CNIcon(symbol: CNSymbol('star'));
-
-// SF Symbol with multicolor / hierarchical rendering
-const CNIcon(
-  symbol: CNSymbol('paintpalette.fill'),
-  mode: CNSymbolRenderingMode.multicolor,
-)
-
-// Custom icon from IconData (CupertinoIcons, Material Icons, etc.)
-const CNIcon(
-  customIcon: CupertinoIcons.home,
-  size: 24,
-)
-
-// SVG asset from your app's assets
-const CNIcon(
-  imageAsset: CNImageAsset('assets/icons/home.svg', size: 24),
-)
-
-// SVG with custom color
-const CNIcon(
-  imageAsset: CNImageAsset(
-    'assets/icons/search.svg', 
-    size: 32,
-    color: CupertinoColors.systemBlue,
-  ),
-)
-```
-
-### Popup Menu Button
-
-![Liquid Glass Popup Menu Button](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/popup-menu-button.png)
-
-Popup menu buttons support all icon types (SVG assets, custom icons, and SF Symbols):
-
-```dart
-// Using SF Symbols
-final items = [
-  const CNPopupMenuItem(label: 'New File', icon: CNSymbol('doc', size: 18)),
-  const CNPopupMenuItem(label: 'New Folder', icon: CNSymbol('folder', size: 18)),
-  const CNPopupMenuDivider(),
-  const CNPopupMenuItem(label: 'Rename', icon: CNSymbol('rectangle.and.pencil.and.ellipsis', size: 18)),
-];
-
-CNPopupMenuButton(
-  buttonLabel: 'Actions',
-  items: items,
-  onSelected: (index) {
-    // Handle selection
+  labels: ['Day', 'Week', 'Month', 'Year'],
+  selectedIndex: _selectedIndex,
+  onValueChanged: (index) {
+    setState(() => _selectedIndex = index);
   },
+  color: Colors.blue, // Optional tint color
 )
 
-// Using custom icons (IconData)
-final itemsWithCustomIcons = [
-  const CNPopupMenuItem(label: 'Home', customIcon: CupertinoIcons.home),
-  const CNPopupMenuItem(label: 'Settings', customIcon: CupertinoIcons.settings),
-];
-
-// Using SVG assets
-final itemsWithSVG = [
-  const CNPopupMenuItem(
-    label: 'Home',
-    imageAsset: CNImageAsset('assets/icons/home.svg', size: 18),
-  ),
-  const CNPopupMenuItem(
-    label: 'Search',
-    imageAsset: CNImageAsset('assets/icons/search.svg', size: 18),
-  ),
-];
-
-// Icon-only popup menu button
-CNPopupMenuButton.icon(
-  buttonImageAsset: const CNImageAsset('assets/icons/menu.svg', size: 18),
-  items: items,
-  onSelected: (index) {},
+// Segments with SF Symbols
+CNSegmentedControl(
+  labels: ['List', 'Grid', 'Gallery'],
+  sfSymbols: [
+    const CNIcon.symbol('list.bullet'),
+    const CNIcon.symbol('square.grid.2x2'),
+    const CNIcon.symbol('photo.on.rectangle'),
+  ],
+  selectedIndex: _viewMode,
+  onValueChanged: (index) {
+    setState(() => _viewMode = index);
+  },
+  shrinkWrap: true, // Size to content
 )
 ```
-
-### Tab Bar
-
-![Liquid Glass Tab Bar](https://github.com/NarekManukyan/cupertino_native_plus/raw/main/misc/screenshots/tab-bar.png)
-
-Tab bars support all icon types (SVG assets, custom icons, and SF Symbols):
-
-```dart
-int _tabIndex = 0;
-
-// Using SF Symbols
-CNTabBar(
-  items: const [
-    CNTabBarItem(label: 'Home', icon: CNSymbol('house.fill')),
-    CNTabBarItem(label: 'Profile', icon: CNSymbol('person.crop.circle')),
-    CNTabBarItem(label: 'Settings', icon: CNSymbol('gearshape.fill')),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-
-// Using custom icons (IconData)
-CNTabBar(
-  items: const [
-    CNTabBarItem(
-      label: 'Home',
-      customIcon: CupertinoIcons.home,
-      activeCustomIcon: CupertinoIcons.home_fill,
-    ),
-    CNTabBarItem(
-      label: 'Profile',
-      customIcon: CupertinoIcons.person,
-    ),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-
-// Using SVG assets
-CNTabBar(
-  items: const [
-    CNTabBarItem(
-      label: 'Home',
-      imageAsset: CNImageAsset('assets/icons/home.svg'),
-      activeImageAsset: CNImageAsset('assets/icons/home-filled.svg'),
-    ),
-    CNTabBarItem(
-      label: 'Search',
-      imageAsset: CNImageAsset('assets/icons/search.svg'),
-    ),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-```
-
-## Liquid Glass Effects (iOS 26+ & macOS 26+)
-
-This package provides native Liquid Glass effects for iOS 26+ and macOS 26+. Liquid Glass effects create beautiful, blurry, translucent surfaces that blend seamlessly with their backgrounds.
 
 ### Liquid Glass Container
 
-Apply Liquid Glass effects to any widget using the `liquidGlass()` extension method:
-
 ```dart
-// Simple glass effect
-Text('Hello, World!').liquidGlass()
-
-// Rectangle shape with corner radius
-Text('Hello, World!').liquidGlass(
-  shape: CNGlassEffectShape.rect,
-  cornerRadius: 16.0,
-)
-
-// Tinted and interactive glass effect
-Text('Hello, World!').liquidGlass(
-  effect: CNGlassEffect.regular,
-  tint: CupertinoColors.systemOrange,
-  interactive: true,
-)
-
-// Prominent glass effect with circle shape
-Container(
-  width: 100,
-  height: 100,
-  child: Center(child: Text('Circle')),
-).liquidGlass(
-  effect: CNGlassEffect.prominent,
-  shape: CNGlassEffectShape.circle,
-)
-```
-
-**Liquid Glass Configuration:**
-- **Effect variants:** `regular` (standard blur) or `prominent` (enhanced blur)
-- **Shapes:** `capsule` (default), `rect` (with corner radius), or `circle`
-- **Tint colors:** Optional color tinting for the glass effect
-- **Interactive:** Makes the glass effect respond to touch/pointer interactions
-
-### Glass Button Group
-
-Group buttons together for proper Liquid Glass blending effects. Buttons in a group can blend together when using `glassEffectUnionId`:
-
-```dart
-CNGlassButtonGroup(
-  axis: Axis.horizontal,
-  spacing: 8.0,
-  spacingForGlass: 40.0,
-  buttons: [
-    CNButton(
-      label: 'Home',
-      imageAsset: CNImageAsset('assets/icons/home.svg', size: 16),
-      onPressed: () {},
-      config: const CNButtonConfig(
-        style: CNButtonStyle.glass,
-        glassEffectUnionId: 'toolbar-group',
-        glassEffectId: 'toolbar-home',
-      ),
-    ),
-    CNButton(
-      label: 'Search',
-      imageAsset: CNImageAsset('assets/icons/search.svg', size: 16),
-      onPressed: () {},
-      config: const CNButtonConfig(
-        style: CNButtonStyle.glass,
-        glassEffectUnionId: 'toolbar-group',
-        glassEffectId: 'toolbar-search',
-      ),
-    ),
-    CNButton(
-      label: 'Profile',
-      imageAsset: CNImageAsset('assets/icons/profile.svg', size: 16),
-      onPressed: () {},
-      config: const CNButtonConfig(
-        style: CNButtonStyle.glass,
-        glassEffectUnionId: 'toolbar-group',
-        glassEffectId: 'toolbar-profile',
-      ),
-    ),
-  ],
-)
-```
-
-**Glass Button Group Features:**
-- **Horizontal or vertical layouts:** Control button arrangement with `axis`
-- **Spacing control:** `spacing` controls layout spacing, `spacingForGlass` controls blending distance
-- **Union IDs:** Buttons with the same `glassEffectUnionId` blend together
-- **Effect IDs:** Buttons with the same `glassEffectId` can morph into each other during transitions
-- **Interactive effects:** Enable `glassEffectInteractive` for real-time touch/pointer responses
-
-### Glass Button Styles
-
-Buttons support two new glass styles for iOS 26+ and macOS 26+:
-
-```dart
-// Regular glass button
-CNButton(
-  label: 'Glass',
-  onPressed: () {},
-  config: const CNButtonConfig(
-    style: CNButtonStyle.glass,
+LiquidGlassContainer(
+  config: LiquidGlassConfig(
+    effect: CNGlassEffect.regular,
+    shape: CNGlassEffectShape.rect,
+    cornerRadius: 16,
+    interactive: true,
+  ),
+  child: Padding(
+    padding: EdgeInsets.all(16),
+    child: Text('Glass Effect'),
   ),
 )
 
-// Prominent glass button (more prominent blur)
-CNButton(
-  label: 'Prominent Glass',
-  onPressed: () {},
-  config: const CNButtonConfig(
-    style: CNButtonStyle.prominentGlass,
-  ),
-)
+// Or use the extension
+Text('Glass Effect')
+  .liquidGlass(cornerRadius: 16)
+```
 
-// Glass button with interactive effect
-CNButton(
-  label: 'Interactive',
-  onPressed: () {},
-  config: const CNButtonConfig(
-    style: CNButtonStyle.glass,
-    glassEffectInteractive: true,
-  ),
-)
+### Experimental: Glass Card
 
-// Glass buttons with morphing transitions
-CNGlassButtonGroup(
-  axis: Axis.horizontal,
-  spacing: 24.0,
-  spacingForGlass: 24.0,
-  buttons: [
-    CNButton(
-      label: 'Morph Button 1',
-      onPressed: () {},
-      config: const CNButtonConfig(
-        style: CNButtonStyle.glass,
-        glassEffectId: 'morph-button', // Same ID = morphing
-      ),
-    ),
-    CNButton(
-      label: 'Morph Button 2',
-      onPressed: () {},
-      config: const CNButtonConfig(
-        style: CNButtonStyle.glass,
-        glassEffectId: 'morph-button', // Same ID = morphing
-      ),
-    ),
-  ],
+```dart
+CNGlassCard(
+  child: Text("Hello"),
+  breathing: true, // Optional subtle glow animation
 )
 ```
 
-### Platform Version Detection
+## Platform Fallbacks
 
-Liquid Glass effects require iOS 26+ or macOS 26+. The package automatically detects platform versions and falls back gracefully on older versions. Initialize version detection early in your app:
+| Platform | Liquid Glass | SF Symbols | Other Widgets |
+|----------|:------------:|:----------:|:-------------:|
+| iOS 26+ | Native | Native | Native |
+| iOS 13-25 | CupertinoButton | Native via CNIconView | CupertinoWidgets |
+| macOS 26+ | Native | Native | Native |
+| macOS 11-25 | CupertinoButton | Native via CNIconView | CupertinoWidgets |
+| Android/Web/etc | Material fallback | Flutter Icon | Material fallback |
+
+## Version Detection
+
+Check platform capabilities:
 
 ```dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Initialize platform version detection early
-  await PlatformVersion.initialize();
-  runApp(const MyApp());
+// Check if Liquid Glass is available
+if (PlatformVersion.shouldUseNativeGlass) {
+  // iOS 26+ or macOS 26+
 }
+
+// Check if SF Symbols are available (iOS 13+, macOS 11+)
+if (PlatformVersion.supportsSFSymbols) {
+  // Use CNIconView for native rendering
+}
+
+// Get specific version
+print('iOS version: ${PlatformVersion.iosVersion}');
+print('macOS version: ${PlatformVersion.macOSVersion}');
 ```
 
-On unsupported platforms or versions, glass effects are automatically disabled and widgets render normally.
+## Requirements
 
-## Custom Icons & Image Asset Support
+- **Flutter**: >= 3.3.0
+- **Dart SDK**: >= 3.9.0
+- **iOS**: >= 13.0 (Liquid Glass requires iOS 26+)
+- **macOS**: >= 11.0 (Liquid Glass requires macOS 26+)
 
-This package supports three types of icons with a unified priority system: **Image Assets (SVG/PNG)** > **Custom Icons** > **SF Symbols**.
+## Migration from Previous Versions
 
-### Image Assets (SVG & PNG)
+Version 0.0.7 introduces **breaking changes** to the icon/image API. See [MIGRATION.md](MIGRATION.md) for the full guide.
 
-Render custom SVG or PNG icons natively with full color and size customization. The package automatically selects the appropriate resolution-specific asset based on device pixel ratio (e.g., `assets/icons/3.0x/checkcircle.png` for @3x devices), similar to Flutter's automatic asset selection:
+### Quick Reference
 
-```dart
-// SVG icon from assets
-const CNIcon(
-  imageAsset: CNImageAsset('assets/icons/home.svg', size: 24),
-)
+| Before | After |
+|---|---|
+| `CNSymbol('house', size: 20)` | `CNIcon.symbol('house', size: Size(20, 20))` |
+| `CNIcon('path', size: 20)` (old positional / asset) | `CNIcon.asset('path', size: Size(20, 20))` |
+| `CNImageAsset` / `CNImageAsset.symbol(...)` | `CNIcon` / `CNIcon.symbol(...)` |
+| `CNIcon(...)` widget (native SF Symbol view) | `CNIconView(...)` |
+| `customIcon: CupertinoIcons.home` | `icon: CNIcon.symbol('house.fill'), tint: color` |
+| `CNButtonData(icon: CNSymbol(...))` | `CNButtonData(icon: CNIcon.symbol(...))` |
+| `CNButtonDataConfig(glassMaterial: ...)` | `CNButtonData(theme: CNButtonTheme(glassMaterial: ...))` |
 
-// SVG with custom color
-const CNIcon(
-  imageAsset: CNImageAsset(
-    'assets/icons/search.svg', 
-    size: 32,
-    color: CupertinoColors.systemBlue,
-  ),
-)
-
-// SVG in tab bar
-CNTabBar(
-  items: const [
-    CNTabBarItem(
-      label: 'Home',
-      imageAsset: CNImageAsset('assets/icons/home.svg'),
-      activeImageAsset: CNImageAsset('assets/icons/home-filled.svg'),
-    ),
-    CNTabBarItem(
-      label: 'Search',
-      imageAsset: CNImageAsset('assets/icons/search.svg'),
-    ),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-
-// SVG in buttons
-CNButton.icon(
-  imageAsset: const CNImageAsset('assets/icons/heart.svg', size: 18),
-  onPressed: () {},
-)
-
-// SVG in popup menus
-CNPopupMenuButton.icon(
-  buttonImageAsset: const CNImageAsset('assets/icons/menu.svg', size: 18),
-  items: const [
-    CNPopupMenuItem(
-      label: 'Home',
-      imageAsset: CNImageAsset('assets/icons/home.svg', size: 18),
-    ),
-    CNPopupMenuItem(
-      label: 'Search',
-      imageAsset: CNImageAsset('assets/icons/search.svg', size: 18),
-    ),
-  ],
-  onSelected: (index) {},
-)
+```yaml
+dependencies:
+  cupertino_native_plus: ^0.0.7
 ```
-
-### Custom Icons (IconData)
-
-Use any Flutter `IconData` including CupertinoIcons, Material Icons, or custom font icons:
-
-```dart
-// Custom icon from CupertinoIcons
-const CNIcon(
-  customIcon: CupertinoIcons.home,
-  size: 24,
-)
-
-// Custom icon in tab bar
-CNTabBar(
-  items: const [
-    CNTabBarItem(
-      label: 'Home',
-      customIcon: CupertinoIcons.home,
-      activeCustomIcon: CupertinoIcons.home_fill,
-    ),
-    CNTabBarItem(
-      label: 'Profile',
-      customIcon: CupertinoIcons.person,
-    ),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-
-// Custom icon in buttons
-CNButton.icon(
-  customIcon: CupertinoIcons.heart_fill,
-  onPressed: () {},
-)
-
-// Custom icon in popup menus
-CNPopupMenuButton.icon(
-  buttonCustomIcon: CupertinoIcons.ellipsis_circle,
-  items: const [
-    CNPopupMenuItem(
-      label: 'Home',
-      customIcon: CupertinoIcons.home,
-    ),
-    CNPopupMenuItem(
-      label: 'Settings',
-      customIcon: CupertinoIcons.settings,
-    ),
-  ],
-  onSelected: (index) {},
-)
-```
-
-### SF Symbols (Default)
-
-Native SF Symbols with full rendering mode support:
-
-```dart
-// Monochrome symbol
-const CNIcon(symbol: CNSymbol('star'));
-
-// Hierarchical symbol
-const CNIcon(
-  symbol: CNSymbol('paintpalette.fill'),
-  mode: CNSymbolRenderingMode.hierarchical,
-)
-
-// Multicolor symbol
-const CNIcon(
-  symbol: CNSymbol('paintpalette.fill'),
-  mode: CNSymbolRenderingMode.multicolor,
-)
-```
-
-### Icon Priority System
-
-All components follow the same priority order:
-
-1. **`imageAsset`** - SVG/PNG assets with automatic resolution selection (highest priority)
-2. **`customIcon`** - Flutter IconData (medium priority)  
-3. **`symbol`** - SF Symbols (lowest priority)
-
-### Automatic Asset Resolution
-
-The package automatically resolves asset paths based on device pixel ratio, similar to Flutter's automatic asset selection. For example, if you provide `assets/icons/checkcircle.png`, the system will automatically look for:
-- `assets/icons/3.0x/checkcircle.png` (for @3x devices)
-- `assets/icons/2.0x/checkcircle.png` (for @2x devices)
-- `assets/icons/checkcircle.png` (fallback)
-
-If the exact resolution isn't found, it selects the closest bigger size. This ensures optimal image quality on all devices without manual asset management.
-
-```dart
-// This will use the image asset (SVG or PNG), ignoring the customIcon and symbol
-const CNIcon(
-  symbol: CNSymbol('house.fill'),
-  customIcon: CupertinoIcons.home,
-  imageAsset: CNImageAsset('assets/icons/home.svg'), // or .png
-)
-```
-
-### PNG Image Support
-
-PNG images are fully supported with automatic format detection, color tinting, and proper scaling:
-
-```dart
-// PNG icon with automatic resolution selection
-CNButton.icon(
-  imageAsset: CNImageAsset('assets/icons/checkcircle.png', size: 20),
-  onPressed: () {},
-)
-
-// PNG icon with custom color
-CNButton.icon(
-  imageAsset: CNImageAsset(
-    'assets/icons/checkcircle.png',
-    size: 20,
-    color: CupertinoColors.systemBlue,
-  ),
-  onPressed: () {},
-)
-```
-
-### Badge Support
-
-Display notification badges on tab bar items (iOS only):
-
-```dart
-CNTabBar(
-  items: const [
-    CNTabBarItem(
-      label: 'Home',
-      icon: CNSymbol('house.fill'),
-      badge: '3', // Red badge with "3"
-    ),
-    CNTabBarItem(
-      label: 'Messages',
-      icon: CNSymbol('message.fill'),
-      badge: '12',
-    ),
-  ],
-  currentIndex: _tabIndex,
-  onTap: (i) => setState(() => _tabIndex = i),
-)
-```
-
-## Future Improvements
-
-This package provides comprehensive native widget support with Liquid Glass effects. Future improvements include:
-
-- Adding more native components (DatePicker, ActionSheet, etc.)
-- Extending SVG support to remaining components (SegmentedControl, Slider, Switch)
-- Reviewing the Flutter APIs to ensure consistency and eliminate redundancies
-- Extending the flexibility and styling options of the widgets
-- Investigating how to best combine scroll views with the native components
-- Performance optimizations for SVG rendering and caching
-- Additional Liquid Glass effect variants and configurations
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Credits
+
+This package is inspired by:
+- [cupertino_native](https://pub.dev/packages/cupertino_native) by Serverpod
+
+Special thanks to [gunumdogdu](https://github.com/gunumdogdu) for the improvements and fixes contributed through [cupertino_native_better](https://github.com/gunumdogdu/cupertino_native_better), including enhanced version detection, improved icon support, and various bug fixes.
+
 ## License
 
-This package is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.

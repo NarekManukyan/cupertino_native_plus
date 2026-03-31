@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../channel/params.dart';
+import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/platform_view_builder.dart';
 import '../utils/icon_renderer.dart';
 import '../utils/theme_helper.dart';
 import '../utils/version_detector.dart';
@@ -12,9 +13,9 @@ import '../utils/version_detector.dart';
 ///
 /// Renders an `SFSymbol` on iOS/macOS using native APIs for best fidelity,
 /// displays a custom image asset, or renders IconData.
-class CNIcon extends StatefulWidget {
+class CNIconView extends StatefulWidget {
   /// Creates a platform-rendered SF Symbol icon.
-  const CNIcon({
+  const CNIconView({
     super.key,
     this.symbol,
     this.imageAsset,
@@ -35,7 +36,7 @@ class CNIcon extends StatefulWidget {
 
   /// Custom image asset (SVG, PNG, etc.) to render.
   /// If provided, this takes precedence over [symbol] and [customIcon].
-  final CNImageAsset? imageAsset;
+  final CNIcon? imageAsset;
 
   /// Optional custom icon from CupertinoIcons, Icons, or any IconData.
   /// If provided, this takes precedence over [symbol] but not [imageAsset].
@@ -57,10 +58,10 @@ class CNIcon extends StatefulWidget {
   final double? height;
 
   @override
-  State<CNIcon> createState() => _CNIconState();
+  State<CNIconView> createState() => _CNIconViewState();
 }
 
-class _CNIconState extends State<CNIcon> {
+class _CNIconViewState extends State<CNIconView> {
   MethodChannel? _channel;
   bool? _lastIsDark;
   String? _lastName;
@@ -79,7 +80,7 @@ class _CNIconState extends State<CNIcon> {
   }
 
   @override
-  void didUpdateWidget(covariant CNIcon oldWidget) {
+  void didUpdateWidget(covariant CNIconView oldWidget) {
     super.didUpdateWidget(oldWidget);
     _syncPropsToNativeIfNeeded();
   }
@@ -92,14 +93,12 @@ class _CNIconState extends State<CNIcon> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if we should use native platform view
-    final isIOSOrMacOS =
-        defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
-    final shouldUseNative =
-        isIOSOrMacOS && PlatformVersion.shouldUseNativeGlass;
+    // SF Symbols are available on iOS 13+ and macOS 11+
+    // Always use native rendering for icons on iOS/macOS
+    // (regardless of PlatformVersion initialization or iOS version)
+    final shouldUseNative = PlatformVersion.supportsSFSymbols;
 
-    // Fallback to Flutter widgets for non-iOS/macOS or iOS/macOS < 26
+    // Fallback to Flutter widgets for non-iOS/macOS only
     if (!shouldUseNative) {
       return _buildFlutterIcon(context);
     }
@@ -113,21 +112,18 @@ class _CNIconState extends State<CNIcon> {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             final defaultSize =
-                widget.size ?? (widget.imageAsset?.size ?? 24.0);
+                widget.size ?? (widget.imageAsset?.size.width ?? 24.0);
             return SizedBox(
               width: defaultSize,
               height: widget.height ?? defaultSize,
             );
           }
-          // Create a new CNImageAsset with resolved path
-          final resolvedImageAsset = CNImageAsset(
+          // Create a new CNIcon with resolved path
+          final resolvedImageAsset = CNIcon.asset(
             snapshot.data!,
             size: widget.imageAsset!.size,
             color: widget.imageAsset!.color,
-            imageFormat: widget.imageAsset!.imageFormat,
-            imageData: widget.imageAsset!.imageData,
-            mode: widget.imageAsset!.mode,
-            gradient: widget.imageAsset!.gradient,
+            format: widget.imageAsset!.imageFormat,
           );
           return _buildNativeIcon(context, imageAsset: resolvedImageAsset);
         },
@@ -155,9 +151,9 @@ class _CNIconState extends State<CNIcon> {
   Widget _buildNativeIcon(
     BuildContext context, {
     Uint8List? customIconBytes,
-    CNImageAsset? imageAsset,
+    CNIcon? imageAsset,
   }) {
-    const viewType = 'CupertinoNativeIcon';
+    const viewType = ViewTypes.cupertinoNativeIcon;
 
     // Determine which source to use and build parameters accordingly
     String name = '';
@@ -178,7 +174,7 @@ class _CNIconState extends State<CNIcon> {
       imageFormat =
           imageAsset.imageFormat ??
           detectImageFormat(imageAsset.assetPath, imageAsset.imageData);
-      size = widget.size ?? imageAsset.size;
+      size = widget.size ?? imageAsset.size.width;
       color = widget.color ?? imageAsset.color;
       mode = widget.mode ?? imageAsset.mode;
       gradient = widget.gradient ?? imageAsset.gradient;
@@ -219,23 +215,16 @@ class _CNIconState extends State<CNIcon> {
       },
     };
 
-    final platformView = defaultTargetPlatform == TargetPlatform.iOS
-        ? UiKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-          )
-        : AppKitView(
-            viewType: viewType,
-            creationParamsCodec: const StandardMessageCodec(),
-            creationParams: creationParams,
-            onPlatformViewCreated: _onPlatformViewCreated,
-          );
+    final platformView = buildCupertinoPlatformView(
+      context,
+      viewType: viewType,
+      creationParams: creationParams,
+      onPlatformViewCreated: _onPlatformViewCreated,
+    );
 
     // Ensure the platform view always has finite constraints
     final fallbackSize =
-        widget.size ?? (imageAsset?.size ?? widget.symbol?.size ?? 24.0);
+        widget.size ?? (imageAsset?.size.width ?? widget.symbol?.size ?? 24.0);
     final h = widget.height ?? fallbackSize;
     final w = fallbackSize;
     return ClipRect(
@@ -244,7 +233,7 @@ class _CNIconState extends State<CNIcon> {
   }
 
   void _onPlatformViewCreated(int id) {
-    _channel = MethodChannel('CupertinoNativeIcon_$id')
+    _channel = ViewTypes.methodChannelFor(ViewTypes.cupertinoNativeIcon, id)
       ..setMethodCallHandler(_onMethodCall);
     _cacheCurrentProps();
     _syncBrightnessIfNeeded();
@@ -261,7 +250,7 @@ class _CNIconState extends State<CNIcon> {
     // Determine current source and cache accordingly
     if (widget.imageAsset != null) {
       _lastName = widget.imageAsset!.assetPath;
-      _lastSize = widget.size ?? widget.imageAsset!.size;
+      _lastSize = widget.size ?? widget.imageAsset!.size.width;
       _lastColor = resolveColorToArgb(
         widget.color ?? widget.imageAsset!.color,
         context,
@@ -303,8 +292,10 @@ class _CNIconState extends State<CNIcon> {
       final resolvedAssetPath = await resolveAssetPathForPixelRatio(
         widget.imageAsset!.assetPath,
       );
+      if (!mounted) return;
+
       name = resolvedAssetPath;
-      size = widget.size ?? widget.imageAsset!.size;
+      size = widget.size ?? widget.imageAsset!.size.width;
       color = resolveColorToArgb(
         widget.color ?? widget.imageAsset!.color,
         context,
@@ -418,7 +409,7 @@ class _CNIconState extends State<CNIcon> {
       // For image assets in fallback, use a placeholder
       iconWidget = Icon(
         CupertinoIcons.circle_fill,
-        size: widget.imageAsset!.size,
+        size: widget.imageAsset!.size.width,
         color: widget.imageAsset!.color ?? widget.color,
       );
     } else if (widget.customIcon != null) {

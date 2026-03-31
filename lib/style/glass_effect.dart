@@ -11,6 +11,20 @@ enum CNGlassEffect {
   prominent,
 }
 
+/// Glass material for button glass effects on iOS 26+.
+///
+/// Controls which Glass base material is used when rendering button glass effects.
+enum CNButtonGlassMaterial {
+  /// Clear glass (default). Subtle, translucent button appearance.
+  clear,
+
+  /// Regular glass. More opaque, standard glass appearance.
+  regular,
+
+  /// Identity glass. Pass-through base material for custom-tinted or layered glass.
+  identity,
+}
+
 /// Shapes for Liquid Glass effects.
 enum CNGlassEffectShape {
   /// Capsule shape (default) - rounded ends based on view height.
@@ -40,6 +54,7 @@ class LiquidGlassConfig {
   /// Whether the glass effect should be interactive (responds to touch/pointer).
   final bool interactive;
 
+  /// Creates a configuration for Liquid Glass effects.
   const LiquidGlassConfig({
     this.effect = CNGlassEffect.regular,
     this.shape = CNGlassEffectShape.capsule,

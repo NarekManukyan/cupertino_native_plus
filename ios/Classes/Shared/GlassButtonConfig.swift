@@ -1,5 +1,9 @@
-import SwiftUI
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
+import SwiftUI
 
 /// Configuration for GlassButtonSwiftUI with default values.
 /// This is shared between iOS and macOS implementations.
@@ -9,19 +13,32 @@ public struct GlassButtonConfig {
   let padding: EdgeInsets
   let minHeight: CGFloat
   let spacing: CGFloat
-  
+  /// Optional fixed width for the button content area. nil means unconstrained.
+  let width: CGFloat?
+  /// When true, the glass content expands to fill available width (maxWidth: .infinity).
+  let expandWidth: Bool
+  /// Content alignment along the main axis. Matches Flutter's MainAxisAlignment names.
+  /// e.g. "center", "spaceBetween", "spaceAround", "spaceEvenly", "start", "end".
+  let contentAlignment: String
+
   public init(
     borderRadius: CGFloat? = nil,
     padding: EdgeInsets = EdgeInsets(top: 8.0, leading: 12.0, bottom: 8.0, trailing: 12.0),
     minHeight: CGFloat = 44.0,
-    spacing: CGFloat = 8.0
+    spacing: CGFloat = 8.0,
+    width: CGFloat? = nil,
+    expandWidth: Bool = false,
+    contentAlignment: String = "center"
   ) {
     self.borderRadius = borderRadius
     self.padding = padding
     self.minHeight = minHeight
     self.spacing = spacing
+    self.width = width
+    self.expandWidth = expandWidth
+    self.contentAlignment = contentAlignment
   }
-  
+
   /// Convenience initializer for individual padding values
   public init(
     borderRadius: CGFloat? = nil,
@@ -32,12 +49,18 @@ public struct GlassButtonConfig {
     horizontal: CGFloat? = nil,
     vertical: CGFloat? = nil,
     minHeight: CGFloat = 44.0,
-    spacing: CGFloat = 8.0
+    spacing: CGFloat = 8.0,
+    width: CGFloat? = nil,
+    expandWidth: Bool = false,
+    contentAlignment: String = "center"
   ) {
     self.borderRadius = borderRadius
     self.minHeight = minHeight
     self.spacing = spacing
-    
+    self.width = width
+    self.expandWidth = expandWidth
+    self.contentAlignment = contentAlignment
+
     // Build EdgeInsets from provided values
     let defaultPadding = EdgeInsets(top: 8.0, leading: 12.0, bottom: 8.0, trailing: 12.0)
     self.padding = EdgeInsets(
@@ -48,4 +71,3 @@ public struct GlassButtonConfig {
     )
   }
 }
-

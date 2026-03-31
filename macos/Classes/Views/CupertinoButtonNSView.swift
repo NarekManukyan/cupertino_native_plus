@@ -12,7 +12,7 @@ class CupertinoButtonNSView: NSView {
   private var makeRound: Bool = false
 
   init(viewId: Int64, args: Any?, messenger: FlutterBinaryMessenger) {
-    self.channel = FlutterMethodChannel(name: "CupertinoNativeButton_\(viewId)", binaryMessenger: messenger)
+    self.channel = FlutterMethodChannel(name: "\(ChannelConstants.viewIdCupertinoNativeButton)_\(viewId)", binaryMessenger: messenger)
     super.init(frame: .zero)
 
     var title: String? = nil
@@ -29,6 +29,9 @@ class CupertinoButtonNSView: NSView {
     var glassEffectUnionId: String? = nil
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
+    var imagePlacement: String = "leading"
+    var contentAlignment: String = "center"
+    var glassMaterial: String = "clear"
     var borderRadius: CGFloat? = nil
     var paddingTop: CGFloat? = nil
     var paddingBottom: CGFloat? = nil
@@ -43,7 +46,7 @@ class CupertinoButtonNSView: NSView {
       if let t = dict["buttonTitle"] as? String { title = t }
       if let s = dict["buttonIconName"] as? String { iconName = s }
       if let s = dict["buttonIconSize"] as? NSNumber { iconSize = CGFloat(truncating: s) }
-      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = Self.colorFromARGB(c.intValue) }
+      if let c = dict["buttonIconColor"] as? NSNumber { iconColor = ImageUtils.colorFromARGB(c.intValue) }
       if let r = dict["round"] as? NSNumber {
         makeRound = r.boolValue
         self.makeRound = makeRound
@@ -53,7 +56,7 @@ class CupertinoButtonNSView: NSView {
       if let geInteractive = dict["glassEffectInteractive"] as? NSNumber { glassEffectInteractive = geInteractive.boolValue }
       if let bs = dict["buttonStyle"] as? String { buttonStyle = bs }
       if let v = dict["isDark"] as? NSNumber { isDark = v.boolValue }
-      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = Self.colorFromARGB(n.intValue) }
+      if let style = dict["style"] as? [String: Any], let n = style["tint"] as? NSNumber { tint = ImageUtils.colorFromARGB(n.intValue) }
       if let e = dict["enabled"] as? NSNumber { enabled = e.boolValue }
       if let m = dict["buttonIconRenderingMode"] as? String { iconMode = m }
       if let pal = dict["buttonIconPaletteColors"] as? [NSNumber] { iconPalette = pal }
@@ -66,6 +69,9 @@ class CupertinoButtonNSView: NSView {
       if let pv = dict["paddingVertical"] as? NSNumber { paddingVertical = CGFloat(truncating: pv) }
       if let mh = dict["minHeight"] as? NSNumber { minHeight = CGFloat(truncating: mh) }
       if let ip = dict["imagePadding"] as? NSNumber { imagePadding = CGFloat(truncating: ip) }
+      if let imp = dict["imagePlacement"] as? String { imagePlacement = imp }
+      if let ca = dict["contentAlignment"] as? String { contentAlignment = ca }
+      if let gm = dict["glassMaterial"] as? String { glassMaterial = gm }
     }
 
     wantsLayer = true
@@ -75,25 +81,29 @@ class CupertinoButtonNSView: NSView {
     // Check if we should use SwiftUI for full glass effect support
     if #available(macOS 26.0, *), (glassEffectUnionId != nil || glassEffectId != nil) {
       usesSwiftUI = true
-      // Create icon image if needed
-      var iconImage: NSImage? = nil
-      if let name = iconName {
-        iconImage = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+      // Build flat icon/theme dicts for IconConfig.from(dict:) / CNButtonTheme.from(dict:).
+      let iconArgs = (args as? [String: Any]) ?? [:]
+      var themeArgs: [String: Any] = [:]
+      if let style = (args as? [String: Any])?["style"] as? [String: Any],
+         let n = style["tint"] as? NSNumber {
+        themeArgs["tint"] = n.intValue
       }
-      
+      themeArgs["glassMaterial"] = glassMaterial
+      for key in ["labelColor", "themeIconColor", "backgroundColor"] {
+        if let n = iconArgs[key] as? NSNumber { themeArgs[key] = n.intValue }
+      }
+      if let ls = iconArgs["labelStyle"] as? [String: Any] { themeArgs["labelStyle"] = ls }
+
       setupSwiftUIButton(
         title: title,
-        iconName: iconName,
-        iconImage: iconImage,
-        iconSize: iconSize ?? 20,
-        iconColor: iconColor != nil ? Color(nsColor: iconColor!) : nil,
-        tint: tint != nil ? Color(nsColor: tint!) : nil,
-        isRound: makeRound,
-        style: buttonStyle,
+        iconArgs: iconArgs,
+        themeArgs: themeArgs,
         enabled: enabled,
         glassEffectUnionId: glassEffectUnionId,
         glassEffectId: glassEffectId,
         glassEffectInteractive: glassEffectInteractive,
+        imagePlacement: imagePlacement,
+        contentAlignment: contentAlignment,
         borderRadius: borderRadius,
         paddingTop: paddingTop,
         paddingBottom: paddingBottom,
@@ -140,7 +150,7 @@ class CupertinoButtonNSView: NSView {
           }
         case "palette":
           if #available(macOS 12.0, *), !iconPalette.isEmpty {
-            let cols = iconPalette.map { Self.colorFromARGB($0.intValue) }
+            let cols = iconPalette.map { ImageUtils.colorFromARGB($0.intValue) }
             let cfg = NSImage.SymbolConfiguration(paletteColors: cols)
             image = image.withSymbolConfiguration(cfg) ?? image
           }
@@ -235,7 +245,7 @@ class CupertinoButtonNSView: NSView {
             result(nil)
           } else if let button = self.button {
           if #available(macOS 10.14, *), let n = args["tint"] as? NSNumber {
-            let color = Self.colorFromARGB(n.intValue)
+            let color = ImageUtils.colorFromARGB(n.intValue)
             if ["filled", "borderedProminent", "prominentGlass"].contains(self.currentButtonStyle) {
                 button.bezelColor = color
                 button.contentTintColor = .white
@@ -292,7 +302,7 @@ class CupertinoButtonNSView: NSView {
         result(nil)
       case "setTextStyle":
         if let args = call.arguments as? [String: Any] {
-          let color = (args["color"] as? NSNumber).map { Self.colorFromARGB($0.intValue) }
+          let color = (args["color"] as? NSNumber).map { ImageUtils.colorFromARGB($0.intValue) }
           let fontSize = (args["fontSize"] as? NSNumber).map { CGFloat(truncating: $0) }
           let fontWeight = args["fontWeight"] as? Int
           let fontFamily = args["fontFamily"] as? String
@@ -360,12 +370,12 @@ class CupertinoButtonNSView: NSView {
               switch mode {
               case "hierarchical":
                 if #available(macOS 12.0, *), let c = args["buttonIconColor"] as? NSNumber {
-                  let cfg = NSImage.SymbolConfiguration(hierarchicalColor: Self.colorFromARGB(c.intValue))
+                  let cfg = NSImage.SymbolConfiguration(hierarchicalColor: ImageUtils.colorFromARGB(c.intValue))
                   image = image.withSymbolConfiguration(cfg) ?? image
                 }
               case "palette":
                 if #available(macOS 12.0, *), let pal = args["buttonIconPaletteColors"] as? [NSNumber] {
-                  let cols = pal.map { Self.colorFromARGB($0.intValue) }
+                  let cols = pal.map { ImageUtils.colorFromARGB($0.intValue) }
                   let cfg = NSImage.SymbolConfiguration(paletteColors: cols)
                   image = image.withSymbolConfiguration(cfg) ?? image
                 }
@@ -376,13 +386,13 @@ class CupertinoButtonNSView: NSView {
                 }
               case "monochrome":
                 if let c = args["buttonIconColor"] as? NSNumber {
-                  image = image.tinted(with: Self.colorFromARGB(c.intValue))
+                  image = image.tinted(with: ImageUtils.colorFromARGB(c.intValue))
                 }
               default:
                 break
               }
             } else if let c = args["buttonIconColor"] as? NSNumber {
-              image = image.tinted(with: Self.colorFromARGB(c.intValue))
+              image = image.tinted(with: ImageUtils.colorFromARGB(c.intValue))
             }
             if !usesSwiftUI, let button = self.button {
               button.image = image
@@ -421,17 +431,14 @@ class CupertinoButtonNSView: NSView {
   @available(macOS 26.0, *)
   private func setupSwiftUIButton(
     title: String?,
-    iconName: String?,
-    iconImage: NSImage?,
-    iconSize: CGFloat,
-    iconColor: Color?,
-    tint: Color?,
-    isRound: Bool,
-    style: String,
+    iconArgs: [String: Any],
+    themeArgs: [String: Any],
     enabled: Bool,
     glassEffectUnionId: String?,
     glassEffectId: String?,
     glassEffectInteractive: Bool,
+    imagePlacement: String,
+    contentAlignment: String,
     borderRadius: CGFloat?,
     paddingTop: CGFloat?,
     paddingBottom: CGFloat?,
@@ -442,7 +449,6 @@ class CupertinoButtonNSView: NSView {
     minHeight: CGFloat?,
     spacing: CGFloat?
   ) {
-    // Create GlassButtonConfig with provided values or defaults
     let config = GlassButtonConfig(
       borderRadius: borderRadius,
       top: paddingTop,
@@ -452,20 +458,17 @@ class CupertinoButtonNSView: NSView {
       horizontal: paddingHorizontal,
       vertical: paddingVertical,
       minHeight: minHeight ?? 44.0,
-      spacing: spacing ?? 8.0
+      spacing: spacing ?? 8.0,
+      contentAlignment: contentAlignment
     )
-    
-    // Create a wrapper view that provides a namespace for the button
+    let iconConfig = IconConfig.from(dict: iconArgs)
+    let theme = CNButtonTheme.from(dict: themeArgs)
+
     struct ButtonWrapperView: View {
       @Namespace private var namespace
-      
       let title: String?
-      let iconName: String?
-      let iconImage: NSImage?
-      let iconSize: CGFloat
-      let iconColor: Color?
-      let tint: Color?
-      let isRound: Bool
+      let iconConfig: IconConfig?
+      let theme: CNButtonTheme
       let style: String
       let isEnabled: Bool
       let onPressed: () -> Void
@@ -473,16 +476,13 @@ class CupertinoButtonNSView: NSView {
       let glassEffectId: String?
       let glassEffectInteractive: Bool
       let config: GlassButtonConfig
-      
+      let imagePlacement: String
+      let contentAlignment: String
       var body: some View {
         GlassButtonSwiftUI(
           title: title,
-          iconName: iconName,
-          iconImage: iconImage,
-          iconSize: iconSize,
-          iconColor: iconColor,
-          tint: tint,
-          isRound: isRound,
+          iconConfig: iconConfig,
+          theme: theme,
           style: style,
           isEnabled: isEnabled,
           onPressed: onPressed,
@@ -490,34 +490,32 @@ class CupertinoButtonNSView: NSView {
           glassEffectId: glassEffectId,
           glassEffectInteractive: glassEffectInteractive,
           namespace: namespace,
-          config: config
+          config: config,
+          imagePlacement: imagePlacement,
+          contentAlignment: contentAlignment
         )
       }
     }
-    
+
     let swiftUIButton = ButtonWrapperView(
       title: title,
-      iconName: iconName,
-      iconImage: iconImage,
-      iconSize: iconSize,
-      iconColor: iconColor,
-      tint: tint,
-      isRound: isRound,
-      style: style,
+      iconConfig: iconConfig.hasIcon ? iconConfig : nil,
+      theme: theme,
+      style: "glass",
       isEnabled: enabled,
-      onPressed: { [weak self] in
-        self?.onPressed(nil)
-      },
+      onPressed: { [weak self] in self?.onPressed(nil) },
       glassEffectUnionId: glassEffectUnionId,
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
-      config: config
+      config: config,
+      imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment
     )
-    
+
     let hostingController = NSHostingController(rootView: AnyView(swiftUIButton))
     hostingController.view.layer?.backgroundColor = .clear
     self.hostingController = hostingController
-    
+
     hostingController.view.translatesAutoresizingMaskIntoConstraints = false
     addSubview(hostingController.view)
     NSLayoutConstraint.activate([
@@ -526,16 +524,13 @@ class CupertinoButtonNSView: NSView {
       hostingController.view.topAnchor.constraint(equalTo: topAnchor),
       hostingController.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
-    
-    // Force layout update for proper first-time rendering
-    // Similar to TabBar fix - ensures SwiftUI view is properly laid out before display
+
     DispatchQueue.main.async { [weak self, weak hostingController] in
       guard let self = self, let hostingController = hostingController else { return }
       self.needsLayout = true
       self.layout()
       hostingController.view.needsLayout = true
       hostingController.view.layout()
-      // Force another update cycle for proper rendering
       DispatchQueue.main.async { [weak hostingController] in
         guard let hostingController = hostingController else { return }
         hostingController.view.needsDisplay = true
@@ -545,13 +540,6 @@ class CupertinoButtonNSView: NSView {
     }
   }
 
-  private static func colorFromARGB(_ argb: Int) -> NSColor {
-    let a = CGFloat((argb >> 24) & 0xFF) / 255.0
-    let r = CGFloat((argb >> 16) & 0xFF) / 255.0
-    let g = CGFloat((argb >> 8) & 0xFF) / 255.0
-    let b = CGFloat(argb & 0xFF) / 255.0
-    return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
-  }
 }
 
 private extension NSImage {

@@ -1,4 +1,4 @@
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 import 'package:flutter/cupertino.dart';
 
 class ButtonDemoPage extends StatefulWidget {
@@ -86,7 +86,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Glass Chat',
-                  imageAsset: CNImageAsset('assets/icons/chat.svg', size: 18),
+                  icon: const CNIcon.asset(
+                    'assets/icons/chat.svg',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('Glass Chat'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,
@@ -122,44 +125,44 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Gray'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Tinted'),
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Bordered'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon BorderedProminent'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.borderedProminent,
                   ),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Filled'),
                   config: const CNButtonConfig(style: CNButtonStyle.filled),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon Glass'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 18),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(18, 18)),
                   onPressed: () => _set('Icon ProminentGlass'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.prominentGlass,
@@ -168,7 +171,15 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 48),
-            const Text('Icon buttons (Custom Icons)'),
+            const Text('Themed Icon Buttons'),
+            const SizedBox(height: 12),
+            const Text(
+              'Use tint: to color SF Symbol icons (replaces the former customIcon: parameter).',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
@@ -176,38 +187,102 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  customIcon: CupertinoIcons.home, // Custom IconData!
-                  onPressed: () => _set('Custom Icon Plain'),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
+                  onPressed: () => _set('Themed Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  customIcon: CupertinoIcons.home,
-                  onPressed: () => _set('Custom Icon Gray'),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
+                  tint: CupertinoColors.systemBlue,
+                  onPressed: () => _set('Themed Blue'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  customIcon: CupertinoIcons.home,
-                  onPressed: () => _set('Custom Icon Tinted'),
-                  config: const CNButtonConfig(style: CNButtonStyle.tinted),
-                ),
-                CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  customIcon: CupertinoIcons.home,
-                  onPressed: () => _set('Custom Icon Bordered'),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
+                  tint: CupertinoColors.systemGreen,
+                  onPressed: () => _set('Themed Green'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  customIcon: CupertinoIcons.home,
-                  onPressed: () => _set('Custom Icon Glass'),
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
+                  tint: CupertinoColors.systemRed,
+                  onPressed: () => _set('Themed Red'),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+                CNButton.icon(
+                  icon: const CNIcon.symbol('house.fill', size: Size(18, 18)),
+                  tint: CupertinoColors.systemOrange,
+                  onPressed: () => _set('Themed Orange'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
               ],
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 24),
+            const Text('CNButtonTheme — colors'),
+            const SizedBox(height: 8),
+            const Text(
+              'theme.tint: applies to both icon and label. '
+              'labelColor/iconColor allow independent control.',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                // tint: both label and icon follow the tint
+                CNButton(
+                  label: 'Tint',
+                  icon: const CNIcon.symbol('star.fill', size: Size(16, 16)),
+                  onPressed: () => _set('CNButtonTheme tint'),
+                  theme: const CNButtonTheme(tint: CupertinoColors.systemBlue),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    shrinkWrap: true,
+                  ),
+                ),
+                // labelColor: text color only, icon is unaffected
+                CNButton(
+                  label: 'Label color',
+                  onPressed: () => _set('CNButtonTheme labelColor'),
+                  theme: const CNButtonTheme(
+                    labelColor: CupertinoColors.systemPurple,
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    shrinkWrap: true,
+                  ),
+                ),
+                // iconColor: icon tint only, label is unaffected
+                CNButton(
+                  label: 'Icon color',
+                  icon: const CNIcon.symbol('heart.fill', size: Size(16, 16)),
+                  onPressed: () => _set('CNButtonTheme iconColor'),
+                  theme: const CNButtonTheme(
+                    iconColor: CupertinoColors.systemRed,
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.glass,
+                    shrinkWrap: true,
+                  ),
+                ),
+                // glassMaterial inside CNButtonTheme
+                CNButton.icon(
+                  icon: const CNIcon.symbol('waveform', size: Size(18, 18)),
+                  onPressed: () => _set('CNButtonTheme glassMaterial'),
+                  theme: const CNButtonTheme(
+                    tint: CupertinoColors.systemGreen,
+                    glassMaterial: CNButtonGlassMaterial.regular,
+                  ),
+                  config: const CNButtonConfig(style: CNButtonStyle.glass),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -224,10 +299,12 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: CupertinoColors.systemBlue.withOpacity(0.1),
+                      color: CupertinoColors.systemBlue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: CupertinoColors.systemBlue.withOpacity(0.3),
+                        color: CupertinoColors.systemBlue.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -248,68 +325,62 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/home.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                   ),
                   onPressed: () => _set('SVG Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/search.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                   ),
                   onPressed: () => _set('SVG Gray'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/home.svg'
                         : 'assets/icons/profile.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                   ),
                   onPressed: () => _set('SVG Tinted'),
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/search.svg'
                         : 'assets/icons/chat.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                   ),
                   onPressed: () => _set('SVG Bordered'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/chat.svg'
                         : 'assets/icons/home.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                     color: CupertinoColors.systemRed,
                   ),
                   onPressed: () => _set('SVG Glass'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('house.fill', size: 18),
-                  imageAsset: CNImageAsset(
+                  icon: CNIcon.asset(
                     _useAlternateSvgIcons
                         ? 'assets/icons/profile.svg'
                         : 'assets/icons/search.svg',
-                    size: 18,
+                    size: const Size(18, 18),
                     color: CupertinoColors.systemBlue,
                   ),
                   onPressed: () => _set('SVG ProminentGlass'),
@@ -323,7 +394,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
             const Text('Icon buttons (PNG Assets)'),
             const SizedBox(height: 12),
             const Text(
-              'PNG icons with automatic format detection - no need to specify imageFormat!',
+              'PNG icons with automatic format detection - no need to specify format!',
               style: TextStyle(
                 fontSize: 12,
                 color: CupertinoColors.secondaryLabel,
@@ -336,40 +407,49 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 18,
+                    size: Size(18, 18),
                   ),
                   onPressed: () => _set('PNG Plain'),
                   config: const CNButtonConfig(style: CNButtonStyle.plain),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
+                  icon: const CNIcon.asset(
+                    'assets/icons/clock.png',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('PNG Gray'),
                   config: const CNButtonConfig(style: CNButtonStyle.gray),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock_filled.png',
-                    size: 18,
+                    size: Size(18, 18),
                   ),
                   onPressed: () => _set('PNG Tinted'),
                   config: const CNButtonConfig(style: CNButtonStyle.tinted),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset('assets/icons/close.png', size: 18),
+                  icon: const CNIcon.asset(
+                    'assets/icons/close.png',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('PNG Bordered'),
                   config: const CNButtonConfig(style: CNButtonStyle.bordered),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset('assets/icons/coins.png', size: 18),
+                  icon: const CNIcon.asset(
+                    'assets/icons/coins.png',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('PNG Glass'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 18,
+                    size: Size(18, 18),
                     color: CupertinoColors.systemGreen,
                   ),
                   onPressed: () => _set('PNG Colored'),
@@ -377,9 +457,9 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'PNG with Text',
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 16,
+                    size: Size(16, 16),
                     color: CupertinoColors.activeGreen,
                   ),
                   tint: CupertinoColors.activeGreen,
@@ -410,32 +490,32 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 12),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(12, 12)),
                   onPressed: () => _set('12px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 16),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(16, 16)),
                   onPressed: () => _set('16px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 20),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(20, 20)),
                   onPressed: () => _set('20px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 24),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(24, 24)),
                   onPressed: () => _set('24px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 28),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(28, 28)),
                   onPressed: () => _set('28px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('heart.fill', size: 32),
+                  icon: const CNIcon.symbol('heart.fill', size: Size(32, 32)),
                   onPressed: () => _set('32px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
@@ -448,49 +528,49 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               alignment: WrapAlignment.center,
               children: [
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 12,
+                    size: Size(12, 12),
                   ),
                   onPressed: () => _set('PNG 12px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 16,
+                    size: Size(16, 16),
                   ),
                   onPressed: () => _set('PNG 16px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 20,
+                    size: Size(20, 20),
                   ),
                   onPressed: () => _set('PNG 20px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 24,
+                    size: Size(24, 24),
                   ),
                   onPressed: () => _set('PNG 24px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 28,
+                    size: Size(28, 28),
                   ),
                   onPressed: () => _set('PNG 28px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
                 ),
                 CNButton.icon(
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 32,
+                    size: Size(32, 32),
                   ),
                   onPressed: () => _set('PNG 32px'),
                   config: const CNButtonConfig(style: CNButtonStyle.glass),
@@ -529,7 +609,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNSymbol('star.fill', size: 18),
+                    icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                     onPressed: () => _set('Light BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -561,7 +641,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNSymbol('star.fill', size: 18),
+                    icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                     onPressed: () => _set('Dark BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -595,7 +675,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNSymbol('heart.fill', size: 18),
+                          icon: const CNIcon.symbol(
+                            'heart.fill',
+                            size: Size(18, 18),
+                          ),
                           onPressed: () => _set('Blue BG'),
                           config: const CNButtonConfig(
                             style: CNButtonStyle.glass,
@@ -627,7 +710,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNSymbol('heart.fill', size: 18),
+                          icon: const CNIcon.symbol(
+                            'heart.fill',
+                            size: Size(18, 18),
+                          ),
                           onPressed: () => _set('Green BG'),
                           config: const CNButtonConfig(
                             style: CNButtonStyle.glass,
@@ -659,7 +745,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                         ),
                         const SizedBox(height: 8),
                         CNButton.icon(
-                          icon: const CNSymbol('heart.fill', size: 18),
+                          icon: const CNIcon.symbol(
+                            'heart.fill',
+                            size: Size(18, 18),
+                          ),
                           onPressed: () => _set('Red BG'),
                           config: const CNButtonConfig(
                             style: CNButtonStyle.glass,
@@ -701,7 +790,7 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   const SizedBox(height: 12),
                   CNButton(
                     label: 'Adaptive Button',
-                    icon: const CNSymbol('sparkles', size: 18),
+                    icon: const CNIcon.symbol('sparkles', size: Size(18, 18)),
                     onPressed: () => _set('Gradient BG'),
                     config: const CNButtonConfig(
                       style: CNButtonStyle.glass,
@@ -720,7 +809,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               children: [
                 CNButton(
                   label: 'Leading',
-                  imageAsset: CNImageAsset('assets/icons/home.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/home.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('Leading'),
                   config: const CNButtonConfig(
                     imagePlacement: CNImagePlacement.leading,
@@ -731,7 +823,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Trailing',
-                  imageAsset: CNImageAsset('assets/icons/search.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/search.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('Trailing'),
                   config: const CNButtonConfig(
                     imagePlacement: CNImagePlacement.trailing,
@@ -742,9 +837,9 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Top',
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
-                    size: 16,
+                    size: Size(16, 16),
                   ),
                   onPressed: () => _set('Top'),
                   config: const CNButtonConfig(
@@ -756,7 +851,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Bottom',
-                  imageAsset: CNImageAsset('assets/icons/chat.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/chat.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('Bottom'),
                   config: const CNButtonConfig(
                     imagePlacement: CNImagePlacement.bottom,
@@ -767,9 +865,9 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'Top',
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
-                    size: 16,
+                    size: Size(16, 16),
                   ),
                   onPressed: () => _set('Top'),
                   config: const CNButtonConfig(
@@ -790,7 +888,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               children: [
                 CNButton(
                   label: 'No Padding',
-                  imageAsset: CNImageAsset('assets/icons/home.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/home.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('No Padding'),
                   config: const CNButtonConfig(
                     imagePlacement: CNImagePlacement.leading,
@@ -799,7 +900,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                 ),
                 CNButton(
                   label: 'With Padding',
-                  imageAsset: CNImageAsset('assets/icons/search.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/search.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('With Padding'),
                   config: const CNButtonConfig(
                     imagePlacement: CNImagePlacement.leading,
@@ -865,40 +969,43 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Home',
-                  imageAsset: CNImageAsset('assets/icons/home.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/home.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('Home'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-home',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Search',
-                  imageAsset: CNImageAsset('assets/icons/search.svg', size: 16),
+                  icon: const CNIcon.asset(
+                    'assets/icons/search.svg',
+                    size: Size(16, 16),
+                  ),
                   onPressed: () => _set('Search'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-search',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Profile',
-                  imageAsset: CNImageAsset(
+                  icon: const CNIcon.asset(
                     'assets/icons/profile.svg',
-                    size: 16,
+                    size: Size(16, 16),
                   ),
                   onPressed: () => _set('Profile'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'toolbar-group',
                     glassEffectId: 'toolbar-profile',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -919,46 +1026,43 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton.icon(
-                  imageAsset: CNImageAsset(
+                CNButtonData.icon(
+                  icon: const CNIcon.asset(
                     'assets/icons/checkcircle.png',
-                    size: 18,
+                    size: Size(18, 18),
                     color: CupertinoColors.systemGreen,
                   ),
                   onPressed: () => _set('Check PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-check',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton.icon(
-                  imageAsset: CNImageAsset(
+                CNButtonData.icon(
+                  icon: const CNIcon.asset(
                     'assets/icons/clock.png',
-                    size: 18,
+                    size: Size(18, 18),
                     color: CupertinoColors.systemBlue,
                   ),
                   onPressed: () => _set('Clock PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-clock',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton.icon(
-                  imageAsset: CNImageAsset(
+                CNButtonData.icon(
+                  icon: const CNIcon.asset(
                     'assets/icons/coins.png',
-                    size: 18,
+                    size: Size(18, 18),
                     color: CupertinoColors.systemYellow,
                   ),
                   onPressed: () => _set('Coins PNG'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'png-group',
                     glassEffectId: 'png-coins',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -980,36 +1084,33 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 12.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Option 1',
                   onPressed: () => _set('Option 1'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-1',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Option 2',
                   onPressed: () => _set('Option 2'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-2',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Option 3',
                   onPressed: () => _set('Option 3'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectUnionId: 'menu-group',
                     glassEffectId: 'menu-option-3',
-                    shrinkWrap: true,
                     borderRadius: 12.0,
                   ),
                 ),
@@ -1032,34 +1133,37 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 24.0,
               spacingForGlass: 24.0,
               buttons: [
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 1',
-                  imageAsset: CNImageAsset('assets/icons/clock.png', size: 18),
+                  icon: const CNIcon.asset(
+                    'assets/icons/clock.png',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('Morph Button 1'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 2',
-                  customIcon: CupertinoIcons.star_fill,
+                  icon: const CNIcon.symbol('star.fill', size: Size(18, 18)),
                   onPressed: () => _set('Morph Button 2'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
-                CNButton(
+                CNButtonData(
                   label: 'Morph Button 3',
-                  customIcon: CupertinoIcons.bookmark_fill,
+                  icon: const CNIcon.symbol(
+                    'bookmark.fill',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('Morph Button 3'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.glass,
                     glassEffectId: 'morph-button',
-                    shrinkWrap: true,
                   ),
                 ),
               ],
@@ -1090,7 +1194,10 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
                   ),
                 ),
                 CNButton.icon(
-                  icon: const CNSymbol('hand.tap.fill', size: 18),
+                  icon: const CNIcon.symbol(
+                    'hand.tap.fill',
+                    size: Size(18, 18),
+                  ),
                   onPressed: () => _set('Interactive Icon'),
                   config: const CNButtonConfig(
                     style: CNButtonStyle.glass,
@@ -1125,30 +1232,30 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               spacing: 8.0,
               spacingForGlass: 40.0,
               buttons: [
-                CNButton.icon(
-                  icon: const CNSymbol('play.fill', size: 18),
+                CNButtonData.icon(
+                  icon: const CNIcon.symbol('play.fill', size: Size(18, 18)),
                   onPressed: () => _set('Play'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'play-button',
                     glassEffectInteractive: true,
                   ),
                 ),
-                CNButton.icon(
-                  icon: const CNSymbol('pause.fill', size: 18),
+                CNButtonData.icon(
+                  icon: const CNIcon.symbol('pause.fill', size: Size(18, 18)),
                   onPressed: () => _set('Pause'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'pause-button',
                     glassEffectInteractive: true,
                   ),
                 ),
-                CNButton.icon(
-                  icon: const CNSymbol('stop.fill', size: 18),
+                CNButtonData.icon(
+                  icon: const CNIcon.symbol('stop.fill', size: Size(18, 18)),
                   onPressed: () => _set('Stop'),
-                  config: const CNButtonConfig(
+                  config: const CNButtonDataConfig(
                     style: CNButtonStyle.prominentGlass,
                     glassEffectUnionId: 'media-controls',
                     glassEffectId: 'stop-button',
@@ -1169,6 +1276,181 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
             ),
             const SizedBox(height: 12),
             _ParameterChangeTest(),
+            const SizedBox(height: 48),
+            const Text('CNButtonTheme — labelStyle'),
+            const SizedBox(height: 8),
+            const Text(
+              'Use theme.labelStyle to apply a custom TextStyle to the button label.',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                CNButton(
+                  label: 'Large Label',
+                  onPressed: () => _set('Large Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(fontSize: 20),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Bold Label',
+                  onPressed: () => _set('Bold Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Italic Label',
+                  onPressed: () => _set('Italic Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 16,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Georgia Label',
+                  onPressed: () => _set('Georgia Label'),
+                  theme: const CNButtonTheme(
+                    labelStyle: TextStyle(fontFamily: 'Georgia', fontSize: 16),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.tinted,
+                    shrinkWrap: true,
+                  ),
+                ),
+                CNButton(
+                  label: 'Colored Label',
+                  onPressed: () => _set('Colored Label'),
+                  theme: const CNButtonTheme(
+                    tint: CupertinoColors.systemOrange,
+                    labelStyle: TextStyle(
+                      color: CupertinoColors.systemOrange,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  config: const CNButtonConfig(
+                    style: CNButtonStyle.gray,
+                    shrinkWrap: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
+            const Text('Content Alignment'),
+            const SizedBox(height: 8),
+            const Text(
+              'Use contentAlignment to control icon/label distribution. '
+              'spaceBetween pushes icon and label to opposite edges — set shrinkWrap: false to make it visible.',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Space Between',
+              icon: const CNIcon.symbol('arrow.right', size: Size(16, 16)),
+              onPressed: () => _set('spaceBetween'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.glass,
+                imagePlacement: CNImagePlacement.trailing,
+                imagePadding: 8.0,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Share',
+              icon: const CNIcon.symbol(
+                'square.and.arrow.up',
+                size: Size(16, 16),
+              ),
+              onPressed: () => _set('Share spaceBetween'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.filled,
+                imagePlacement: CNImagePlacement.trailing,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Continue',
+              icon: const CNIcon.symbol('chevron.right', size: Size(14, 14)),
+              onPressed: () => _set('Continue'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.borderedProminent,
+                imagePlacement: CNImagePlacement.trailing,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: CNButton(
+                    label: 'Home',
+                    icon: const CNIcon.symbol('house.fill', size: Size(16, 16)),
+                    onPressed: () => _set('Home row'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      imagePlacement: CNImagePlacement.leading,
+                      contentAlignment: MainAxisAlignment.spaceBetween,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CNButton(
+                    label: 'Search',
+                    icon: const CNIcon.symbol(
+                      'magnifyingglass',
+                      size: Size(16, 16),
+                    ),
+                    onPressed: () => _set('Search row'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      imagePlacement: CNImagePlacement.trailing,
+                      contentAlignment: MainAxisAlignment.spaceBetween,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 48),
             Center(child: Text('Last pressed: $_last')),
           ],
@@ -1191,7 +1473,6 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
   int _currentImageIndex = 0;
   int _currentPngIndex = 0;
   int _currentIconIndex = 0;
-  int _currentCustomIconIndex = 0;
 
   final List<String> _imagePaths = [
     'assets/icons/home.svg',
@@ -1209,13 +1490,6 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
   ];
 
   final List<String> _iconNames = ['heart', 'star', 'bookmark', 'bell'];
-
-  final List<IconData> _customIcons = [
-    CupertinoIcons.heart,
-    CupertinoIcons.star,
-    CupertinoIcons.bookmark,
-    CupertinoIcons.bell,
-  ];
 
   void _toggleFavorite() {
     setState(() {
@@ -1238,13 +1512,6 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
   void _cycleIcon() {
     setState(() {
       _currentIconIndex = (_currentIconIndex + 1) % _iconNames.length;
-    });
-  }
-
-  void _cycleCustomIcon() {
-    setState(() {
-      _currentCustomIconIndex =
-          (_currentCustomIconIndex + 1) % _customIcons.length;
     });
   }
 
@@ -1282,9 +1549,9 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                 children: [
                   // SF Symbol version
                   CNButton.icon(
-                    icon: CNSymbol(
+                    icon: CNIcon.symbol(
                       _isFavorited ? 'heart.fill' : 'heart',
-                      size: 20,
+                      size: const Size(20, 20),
                       color: _isFavorited
                           ? CupertinoColors.systemRed
                           : CupertinoColors.secondaryLabel,
@@ -1294,11 +1561,11 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                   ),
                   // Image asset version
                   CNButton.icon(
-                    imageAsset: CNImageAsset(
+                    icon: CNIcon.asset(
                       _isFavorited
                           ? 'assets/icons/checkcircle.png'
                           : 'assets/icons/clock.png',
-                      size: 20,
+                      size: const Size(20, 20),
                       color: _isFavorited
                           ? CupertinoColors.systemGreen
                           : CupertinoColors.secondaryLabel,
@@ -1306,13 +1573,15 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                     onPressed: _toggleFavorite,
                     config: const CNButtonConfig(style: CNButtonStyle.glass),
                   ),
-                  // Custom icon version
+                  // Tinted symbol version
                   CNButton.icon(
-                    customIcon: _isFavorited
-                        ? CupertinoIcons.heart_fill
-                        : CupertinoIcons.heart,
+                    icon: CNIcon.symbol(
+                      _isFavorited ? 'bookmark.fill' : 'bookmark',
+                      size: const Size(20, 20),
+                    ),
+                    tint: _isFavorited ? CupertinoColors.systemBlue : null,
                     onPressed: _toggleFavorite,
-                    config: CNButtonConfig(style: CNButtonStyle.glass),
+                    config: const CNButtonConfig(style: CNButtonStyle.glass),
                   ),
                 ],
               ),
@@ -1346,9 +1615,9 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    imageAsset: CNImageAsset(
+                    icon: CNIcon.asset(
                       _imagePaths[_currentImageIndex],
-                      size: 20,
+                      size: const Size(20, 20),
                     ),
                     onPressed: _cycleImage,
                     config: const CNButtonConfig(style: CNButtonStyle.glass),
@@ -1392,9 +1661,9 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    imageAsset: CNImageAsset(
+                    icon: CNIcon.asset(
                       _pngPaths[_currentPngIndex],
-                      size: 20,
+                      size: const Size(20, 20),
                       color: [
                         CupertinoColors.systemGreen,
                         CupertinoColors.systemBlue,
@@ -1448,7 +1717,10 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
               Row(
                 children: [
                   CNButton.icon(
-                    icon: CNSymbol(_iconNames[_currentIconIndex], size: 20),
+                    icon: CNIcon.symbol(
+                      _iconNames[_currentIconIndex],
+                      size: const Size(20, 20),
+                    ),
                     onPressed: _cycleIcon,
                     config: const CNButtonConfig(style: CNButtonStyle.glass),
                   ),
@@ -1456,49 +1728,6 @@ class _ParameterChangeTestState extends State<_ParameterChangeTest> {
                   Expanded(
                     child: Text(
                       'Current: ${_iconNames[_currentIconIndex]}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Test: Custom Icon Change
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: CupertinoColors.secondarySystemGroupedBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Custom Icon Change',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Tap to cycle through different custom icons. The button should update smoothly.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: CupertinoColors.secondaryLabel,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  CNButton.icon(
-                    customIcon: _customIcons[_currentCustomIconIndex],
-                    onPressed: _cycleCustomIcon,
-                    config: const CNButtonConfig(style: CNButtonStyle.glass),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Current: Custom Icon ${_currentCustomIconIndex + 1}',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
@@ -1606,7 +1835,7 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
   @override
   Widget build(BuildContext context) {
     final currentSet = _buttonSets[_currentButtonSet];
-    final buttons = <CNButton>[];
+    final buttons = <CNButtonData>[];
 
     for (int i = 0; i < currentSet.length; i++) {
       final buttonData = currentSet[i];
@@ -1620,38 +1849,36 @@ class _ButtonGroupTestState extends State<_ButtonGroupTest> {
       if (buttonData.containsKey('path')) {
         // Image asset button
         buttons.add(
-          CNButton(
+          CNButtonData(
             label: buttonData['label'] as String,
-            imageAsset: CNImageAsset(
+            icon: CNIcon.asset(
               buttonData['path'] as String,
-              size: 16,
+              size: const Size(16, 16),
               color: isFavorited ? CupertinoColors.systemRed : null,
             ),
             onPressed: onPressed,
-            config: CNButtonConfig(
+            config: CNButtonDataConfig(
               style: CNButtonStyle.glass,
               glassEffectUnionId: 'test-group',
               glassEffectId: 'test-button-$i',
-              shrinkWrap: true,
             ),
           ),
         );
       } else if (buttonData.containsKey('symbol')) {
         // SF Symbol button
         buttons.add(
-          CNButton(
+          CNButtonData(
             label: buttonData['label'] as String,
-            icon: CNSymbol(
+            icon: CNIcon.symbol(
               buttonData['symbol'] as String,
-              size: 16,
+              size: const Size(16, 16),
               color: isFavorited ? CupertinoColors.systemRed : null,
             ),
             onPressed: onPressed,
-            config: CNButtonConfig(
+            config: CNButtonDataConfig(
               style: CNButtonStyle.glass,
               glassEffectUnionId: 'test-group',
               glassEffectId: 'test-button-$i',
-              shrinkWrap: true,
             ),
           ),
         );

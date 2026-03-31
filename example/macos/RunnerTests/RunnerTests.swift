@@ -3,7 +3,7 @@ import FlutterMacOS
 import XCTest
 
 
-@testable import cupertino_native
+@testable import cupertino_native_plus
 
 // This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
 //

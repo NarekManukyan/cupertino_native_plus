@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 
 class SegmentedControlDemoPage extends StatefulWidget {
   const SegmentedControlDemoPage({super.key});

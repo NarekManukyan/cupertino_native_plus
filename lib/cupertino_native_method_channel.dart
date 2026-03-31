@@ -9,8 +9,8 @@ class MethodChannelCupertinoNative extends CupertinoNativePlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel('cupertino_native');
 
-  @override
   /// See [CupertinoNativePlatform.getPlatformVersion].
+  @override
   Future<String?> getPlatformVersion() async {
     final version = await methodChannel.invokeMethod<String>(
       'getPlatformVersion',
@@ -18,8 +18,8 @@ class MethodChannelCupertinoNative extends CupertinoNativePlatform {
     return version;
   }
 
-  @override
   /// See [CupertinoNativePlatform.getMajorOSVersion].
+  @override
   Future<int?> getMajorOSVersion() async {
     final version = await methodChannel.invokeMethod<int>('getMajorOSVersion');
     return version;

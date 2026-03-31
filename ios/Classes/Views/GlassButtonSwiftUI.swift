@@ -1,17 +1,12 @@
 import SwiftUI
 import UIKit
 
-/// SwiftUI button view with full Liquid Glass support using glassEffect() modifier.
-/// This provides full blending and morphing capabilities when used in groups.
+/// Individual glass button using iOS 26 glassEffect() modifier.
 @available(iOS 26.0, *)
 struct GlassButtonSwiftUI: View {
   let title: String?
-  let iconName: String?
-  let iconImage: UIImage?
-  let iconSize: CGFloat
-  let iconColor: Color?
-  let tint: Color?
-  let isRound: Bool
+  let iconConfig: IconConfig?
+  let theme: CNButtonTheme
   let style: String
   let isEnabled: Bool
   let onPressed: () -> Void
@@ -20,105 +15,243 @@ struct GlassButtonSwiftUI: View {
   let glassEffectInteractive: Bool
   var namespace: Namespace.ID
   let config: GlassButtonConfig
-  
+  /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
+  let imagePlacement: String
+  /// Content alignment along the main axis. Matches Flutter's MainAxisAlignment names.
+  let contentAlignment: String
+
+  private var effectiveLabelColor: Color? { theme.effectiveLabelColor }
+  private var effectiveIconColor: Color? { theme.effectiveIconColor }
+  private var effectiveBackgroundColor: Color? { theme.effectiveBackgroundColor }
+
   var body: some View {
+    // Compute shape once and reuse for both contentShape and glassEffect.
+    let shape = buttonShape
     Button(action: onPressed) {
-      HStack(spacing: config.spacing) {
-        if let icon = iconImage {
-          Image(uiImage: icon)
-            .resizable()
-            .scaledToFit()
-            .frame(width: iconSize, height: iconSize)
-        } else if let iconName = iconName {
-          Image(systemName: iconName)
-            .font(.system(size: iconSize))
-            .foregroundColor(iconColor != nil ? Color(iconColor!) : nil)
-        }
-        
-        if let title = title {
-          Text(title)
-            .foregroundColor(tint != nil ? Color(tint!) : nil)
-        }
-      }
-      .padding(config.padding)
-      .frame(minHeight: config.minHeight)
-      .contentShape(shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .glassEffect(glassEffectForStyle(style, interactive: glassEffectInteractive), in: shapeForStyle(isRound, borderRadius: config.borderRadius))
-      .applyGlassEffectModifiers(unionId: glassEffectUnionId, id: glassEffectId, namespace: namespace)
+      labelContent
+        .padding(config.padding)
+        .frame(minWidth: frameMinWidth, maxWidth: frameMaxWidth, minHeight: config.minHeight)
+        .contentShape(shape)
+        .glassEffect(glassEffectValue, in: shape)
+        .applyGlassEffectModifiers(
+          unionId: glassEffectUnionId,
+          id: glassEffectId,
+          namespace: namespace
+        )
+        .animation(.easeInOut(duration: 0.25), value: animState)
     }
     .disabled(!isEnabled)
     .buttonStyle(NoHighlightButtonStyle())
+    // The glass vibrancy system overrides foregroundStyle on inner views.
+    // Applying .tint() on the button propagates the color through the glass
+    // system correctly. nil falls back to the environment/system default.
   }
-  
-  private func glassEffectForStyle(_ style: String, interactive: Bool) -> Glass {
-    // Always use .regular for now - prominent glass API may be available in future
-    var glass = Glass.regular
-    
-    // Make glass interactive if requested
-    if interactive {
-      glass = glass.interactive()
+
+  // MARK: - Frame helpers
+
+  private var frameMinWidth: CGFloat? { config.width }
+  private var frameMaxWidth: CGFloat? {
+    if let w = config.width { return w }
+    return config.expandWidth ? .infinity : nil
+  }
+
+  // MARK: - Label content
+
+  @ViewBuilder
+  private var labelContent: some View {
+    if let title, hasIcon {
+      switch imagePlacement {
+      case "trailing":
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(TrailingIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
+      case "top":
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(TopIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
+      case "bottom":
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(BottomIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
+      default: // "leading"
+        Label { Text(title).font(theme.labelFont) } icon: { iconView.foregroundStyle(effectiveIconColor ?? .primary) }
+          .labelStyle(LeadingIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
+          .foregroundStyle(effectiveLabelColor ?? .primary)
+      }
+    } else if hasIcon {
+      iconView
+        .foregroundStyle(effectiveIconColor ?? .primary)
+    } else if let text = title {
+      Text(text)
+        .font(theme.labelFont)
+        .foregroundStyle(effectiveLabelColor ?? .primary)
     }
-    
-    return glass
   }
-  
-  private func shapeForStyle(_ isRound: Bool, borderRadius: CGFloat?) -> some Shape {
-    // If borderRadius is provided, use it
-    if let radius = borderRadius {
+
+  @ViewBuilder
+  private var iconView: some View {
+    if let ic = iconConfig, let asset = ic.asset {
+      resolvedIconView(ic: ic, asset: asset)
+    }
+  }
+
+  @ViewBuilder
+  private func resolvedIconView(ic: IconConfig, asset: CNIcon) -> some View {
+    let resolved = asset.resolve(
+      width: ic.width, height: ic.height, scale: UIScreen.main.scale)
+    if let image = resolved.0 {
+      Image(uiImage: image)
+        .renderingMode(effectiveIconColor != nil ? .template : .original)
+        .resizable()
+        .aspectRatio(contentMode: ic.contentMode)
+        .frame(width: ic.width, height: ic.height)
+    } else if let symbolName = resolved.1 {
+      Image(systemName: symbolName)
+        .renderingMode(.template)
+        .resizable()
+        .aspectRatio(contentMode: ic.contentMode)
+        .frame(width: ic.width, height: ic.height)
+    }
+  }
+
+  private var hasIcon: Bool { iconConfig?.hasIcon ?? false }
+
+  // MARK: - Helpers
+
+  private var buttonShape: AnyShape {
+    if let radius = config.borderRadius {
       return AnyShape(RoundedRectangle(cornerRadius: radius))
     }
-    // If no borderRadius provided, use capsule for round buttons
-    if isRound {
-      return AnyShape(Capsule())
-    }
-    // For non-round buttons without radius, also use capsule (as per user requirement)
     return AnyShape(Capsule())
   }
+
+  private var glassEffectValue: Glass {
+    var glass: Glass = Self.glassMaterial(from: theme.glassMaterial)
+    if let bg = effectiveBackgroundColor { glass = glass.tint(bg) }
+    if glassEffectInteractive { glass = glass.interactive() }
+    return glass
+  }
+
+  private static func glassMaterial(from string: String) -> Glass {
+    switch string {
+    case "regular": return .regular
+    case "identity": return .identity
+    default: return .clear
+    }
+  }
+
+  // MARK: - Animation state
+
+  /// Equatable struct capturing every property that triggers an animation.
+  private struct AnimState: Equatable {
+    let iconWidth: CGFloat
+    let iconHeight: CGFloat
+    let iconColor: Color?
+    let labelColor: Color?
+    let glassMaterial: String
+    let style: String
+    let imagePlacement: String
+    let contentAlignment: String
+    let spacing: CGFloat
+    let minHeight: CGFloat
+    let borderRadius: CGFloat?
+    let width: CGFloat?
+    let expandWidth: Bool
+    let frameMinWidth: CGFloat?
+    let frameMaxWidth: CGFloat?
+  }
+
+  private var animState: AnimState {
+    AnimState(
+      iconWidth: iconConfig?.width ?? 0,
+      iconHeight: iconConfig?.height ?? 0,
+      iconColor: effectiveIconColor,
+      labelColor: effectiveLabelColor,
+      glassMaterial: theme.glassMaterial,
+      style: style,
+      imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment,
+      spacing: config.spacing,
+      minHeight: config.minHeight,
+      borderRadius: config.borderRadius,
+      width: config.width,
+      expandWidth: config.expandWidth,
+      frameMinWidth: frameMinWidth,
+      frameMaxWidth: frameMaxWidth
+    )
+  }
 }
 
-// Helper to apply glass effect modifiers conditionally
+// MARK: - Label styles for icon placement
+
 @available(iOS 26.0, *)
-extension View {
-  @ViewBuilder
-  func applyGlassEffectModifiers(unionId: String?, id: String?, namespace: Namespace.ID) -> some View {
-    if let unionId = unionId {
-      if let id = id {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-          .glassEffectID(id, in: namespace)
-      } else {
-        self
-          .glassEffectUnion(id: unionId, namespace: namespace)
-      }
-    } else if let id = id {
-      self
-        .glassEffectID(id, in: namespace)
-    } else {
-      self
+private struct LeadingIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  let contentAlignment: String
+  func makeBody(configuration: Configuration) -> some View {
+    switch contentAlignment {
+    case "spaceBetween":
+      HStack { configuration.icon; Spacer(); configuration.title }
+    case "spaceAround", "spaceEvenly":
+      HStack { Spacer(); configuration.icon; Spacer(); configuration.title; Spacer() }
+    case "end":
+      HStack(spacing: spacing) { Spacer(); configuration.icon; configuration.title }
+    default:
+      HStack(spacing: spacing) { configuration.icon; configuration.title }
     }
   }
 }
 
-// Custom button style that removes all highlights and press effects
 @available(iOS 26.0, *)
-struct NoHighlightButtonStyle: ButtonStyle {
+private struct TrailingIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  let contentAlignment: String
   func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      // No opacity or scale changes - let the glass effect handle visual feedback
+    switch contentAlignment {
+    case "spaceBetween":
+      HStack { configuration.title; Spacer(); configuration.icon }
+    case "spaceAround", "spaceEvenly":
+      HStack { Spacer(); configuration.title; Spacer(); configuration.icon; Spacer() }
+    case "end":
+      HStack(spacing: spacing) { Spacer(); configuration.title; configuration.icon }
+    default:
+      HStack(spacing: spacing) { configuration.title; configuration.icon }
+    }
   }
 }
 
-// Type erasure for Shape
 @available(iOS 26.0, *)
-struct AnyShape: Shape {
-  private let _path: (CGRect) -> Path
-  
-  init<S: Shape>(_ shape: S) {
-    _path = shape.path(in:)
-  }
-  
-  func path(in rect: CGRect) -> Path {
-    return _path(rect)
+private struct TopIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  let contentAlignment: String
+  func makeBody(configuration: Configuration) -> some View {
+    switch contentAlignment {
+    case "spaceBetween":
+      VStack { configuration.icon; Spacer(); configuration.title }
+    case "spaceAround", "spaceEvenly":
+      VStack { Spacer(); configuration.icon; Spacer(); configuration.title; Spacer() }
+    case "end":
+      VStack(spacing: spacing) { Spacer(); configuration.icon; configuration.title }
+    default:
+      VStack(spacing: spacing) { configuration.icon; configuration.title }
+    }
   }
 }
 
+@available(iOS 26.0, *)
+private struct BottomIconLabelStyle: LabelStyle {
+  let spacing: CGFloat
+  let contentAlignment: String
+  func makeBody(configuration: Configuration) -> some View {
+    switch contentAlignment {
+    case "spaceBetween":
+      VStack { configuration.title; Spacer(); configuration.icon }
+    case "spaceAround", "spaceEvenly":
+      VStack { Spacer(); configuration.title; Spacer(); configuration.icon; Spacer() }
+    case "end":
+      VStack(spacing: spacing) { Spacer(); configuration.title; configuration.icon }
+    default:
+      VStack(spacing: spacing) { configuration.title; configuration.icon }
+    }
+  }
+}

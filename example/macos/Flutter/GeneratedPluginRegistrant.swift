@@ -5,7 +5,7 @@
 import FlutterMacOS
 import Foundation
 
-import cupertino_native
+import cupertino_native_plus
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   CupertinoNativePlugin.register(with: registry.registrar(forPlugin: "CupertinoNativePlugin"))

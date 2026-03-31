@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 
 class SwitchDemoPage extends StatefulWidget {
   const SwitchDemoPage({super.key});

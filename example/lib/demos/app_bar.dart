@@ -1,4 +1,4 @@
-import 'package:cupertino_native_plus/cupertino_native.dart';
+import 'package:cupertino_native_plus/cupertino_native_plus.dart';
 import 'package:flutter/cupertino.dart';
 
 class AppBarDemoPage extends StatelessWidget {

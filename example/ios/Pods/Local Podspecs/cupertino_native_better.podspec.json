@@ -1,0 +1,32 @@
+{
+  "name": "cupertino_native_better",
+  "version": "0.0.1",
+  "summary": "Native Liquid Glass widgets for iOS and macOS with pixel-perfect fidelity.",
+  "description": "Native Liquid Glass widgets for iOS and macOS in Flutter with pixel-perfect fidelity.",
+  "homepage": "https://github.com/NarekManukyan/cupertino_native_plus",
+  "license": {
+    "file": "../LICENSE"
+  },
+  "authors": {
+    "Narek Manukyan": "narek.manukyan.2031@gmail.com"
+  },
+  "source": {
+    "path": "."
+  },
+  "source_files": "Classes/**/*",
+  "dependencies": {
+    "Flutter": [],
+    "SVGKit": [
+      "~> 3.0"
+    ]
+  },
+  "platforms": {
+    "ios": "15.0"
+  },
+  "pod_target_xcconfig": {
+    "DEFINES_MODULE": "YES",
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": "i386"
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
+}
