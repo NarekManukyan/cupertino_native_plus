@@ -16,6 +16,7 @@ final class CupertinoButtonViewModel: ObservableObject {
   @Published var glassEffectInteractive: Bool
   @Published var config: GlassButtonConfig
   @Published var imagePlacement: String
+  @Published var contentAlignment: String
 
   init(
     title: String?,
@@ -27,7 +28,8 @@ final class CupertinoButtonViewModel: ObservableObject {
     glassEffectId: String?,
     glassEffectInteractive: Bool,
     config: GlassButtonConfig,
-    imagePlacement: String
+    imagePlacement: String,
+    contentAlignment: String = "center"
   ) {
     self.title = title
     self.iconConfig = iconConfig
@@ -39,6 +41,7 @@ final class CupertinoButtonViewModel: ObservableObject {
     self.glassEffectInteractive = glassEffectInteractive
     self.config = config
     self.imagePlacement = imagePlacement
+    self.contentAlignment = contentAlignment
   }
 }
 
@@ -82,6 +85,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     var iconPalette: [NSNumber] = []
     var iconScale: CGFloat = UIScreen.main.scale
     var imagePlacement: String = "leading"
+    var contentAlignment: String = "center"
     var imagePadding: CGFloat? = nil
     var paddingTop: CGFloat? = nil
     var paddingBottom: CGFloat? = nil
@@ -130,6 +134,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       if let m = dict["buttonIconRenderingMode"] as? String { iconMode = m }
       if let pal = dict["buttonIconPaletteColors"] as? [NSNumber] { iconPalette = pal }
       if let ip = dict["imagePlacement"] as? String { imagePlacement = ip }
+      if let ca = dict["contentAlignment"] as? String { contentAlignment = ca }
       if let ip = dict["imagePadding"] as? NSNumber { imagePadding = CGFloat(truncating: ip) }
       if let pt = dict["paddingTop"] as? NSNumber { paddingTop = CGFloat(truncating: pt) }
       if let pb = dict["paddingBottom"] as? NSNumber { paddingBottom = CGFloat(truncating: pb) }
@@ -304,6 +309,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
         minHeight: minHeight ?? 44.0,
         spacing: imagePadding ?? 8.0,
         imagePlacement: imagePlacement,
+        contentAlignment: contentAlignment,
         width: swiftUIWidth,
         expandWidth: swiftUIExpandWidth
       )
@@ -893,6 +899,7 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
     minHeight: CGFloat,
     spacing: CGFloat,
     imagePlacement: String,
+    contentAlignment: String,
     width: CGFloat?,
     expandWidth: Bool
   ) {
@@ -907,7 +914,8 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       minHeight: minHeight,
       spacing: spacing,
       width: width,
-      expandWidth: expandWidth
+      expandWidth: expandWidth,
+      contentAlignment: contentAlignment
     )
     let iconConfig = IconConfig.from(dict: iconArgs)
     let theme = CNButtonTheme.from(dict: themeArgs)
@@ -922,7 +930,8 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: imagePlacement
+      imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment
     )
     self._buttonViewModel = viewModel
 
@@ -944,7 +953,8 @@ class CupertinoButtonPlatformView: NSObject, FlutterPlatformView {
           glassEffectInteractive: viewModel.glassEffectInteractive,
           namespace: namespace,
           config: viewModel.config,
-          imagePlacement: viewModel.imagePlacement
+          imagePlacement: viewModel.imagePlacement,
+          contentAlignment: viewModel.contentAlignment
         )
       }
     }

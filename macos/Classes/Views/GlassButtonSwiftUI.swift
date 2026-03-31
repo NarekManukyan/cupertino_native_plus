@@ -17,6 +17,8 @@ struct GlassButtonSwiftUI: View {
   let config: GlassButtonConfig
   /// Icon placement relative to text: "leading" | "trailing" | "top" | "bottom".
   let imagePlacement: String
+  /// Content alignment along the main axis. Matches Flutter's MainAxisAlignment names.
+  let contentAlignment: String
 
   private var effectiveLabelColor: Color? { theme.effectiveLabelColor }
   private var effectiveIconColor: Color? { theme.effectiveIconColor }
@@ -61,7 +63,7 @@ struct GlassButtonSwiftUI: View {
         } icon: {
           iconView.foregroundStyle(effectiveIconColor ?? .primary)
         }
-        .labelStyle(TrailingIconLabelStyle(spacing: config.spacing))
+        .labelStyle(TrailingIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
         .foregroundStyle(effectiveLabelColor ?? .primary)
       case "top":
         Label {
@@ -69,7 +71,7 @@ struct GlassButtonSwiftUI: View {
         } icon: {
           iconView.foregroundStyle(effectiveIconColor ?? .primary)
         }
-        .labelStyle(TopIconLabelStyle(spacing: config.spacing))
+        .labelStyle(TopIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
         .foregroundStyle(effectiveLabelColor ?? .primary)
       case "bottom":
         Label {
@@ -77,7 +79,7 @@ struct GlassButtonSwiftUI: View {
         } icon: {
           iconView.foregroundStyle(effectiveIconColor ?? .primary)
         }
-        .labelStyle(BottomIconLabelStyle(spacing: config.spacing))
+        .labelStyle(BottomIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
         .foregroundStyle(effectiveLabelColor ?? .primary)
       default:  // "leading"
         Label {
@@ -85,7 +87,7 @@ struct GlassButtonSwiftUI: View {
         } icon: {
           iconView.foregroundStyle(effectiveIconColor ?? .primary)
         }
-        .labelStyle(LeadingIconLabelStyle(spacing: config.spacing))
+        .labelStyle(LeadingIconLabelStyle(spacing: config.spacing, contentAlignment: contentAlignment))
         .foregroundStyle(effectiveLabelColor ?? .primary)
       }
     } else if hasIcon {
@@ -164,6 +166,7 @@ struct GlassButtonSwiftUI: View {
     let glassMaterial: String
     let style: String
     let imagePlacement: String
+    let contentAlignment: String
     let spacing: CGFloat
     let minHeight: CGFloat
     let borderRadius: CGFloat?
@@ -180,6 +183,7 @@ struct GlassButtonSwiftUI: View {
       glassMaterial: theme.glassMaterial,
       style: style,
       imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment,
       spacing: config.spacing,
       minHeight: config.minHeight,
       borderRadius: config.borderRadius,
@@ -194,10 +198,17 @@ struct GlassButtonSwiftUI: View {
 @available(macOS 26.0, *)
 private struct LeadingIconLabelStyle: LabelStyle {
   let spacing: CGFloat
+  let contentAlignment: String
   func makeBody(configuration: Configuration) -> some View {
-    HStack(spacing: spacing) {
-      configuration.icon
-      configuration.title
+    switch contentAlignment {
+    case "spaceBetween":
+      HStack { configuration.icon; Spacer(); configuration.title }
+    case "spaceAround", "spaceEvenly":
+      HStack { Spacer(); configuration.icon; Spacer(); configuration.title; Spacer() }
+    case "end":
+      HStack(spacing: spacing) { Spacer(); configuration.icon; configuration.title }
+    default:
+      HStack(spacing: spacing) { configuration.icon; configuration.title }
     }
   }
 }
@@ -205,10 +216,17 @@ private struct LeadingIconLabelStyle: LabelStyle {
 @available(macOS 26.0, *)
 private struct TrailingIconLabelStyle: LabelStyle {
   let spacing: CGFloat
+  let contentAlignment: String
   func makeBody(configuration: Configuration) -> some View {
-    HStack(spacing: spacing) {
-      configuration.title
-      configuration.icon
+    switch contentAlignment {
+    case "spaceBetween":
+      HStack { configuration.title; Spacer(); configuration.icon }
+    case "spaceAround", "spaceEvenly":
+      HStack { Spacer(); configuration.title; Spacer(); configuration.icon; Spacer() }
+    case "end":
+      HStack(spacing: spacing) { Spacer(); configuration.title; configuration.icon }
+    default:
+      HStack(spacing: spacing) { configuration.title; configuration.icon }
     }
   }
 }
@@ -216,10 +234,17 @@ private struct TrailingIconLabelStyle: LabelStyle {
 @available(macOS 26.0, *)
 private struct TopIconLabelStyle: LabelStyle {
   let spacing: CGFloat
+  let contentAlignment: String
   func makeBody(configuration: Configuration) -> some View {
-    VStack(spacing: spacing) {
-      configuration.icon
-      configuration.title
+    switch contentAlignment {
+    case "spaceBetween":
+      VStack { configuration.icon; Spacer(); configuration.title }
+    case "spaceAround", "spaceEvenly":
+      VStack { Spacer(); configuration.icon; Spacer(); configuration.title; Spacer() }
+    case "end":
+      VStack(spacing: spacing) { Spacer(); configuration.icon; configuration.title }
+    default:
+      VStack(spacing: spacing) { configuration.icon; configuration.title }
     }
   }
 }
@@ -227,10 +252,17 @@ private struct TopIconLabelStyle: LabelStyle {
 @available(macOS 26.0, *)
 private struct BottomIconLabelStyle: LabelStyle {
   let spacing: CGFloat
+  let contentAlignment: String
   func makeBody(configuration: Configuration) -> some View {
-    VStack(spacing: spacing) {
-      configuration.title
-      configuration.icon
+    switch contentAlignment {
+    case "spaceBetween":
+      VStack { configuration.title; Spacer(); configuration.icon }
+    case "spaceAround", "spaceEvenly":
+      VStack { Spacer(); configuration.title; Spacer(); configuration.icon; Spacer() }
+    case "end":
+      VStack(spacing: spacing) { Spacer(); configuration.title; configuration.icon }
+    default:
+      VStack(spacing: spacing) { configuration.title; configuration.icon }
     }
   }
 }

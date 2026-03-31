@@ -1360,6 +1360,98 @@ class _ButtonDemoPageState extends State<ButtonDemoPage> {
               ],
             ),
             const SizedBox(height: 48),
+            const Text('Content Alignment'),
+            const SizedBox(height: 8),
+            const Text(
+              'Use contentAlignment to control icon/label distribution. '
+              'spaceBetween pushes icon and label to opposite edges — set shrinkWrap: false to make it visible.',
+              style: TextStyle(
+                fontSize: 12,
+                color: CupertinoColors.secondaryLabel,
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Space Between',
+              icon: const CNIcon.symbol('arrow.right', size: Size(16, 16)),
+              onPressed: () => _set('spaceBetween'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.glass,
+                imagePlacement: CNImagePlacement.trailing,
+                imagePadding: 8.0,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Share',
+              icon: const CNIcon.symbol(
+                'square.and.arrow.up',
+                size: Size(16, 16),
+              ),
+              onPressed: () => _set('Share spaceBetween'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.filled,
+                imagePlacement: CNImagePlacement.trailing,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            CNButton(
+              label: 'Continue',
+              icon: const CNIcon.symbol('chevron.right', size: Size(14, 14)),
+              onPressed: () => _set('Continue'),
+              config: const CNButtonConfig(
+                style: CNButtonStyle.borderedProminent,
+                imagePlacement: CNImagePlacement.trailing,
+                contentAlignment: MainAxisAlignment.spaceBetween,
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: CNButton(
+                    label: 'Home',
+                    icon: const CNIcon.symbol('house.fill', size: Size(16, 16)),
+                    onPressed: () => _set('Home row'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      imagePlacement: CNImagePlacement.leading,
+                      contentAlignment: MainAxisAlignment.spaceBetween,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CNButton(
+                    label: 'Search',
+                    icon: const CNIcon.symbol(
+                      'magnifyingglass',
+                      size: Size(16, 16),
+                    ),
+                    onPressed: () => _set('Search row'),
+                    config: const CNButtonConfig(
+                      style: CNButtonStyle.glass,
+                      imagePlacement: CNImagePlacement.trailing,
+                      contentAlignment: MainAxisAlignment.spaceBetween,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 48),
             Center(child: Text('Last pressed: $_last')),
           ],
         ),

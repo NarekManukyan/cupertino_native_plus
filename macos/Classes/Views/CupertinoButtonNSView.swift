@@ -30,6 +30,7 @@ class CupertinoButtonNSView: NSView {
     var glassEffectId: String? = nil
     var glassEffectInteractive: Bool = false
     var imagePlacement: String = "leading"
+    var contentAlignment: String = "center"
     var glassMaterial: String = "clear"
     var borderRadius: CGFloat? = nil
     var paddingTop: CGFloat? = nil
@@ -69,6 +70,7 @@ class CupertinoButtonNSView: NSView {
       if let mh = dict["minHeight"] as? NSNumber { minHeight = CGFloat(truncating: mh) }
       if let ip = dict["imagePadding"] as? NSNumber { imagePadding = CGFloat(truncating: ip) }
       if let imp = dict["imagePlacement"] as? String { imagePlacement = imp }
+      if let ca = dict["contentAlignment"] as? String { contentAlignment = ca }
       if let gm = dict["glassMaterial"] as? String { glassMaterial = gm }
     }
 
@@ -101,6 +103,7 @@ class CupertinoButtonNSView: NSView {
         glassEffectId: glassEffectId,
         glassEffectInteractive: glassEffectInteractive,
         imagePlacement: imagePlacement,
+        contentAlignment: contentAlignment,
         borderRadius: borderRadius,
         paddingTop: paddingTop,
         paddingBottom: paddingBottom,
@@ -435,6 +438,7 @@ class CupertinoButtonNSView: NSView {
     glassEffectId: String?,
     glassEffectInteractive: Bool,
     imagePlacement: String,
+    contentAlignment: String,
     borderRadius: CGFloat?,
     paddingTop: CGFloat?,
     paddingBottom: CGFloat?,
@@ -454,7 +458,8 @@ class CupertinoButtonNSView: NSView {
       horizontal: paddingHorizontal,
       vertical: paddingVertical,
       minHeight: minHeight ?? 44.0,
-      spacing: spacing ?? 8.0
+      spacing: spacing ?? 8.0,
+      contentAlignment: contentAlignment
     )
     let iconConfig = IconConfig.from(dict: iconArgs)
     let theme = CNButtonTheme.from(dict: themeArgs)
@@ -472,6 +477,7 @@ class CupertinoButtonNSView: NSView {
       let glassEffectInteractive: Bool
       let config: GlassButtonConfig
       let imagePlacement: String
+      let contentAlignment: String
       var body: some View {
         GlassButtonSwiftUI(
           title: title,
@@ -485,7 +491,8 @@ class CupertinoButtonNSView: NSView {
           glassEffectInteractive: glassEffectInteractive,
           namespace: namespace,
           config: config,
-          imagePlacement: imagePlacement
+          imagePlacement: imagePlacement,
+          contentAlignment: contentAlignment
         )
       }
     }
@@ -501,7 +508,8 @@ class CupertinoButtonNSView: NSView {
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: imagePlacement
+      imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment
     )
 
     let hostingController = NSHostingController(rootView: AnyView(swiftUIButton))

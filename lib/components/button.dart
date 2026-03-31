@@ -80,6 +80,15 @@ class CNButtonConfig extends Equatable {
   /// When limited, text will be truncated with ellipsis if too long.
   final int? maxLines;
 
+  /// Alignment of the button content along the main axis.
+  ///
+  /// Controls how the icon and label are distributed within the button.
+  /// Use [MainAxisAlignment.spaceBetween] to push the icon to one side and
+  /// the label to the other in a full-width layout (set [shrinkWrap] to false).
+  ///
+  /// Defaults to null, which behaves as [MainAxisAlignment.center].
+  final MainAxisAlignment? contentAlignment;
+
   /// Creates a configuration for [CNButton].
   const CNButtonConfig({
     this.padding,
@@ -94,6 +103,7 @@ class CNButtonConfig extends Equatable {
     this.glassEffectId,
     this.glassEffectInteractive = true,
     this.maxLines = 1,
+    this.contentAlignment,
   });
 
   @override
@@ -110,6 +120,7 @@ class CNButtonConfig extends Equatable {
     glassEffectId,
     glassEffectInteractive,
     maxLines,
+    contentAlignment,
   ];
 }
 
@@ -356,6 +367,8 @@ class _CNButtonState extends State<CNButton> {
         ),
       if (encodeTextStyle(widget.theme.labelStyle, context) != null)
         'labelStyle': encodeTextStyle(widget.theme.labelStyle, context),
+      if (widget.config.contentAlignment != null)
+        'contentAlignment': widget.config.contentAlignment!.name,
     };
 
     final platformView = buildCupertinoPlatformView(
@@ -809,73 +822,66 @@ class _CNButtonState extends State<CNButton> {
   }
 
   Widget _buildLabelWithIcon(Widget iconWidget) {
+    final alignment =
+        widget.config.contentAlignment ?? MainAxisAlignment.center;
+    final isSpaceDistributing =
+        alignment == MainAxisAlignment.spaceBetween ||
+        alignment == MainAxisAlignment.spaceAround ||
+        alignment == MainAxisAlignment.spaceEvenly;
+    final mainAxisSize = isSpaceDistributing
+        ? MainAxisSize.max
+        : MainAxisSize.min;
+
+    final label = Text(
+      widget.label ?? '',
+      style: widget.theme.labelStyle,
+      maxLines: widget.config.maxLines,
+      overflow: widget.config.maxLines != null ? TextOverflow.ellipsis : null,
+    );
+
     switch (widget.config.imagePlacement) {
       case CNImagePlacement.trailing:
         return Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: mainAxisSize,
+          mainAxisAlignment: alignment,
           children: [
-            Text(
-              widget.label ?? '',
-              style: widget.theme.labelStyle,
-              maxLines: widget.config.maxLines,
-              overflow: widget.config.maxLines != null
-                  ? TextOverflow.ellipsis
-                  : null,
-            ),
-            if (widget.config.imagePadding != null)
+            label,
+            if (widget.config.imagePadding != null && !isSpaceDistributing)
               SizedBox(width: widget.config.imagePadding!),
             iconWidget,
           ],
         );
       case CNImagePlacement.top:
         return Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: mainAxisSize,
+          mainAxisAlignment: alignment,
           children: [
             iconWidget,
-            if (widget.config.imagePadding != null)
+            if (widget.config.imagePadding != null && !isSpaceDistributing)
               SizedBox(height: widget.config.imagePadding!),
-            Text(
-              widget.label ?? '',
-              style: widget.theme.labelStyle,
-              maxLines: widget.config.maxLines,
-              overflow: widget.config.maxLines != null
-                  ? TextOverflow.ellipsis
-                  : null,
-            ),
+            label,
           ],
         );
       case CNImagePlacement.bottom:
         return Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: mainAxisSize,
+          mainAxisAlignment: alignment,
           children: [
-            Text(
-              widget.label ?? '',
-              style: widget.theme.labelStyle,
-              maxLines: widget.config.maxLines,
-              overflow: widget.config.maxLines != null
-                  ? TextOverflow.ellipsis
-                  : null,
-            ),
-            if (widget.config.imagePadding != null)
+            label,
+            if (widget.config.imagePadding != null && !isSpaceDistributing)
               SizedBox(height: widget.config.imagePadding!),
             iconWidget,
           ],
         );
       default: // leading
         return Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: mainAxisSize,
+          mainAxisAlignment: alignment,
           children: [
             iconWidget,
-            if (widget.config.imagePadding != null)
+            if (widget.config.imagePadding != null && !isSpaceDistributing)
               SizedBox(width: widget.config.imagePadding!),
-            Text(
-              widget.label ?? '',
-              style: widget.theme.labelStyle,
-              maxLines: widget.config.maxLines,
-              overflow: widget.config.maxLines != null
-                  ? TextOverflow.ellipsis
-                  : null,
-            ),
+            label,
           ],
         );
     }

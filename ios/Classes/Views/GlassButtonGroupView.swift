@@ -48,7 +48,8 @@ struct GlassButtonGroupSwiftUI: View {
         glassEffectInteractive: button.glassEffectInteractive,
         namespace: namespace,
         config: button.config,
-        imagePlacement: button.imagePlacement
+        imagePlacement: button.imagePlacement,
+        contentAlignment: button.contentAlignment
       )
     }
   }
@@ -70,6 +71,7 @@ struct GlassButtonData: Identifiable {
   let glassEffectInteractive: Bool
   let config: GlassButtonConfig
   let imagePlacement: String
+  let contentAlignment: String
 }
 
 // MARK: - Platform View
@@ -263,10 +265,12 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       horizontal: (processed["paddingHorizontal"] as? NSNumber).map { CGFloat(truncating: $0) },
       vertical: (processed["paddingVertical"] as? NSNumber).map { CGFloat(truncating: $0) },
       minHeight: (processed["minHeight"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 44.0,
-      spacing: (processed["imagePadding"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 8.0
+      spacing: (processed["imagePadding"] as? NSNumber).map { CGFloat(truncating: $0) } ?? 8.0,
+      contentAlignment: processed["contentAlignment"] as? String ?? "center"
     )
 
     let imagePlacement = processed["imagePlacement"] as? String ?? "leading"
+    let contentAlignment = processed["contentAlignment"] as? String ?? "center"
 
     let callback: () -> Void = {
       channel.invokeMethod("buttonPressed", arguments: ["index": index], result: nil as FlutterResult?)
@@ -283,7 +287,8 @@ class GlassButtonGroupPlatformView: NSObject, FlutterPlatformView {
       glassEffectId: glassEffectId,
       glassEffectInteractive: glassEffectInteractive,
       config: config,
-      imagePlacement: imagePlacement
+      imagePlacement: imagePlacement,
+      contentAlignment: contentAlignment
     )
   }
 }
