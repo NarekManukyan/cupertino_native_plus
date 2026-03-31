@@ -6,9 +6,6 @@
 
 Native iOS 26+ **Liquid Glass** widgets for Flutter with pixel-perfect fidelity. This package renders authentic Apple UI components using native platform views, providing the genuine iOS/macOS look and feel that Flutter's built-in widgets cannot achieve.
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/NarekManukyan/cupertino_native_plus/main/misc/screenshots/preview.jpg" alt="Preview" width="600"/>
-</p>
 
 ## Quick Start
 
