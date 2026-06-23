@@ -438,31 +438,59 @@ class _CNIconViewState extends State<CNIconView> {
   }
 
   Widget _buildFlutterIcon(BuildContext context) {
-    // For fallback, use Flutter Icon widget
     Widget? iconWidget;
 
-    if (widget.imageAsset != null) {
-      // For image assets in fallback, use a placeholder
-      iconWidget = Icon(
-        CupertinoIcons.circle_fill,
-        size: widget.imageAsset!.size.width,
-        color: widget.imageAsset!.color ?? widget.color,
-      );
-    } else if (widget.customIcon != null) {
+    // customIcon always takes priority for non-native rendering.
+    if (widget.customIcon != null) {
       iconWidget = Icon(
         widget.customIcon,
         size: widget.size ?? widget.symbol?.size ?? 24.0,
         color: widget.color,
       );
+    } else if (widget.imageAsset != null) {
+      final asset = widget.imageAsset!;
+      final size = widget.size ?? asset.size.width;
+      final color = asset.color ?? widget.color;
+
+      if (asset.fallbackIcon != null) {
+        // Explicit IconData fallback supplied by the caller.
+        iconWidget = Icon(asset.fallbackIcon, size: size, color: color);
+      } else if (asset.assetPath.isNotEmpty &&
+          asset.imageFormat != 'svg') {
+        // Flutter asset — render directly (PNG / JPG).
+        iconWidget = Image.asset(
+          asset.assetPath,
+          width: size,
+          height: size,
+          fit: asset.fit,
+          color: color,
+        );
+      } else if (asset.imageData != null &&
+          asset.imageFormat != 'svg') {
+        // Raw bytes — render directly (PNG / JPG).
+        iconWidget = Image.memory(
+          asset.imageData!,
+          width: size,
+          height: size,
+          fit: asset.fit,
+          color: color,
+        );
+      } else {
+        // SF Symbol name, xcasset, or SVG with no fallback — show placeholder.
+        iconWidget = Icon(
+          CupertinoIcons.circle_fill,
+          size: size,
+          color: color,
+        );
+      }
     } else if (widget.symbol != null) {
-      // For SF Symbols, use a placeholder Cupertino icon
+      // SF Symbol with no customIcon — show placeholder.
       iconWidget = Icon(
         CupertinoIcons.circle_fill,
         size: widget.size ?? widget.symbol!.size,
         color: widget.color ?? widget.symbol?.color,
       );
     } else {
-      // Fallback to a generic icon
       iconWidget = Icon(
         CupertinoIcons.circle_fill,
         size: widget.size ?? 24.0,

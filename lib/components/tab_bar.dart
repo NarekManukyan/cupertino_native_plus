@@ -1255,6 +1255,10 @@ class _CNTabBarState extends State<CNTabBar> {
     if (asset == null) {
       return const Icon(CupertinoIcons.circle, size: 25.0);
     }
-    return CNIconView(imageAsset: asset, size: asset.size.width);
+    return CNIconView(
+      imageAsset: asset,
+      customIcon: asset.fallbackIcon,
+      size: asset.size.width,
+    );
   }
 }
