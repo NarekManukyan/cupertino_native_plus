@@ -372,7 +372,6 @@ class _CNIconViewState extends State<CNIconView> {
       _lastName = name;
     }
 
-    // Track if any style properties changed
     bool hasStyleChanges = false;
     final style = <String, dynamic>{};
 
@@ -403,13 +402,10 @@ class _CNIconViewState extends State<CNIconView> {
       hasStyleChanges = true;
     }
 
-    // If any style changed, include the icon source to prevent disappearing icons
     if (hasStyleChanges) {
-      // Add imageAsset properties if using imageAsset
       if (widget.imageAsset != null) {
         style['assetPath'] = widget.imageAsset!.assetPath;
         style['imageData'] = widget.imageAsset!.imageData;
-        // Auto-detect format if not provided
         style['imageFormat'] =
             widget.imageAsset!.imageFormat ??
             detectImageFormat(
@@ -417,7 +413,6 @@ class _CNIconViewState extends State<CNIconView> {
               widget.imageAsset!.imageData,
             );
       } else if (widget.symbol != null) {
-        // Include the symbol name so native side knows what to render
         style['name'] = widget.symbol!.name;
       }
     }
@@ -439,8 +434,6 @@ class _CNIconViewState extends State<CNIconView> {
 
   Widget _buildFlutterIcon(BuildContext context) {
     Widget? iconWidget;
-
-    // customIcon always takes priority for non-native rendering.
     if (widget.customIcon != null) {
       iconWidget = Icon(
         widget.customIcon,
@@ -453,11 +446,8 @@ class _CNIconViewState extends State<CNIconView> {
       final color = asset.color ?? widget.color;
 
       if (asset.fallbackIcon != null) {
-        // Explicit IconData fallback supplied by the caller.
         iconWidget = Icon(asset.fallbackIcon, size: size, color: color);
-      } else if (asset.assetPath.isNotEmpty &&
-          asset.imageFormat != 'svg') {
-        // Flutter asset — render directly (PNG / JPG).
+      } else if (asset.assetPath.isNotEmpty && asset.imageFormat != 'svg') {
         iconWidget = Image.asset(
           asset.assetPath,
           width: size,
@@ -465,9 +455,7 @@ class _CNIconViewState extends State<CNIconView> {
           fit: asset.fit,
           color: color,
         );
-      } else if (asset.imageData != null &&
-          asset.imageFormat != 'svg') {
-        // Raw bytes — render directly (PNG / JPG).
+      } else if (asset.imageData != null && asset.imageFormat != 'svg') {
         iconWidget = Image.memory(
           asset.imageData!,
           width: size,
@@ -476,15 +464,9 @@ class _CNIconViewState extends State<CNIconView> {
           color: color,
         );
       } else {
-        // SF Symbol name, xcasset, or SVG with no fallback — show placeholder.
-        iconWidget = Icon(
-          CupertinoIcons.circle_fill,
-          size: size,
-          color: color,
-        );
+        iconWidget = Icon(CupertinoIcons.circle_fill, size: size, color: color);
       }
     } else if (widget.symbol != null) {
-      // SF Symbol with no customIcon — show placeholder.
       iconWidget = Icon(
         CupertinoIcons.circle_fill,
         size: widget.size ?? widget.symbol!.size,
