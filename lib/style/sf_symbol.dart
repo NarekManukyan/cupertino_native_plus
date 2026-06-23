@@ -53,6 +53,7 @@ class CNIcon extends Equatable {
     this.fit = BoxFit.contain,
     this.color,
     this.mode,
+    this.fallbackIcon,
   }) : _type = type,
        _name = name,
        _path = path,
@@ -81,17 +82,30 @@ class CNIcon extends Equatable {
   /// Optional rendering mode (applies to SF Symbols).
   final CNSymbolRenderingMode? mode;
 
+  /// Fallback [IconData] used on non-iOS/macOS platforms where SF Symbols and
+  /// native asset rendering are unavailable. Provide a Material or Cupertino
+  /// icon that matches the intent of [CNIcon.symbol] or [CNIcon.xcasset] icons.
+  ///
+  /// Example:
+  /// ```dart
+  /// CNIcon.symbol('house.fill', fallbackIcon: Icons.home)
+  /// ```
+  final IconData? fallbackIcon;
+
   // -------------------------------------------------------------------------
   // Named constructors
   // -------------------------------------------------------------------------
 
   /// SF Symbol — renders via `Image(systemName:)` in SwiftUI.
+  ///
+  /// Provide [fallbackIcon] to display a [IconData] on non-iOS/macOS platforms.
   const CNIcon.symbol(
     String name, {
     Size size = const Size(24, 24),
     Color? color,
     CNSymbolRenderingMode? mode,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.symbol,
          name: name,
@@ -99,20 +113,25 @@ class CNIcon extends Equatable {
          color: color,
          mode: mode,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// xcasset image from the app bundle — loaded via `UIImage(named:)`.
+  ///
+  /// Provide [fallbackIcon] to display a [IconData] on non-iOS/macOS platforms.
   const CNIcon.xcasset(
     String name, {
     Size size = const Size(24, 24),
     Color? color,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.xcasset,
          name: name,
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// Flutter asset path — format is auto-detected from the file extension.
@@ -122,6 +141,7 @@ class CNIcon extends Equatable {
     Color? color,
     String? format,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.asset,
          path: path,
@@ -129,6 +149,7 @@ class CNIcon extends Equatable {
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// SVG bytes.
@@ -137,6 +158,7 @@ class CNIcon extends Equatable {
     Size size = const Size(24, 24),
     Color? color,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.bytes,
          bytes: data,
@@ -144,6 +166,7 @@ class CNIcon extends Equatable {
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// PNG bytes.
@@ -152,6 +175,7 @@ class CNIcon extends Equatable {
     Size size = const Size(24, 24),
     Color? color,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.bytes,
          bytes: data,
@@ -159,6 +183,7 @@ class CNIcon extends Equatable {
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// JPG bytes.
@@ -167,6 +192,7 @@ class CNIcon extends Equatable {
     Size size = const Size(24, 24),
     Color? color,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.bytes,
          bytes: data,
@@ -174,6 +200,7 @@ class CNIcon extends Equatable {
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   /// Generic bytes with an explicit format string (e.g. `'png'`, `'svg'`).
@@ -183,6 +210,7 @@ class CNIcon extends Equatable {
     Size size = const Size(24, 24),
     Color? color,
     BoxFit fit = BoxFit.contain,
+    IconData? fallbackIcon,
   }) : this._(
          type: _CNSourceType.bytes,
          bytes: bytes,
@@ -190,6 +218,7 @@ class CNIcon extends Equatable {
          size: size,
          color: color,
          fit: fit,
+         fallbackIcon: fallbackIcon,
        );
 
   // -------------------------------------------------------------------------
@@ -249,6 +278,7 @@ class CNIcon extends Equatable {
     fit,
     color,
     mode,
+    fallbackIcon,
   ];
 }
 
