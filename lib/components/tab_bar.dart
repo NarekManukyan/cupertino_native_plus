@@ -651,7 +651,12 @@ class _CNTabBarState extends State<CNTabBar> {
         if (isRightButton) {
           // Button mode: always fire callback, don't update _lastIndex
           widget.onTap(idx);
-        } else if (idx != _lastIndex) {
+        } else {
+          // Fire onTap even when the already-selected tab is tapped again,
+          // so consumers can react to reselection (e.g. pop a navigator to
+          // its root). Native only emits valueChanged for genuine user taps;
+          // programmatic selection is suppressed via
+          // suppressSelectionCallbacks, so this never fires spuriously.
           widget.onTap(idx);
           _lastIndex = idx;
         }
