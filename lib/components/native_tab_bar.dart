@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../channel/view_types.dart';
 import '../style/sf_symbol.dart';
+import '../utils/icon_renderer.dart';
 import '../utils/version_detector.dart';
 
 /// iOS 26+ Native Tab Bar with Search Support
@@ -59,6 +60,9 @@ class CNTabBarNative {
   /// UITabBarController. Your Flutter content will be displayed within
   /// the selected tab.
   ///
+  /// Pass [textDirection] (e.g. `Directionality.of(context)`) so the native
+  /// tab bar mirrors its layout for right-to-left locales.
+  ///
   /// Only works on iOS 26+. On older versions, this is a no-op.
   static Future<void> enable({
     required List<CNTab> tabs,
@@ -71,7 +75,17 @@ class CNTabBarNative {
     Color? tintColor,
     Color? unselectedTintColor,
     bool? isDark,
+    bool shrinkWhileScroll = false,
+    double shrinkOffset = 16,
+    List<int?>? badgeCounts,
+    CNTabBarMinimizeBehavior minimizeBehavior =
+        CNTabBarMinimizeBehavior.automatic,
+    TextDirection textDirection = TextDirection.ltr,
   }) async {
+    assert(
+      badgeCounts == null || badgeCounts.length == tabs.length,
+      'badgeCounts.length must match tabs.length',
+    );
     // Only works on iOS 26+
     if (defaultTargetPlatform != TargetPlatform.iOS ||
         !PlatformVersion.shouldUseNativeGlass) {
@@ -92,21 +106,69 @@ class CNTabBarNative {
     // Setup method call handler for callbacks
     _channel.setMethodCallHandler(_handleMethodCall);
 
+    // Resolve Flutter asset paths for custom icons (skipped for xcasset
+    // entries, which the native side loads directly by name).
+    final imageAssetPaths = await Future.wait(
+      tabs.map((tab) async {
+        final icon = tab.icon;
+        if (icon == null ||
+            icon.assetPath.isEmpty ||
+            (icon.xcassetName ?? '').isNotEmpty) {
+          return '';
+        }
+        return resolveAssetPathForPixelRatio(icon.assetPath);
+      }),
+    );
+    final activeImageAssetPaths = await Future.wait(
+      tabs.map((tab) async {
+        final icon = tab.activeIcon;
+        if (icon == null ||
+            icon.assetPath.isEmpty ||
+            (icon.xcassetName ?? '').isNotEmpty) {
+          return '';
+        }
+        return resolveAssetPathForPixelRatio(icon.assetPath);
+      }),
+    );
+
     // Enable native tab bar
     await _channel.invokeMethod('enable', {
-      'tabs': tabs
-          .map(
-            (tab) => {
-              'title': tab.title,
-              'sfSymbol': tab.sfSymbol?.name,
-              'activeSfSymbol': tab.activeSfSymbol?.name,
-              'isSearch': tab.isSearchTab,
-              'badgeCount': tab.badgeCount,
-            },
-          )
-          .toList(),
+      'tabs': [
+        for (var i = 0; i < tabs.length; i++)
+          {
+            'title': tabs[i].title,
+            'sfSymbol':
+                tabs[i].icon?.toMap()['iconName'] as String? ??
+                tabs[i].sfSymbol?.name,
+            'activeSfSymbol':
+                tabs[i].activeIcon?.toMap()['iconName'] as String? ??
+                tabs[i].activeSfSymbol?.name,
+            'xcassetName': tabs[i].icon?.xcassetName ?? '',
+            'activeXcassetName': tabs[i].activeIcon?.xcassetName ?? '',
+            'imageAssetPath': imageAssetPaths[i],
+            'activeImageAssetPath': activeImageAssetPaths[i],
+            'imageData': tabs[i].icon?.imageData,
+            'activeImageData': tabs[i].activeIcon?.imageData,
+            'imageFormat':
+                tabs[i].icon?.imageFormat ??
+                detectImageFormat(imageAssetPaths[i], tabs[i].icon?.imageData),
+            'activeImageFormat':
+                tabs[i].activeIcon?.imageFormat ??
+                detectImageFormat(
+                  activeImageAssetPaths[i],
+                  tabs[i].activeIcon?.imageData,
+                ),
+            'isSearch': tabs[i].isSearchTab,
+            'badgeCount': tabs[i].badgeCount,
+          },
+      ],
       'selectedIndex': selectedIndex,
       'isDark': isDark ?? false,
+      'shrinkWhileScroll': shrinkWhileScroll,
+      'shrinkOffset': shrinkOffset,
+      'badgeCounts': badgeCounts,
+      'minimizeBehavior': minimizeBehavior.rawValue,
+      'isRTL': textDirection == TextDirection.rtl,
       if (tintColor != null) 'tint': tintColor.toARGB32(),
       if (unselectedTintColor != null)
         'unselectedTint': unselectedTintColor.toARGB32(),
@@ -118,9 +180,11 @@ class CNTabBarNative {
   /// Disables the native tab bar and restores Flutter-only mode.
   ///
   /// Call this in [State.dispose] of the widget that called [enable].
-  /// No-op when the native tab bar is not already enabled.
-  static Future<void> disable() async {
-    if (!_isEnabled) {
+  /// No-op when the native tab bar is not already enabled, unless
+  /// [forceDisable] is `true`, which sends the disable call regardless
+  /// of tracked state (useful to recover from a desynced [_isEnabled] flag).
+  static Future<void> disable({bool forceDisable = false}) async {
+    if (!_isEnabled && !forceDisable) {
       return;
     }
 
@@ -202,6 +266,53 @@ class CNTabBarNative {
     await _channel.invokeMethod('setBrightness', {'isDark': isDark});
   }
 
+  /// Notifies the native tab bar of an app text-direction change.
+  ///
+  /// Call this when [Directionality.of(context)] changes (e.g. a locale
+  /// switch between LTR and RTL) if it was not already current in [enable].
+  /// No-op when the native tab bar is not enabled.
+  static Future<void> setTextDirection(TextDirection textDirection) async {
+    if (!_isEnabled) return;
+    await _channel.invokeMethod('setTextDirection', {
+      'isRTL': textDirection == TextDirection.rtl,
+    });
+  }
+
+  /// Updates the iOS 26 native `UITabBarController.tabBarMinimizeBehavior`.
+  ///
+  /// Mirrors SwiftUI's `TabView.tabBarMinimizeBehavior(_:)`. No-op on iOS < 26.
+  /// No-op when the native tab bar is not enabled.
+  static Future<void> setMinimizeBehavior(
+    CNTabBarMinimizeBehavior behavior,
+  ) async {
+    if (!_isEnabled) return;
+    await _channel.invokeMethod('setMinimizeBehavior', {
+      'minimizeBehavior': behavior.rawValue,
+    });
+  }
+
+  static double _lastSentOffset = 0;
+  static int _lastSentTimestampMs = 0;
+
+  /// Reports the current scroll offset so the native tab bar can shrink/expand.
+  ///
+  /// Call this inside a [ScrollController] listener or a
+  /// [NotificationListener<ScrollNotification>] when [shrinkWhileScroll] was
+  /// set to `true` in [enable]. The tab bar hides while scrolling down and
+  /// reappears when scrolling up or when the list is at the top.
+  ///
+  /// No-op when the native tab bar is not enabled.
+  static Future<void> reportScrollOffset(double offset) async {
+    if (!_isEnabled) return;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final deltaAbs = (offset - _lastSentOffset).abs();
+    final elapsedMs = nowMs - _lastSentTimestampMs;
+    if (deltaAbs < 4 && elapsedMs < 33) return;
+    _lastSentOffset = offset;
+    _lastSentTimestampMs = nowMs;
+    await _channel.invokeMethod('updateScrollOffset', {'offset': offset});
+  }
+
   /// Returns `true` if the native tab bar is currently active on the platform side.
   static Future<bool> checkIsEnabled() async {
     try {
@@ -247,7 +358,7 @@ class CNTabBarNative {
 
 /// Configuration for a native tab in [CNTabBarNative].
 ///
-/// Each tab can have a title, SF Symbol icon, and optionally be marked as a search tab.
+/// Each tab can have a title, an icon, and optionally be marked as a search tab.
 ///
 /// Example:
 /// ```dart
@@ -255,18 +366,38 @@ class CNTabBarNative {
 ///   title: 'Home',
 ///   sfSymbol: CNSymbol('house.fill'),
 /// )
+///
+/// // Custom artwork instead of an SF Symbol:
+/// CNTab(
+///   title: 'Home',
+///   icon: CNIcon.asset('assets/icons/home.svg'),
+/// )
 /// ```
 class CNTab extends Equatable {
   /// Title shown below the tab icon.
   final String title;
 
   /// SF Symbol for the unselected state.
+  ///
+  /// Ignored when [icon] is provided.
   final CNSymbol? sfSymbol;
 
   /// SF Symbol for the selected state.
   ///
-  /// Falls back to [sfSymbol] when not provided.
+  /// Falls back to [sfSymbol] when not provided. Ignored when [activeIcon]
+  /// (or [icon], as its fallback) is provided.
   final CNSymbol? activeSfSymbol;
+
+  /// Custom icon for the unselected state — takes precedence over [sfSymbol].
+  ///
+  /// Accepts any [CNIcon] source: [CNIcon.asset] (Flutter asset path, format
+  /// auto-detected), [CNIcon.svg]/[CNIcon.png]/[CNIcon.jpg] (raw bytes), or
+  /// [CNIcon.xcasset] (app bundle asset catalog).
+  final CNIcon? icon;
+
+  /// Custom icon for the selected state — takes precedence over
+  /// [activeSfSymbol]. Falls back to [icon] when not provided.
+  final CNIcon? activeIcon;
 
   /// Whether this tab triggers the iOS 26 native search bar.
   ///
@@ -282,6 +413,8 @@ class CNTab extends Equatable {
     required this.title,
     this.sfSymbol,
     this.activeSfSymbol,
+    this.icon,
+    this.activeIcon,
     this.isSearchTab = false,
     this.badgeCount,
   });
@@ -291,7 +424,32 @@ class CNTab extends Equatable {
     title,
     sfSymbol,
     activeSfSymbol,
+    icon,
+    activeIcon,
     isSearchTab,
     badgeCount,
   ];
+}
+
+/// Mirrors `UITabBarController.MinimizeBehavior` on iOS 26+.
+///
+/// Equivalent to the SwiftUI `TabBarMinimizeBehavior` values used by
+/// `TabView.tabBarMinimizeBehavior(_:)`.
+enum CNTabBarMinimizeBehavior {
+  /// Never minimize the tab bar.
+  never('never'),
+
+  /// Minimize the tab bar when the user scrolls down.
+  onScrollDown('onScrollDown'),
+
+  /// Minimize the tab bar when the user scrolls up.
+  onScrollUp('onScrollUp'),
+
+  /// System-chosen default minimization behavior.
+  automatic('automatic');
+
+  const CNTabBarMinimizeBehavior(this.rawValue);
+
+  /// Wire-format string sent to the iOS side.
+  final String rawValue;
 }
