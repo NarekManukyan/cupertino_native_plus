@@ -116,6 +116,7 @@ class CNTabBar extends StatefulWidget {
     this.searchController,
     this.labelStyle,
     this.activeLabelStyle,
+    this.placeholder,
   }) : assert(items.length >= 2, 'Tab bar must have at least 2 items'),
        assert(
          items.length <= 5,
@@ -211,6 +212,19 @@ class CNTabBar extends StatefulWidget {
   /// On macOS (NSSegmentedControl-based tab bar), per-state label styling
   /// is not supported — font is applied to all states.
   final TextStyle? activeLabelStyle;
+
+  /// Widget shown instead of the Flutter fallback while the native platform
+  /// view is not yet available (startup / hot-restart guard).
+  ///
+  /// Only used on platforms that will eventually render the native tab bar
+  /// (iOS/macOS 26+). On platforms where the Flutter fallback is the
+  /// permanent UI (e.g. iOS < 26, Android), this is ignored and the fallback
+  /// is shown as usual.
+  ///
+  /// Useful to avoid a visible style flash between the Flutter fallback and
+  /// the native Liquid Glass bar — e.g. pass a [SizedBox] to reserve the
+  /// bar's space without drawing anything.
+  final Widget? placeholder;
 
   @override
   State<CNTabBar> createState() => _CNTabBarState();
@@ -363,6 +377,13 @@ class _CNTabBarState extends State<CNTabBar> {
 
     // Fallback to Flutter widgets for non-iOS/macOS, iOS/macOS < 26, or while guard is not ready
     if (!shouldUseNative) {
+      // When the native bar is coming (right platform/version, guard just not
+      // ready yet), let callers swap the transient fallback for a placeholder.
+      final nativeWillBeUsed =
+          isIOSOrMacOS && PlatformVersion.shouldUseNativeGlass;
+      if (nativeWillBeUsed && widget.placeholder != null) {
+        return widget.placeholder!;
+      }
       return _buildFlutterFallback(context);
     }
 
